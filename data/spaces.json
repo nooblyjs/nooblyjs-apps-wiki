@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "name": "Personal Space",
+    "description": "This space is for you personal data",
+    "icon": "🏗️",
+    "visibility": "private",
+    "documentCount": 0,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-08-20T14:30:00Z",
+    "author": "System"
+  },
+  {
+    "id": 2,
+    "name": "Team Space",
+    "description": "This space is for your team to contribiute to",
+    "icon": "🏗️",
+    "visibility": "team",
+    "documentCount": 0,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-08-20T14:30:00Z",
+    "author": "System"
+  },
+  {
+    "id": 3,
+    "name": "Knowledge Space",
+    "description": "This is a formated compilaton of data",
+    "icon": "🏗️",
+    "visibility": "readonly",
+    "documentCount": 0,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-08-20T14:30:00Z",
+    "author": "System"
+  }
+]

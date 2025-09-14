@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management System</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/applications/warehouse/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📦</div>
+                <span>Warehouse Management</span>
+            </div>
+            
+            <div class="search-container">
+                <button class="search-btn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <input type="text" class="search-input" placeholder="Search orders, items..." id="global-search">
+            </div>
+            
+            <nav class="nav">
+                <a href="/applications/warehouse/" class="nav-link active">
+                    <svg class="nav-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="/applications/warehouse/orders" class="nav-link">
+                    <svg class="nav-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Orders
+                </a>
+                <a href="/applications/warehouse/picking" class="nav-link">
+                    <svg class="nav-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    Picking
+                </a>
+                <a href="/applications/warehouse/inventory" class="nav-link">
+                    <svg class="nav-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    Inventory
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <main class="main-content">
+            <div class="welcome-section">
+                <h1>Warehouse Management Dashboard</h1>
+                <p>Real-time overview of warehouse operations and fulfillment pipeline</p>
+            </div>
+
+            <!-- Dashboard Statistics -->
+            <div class="quick-actions">
+                <div class="action-card" id="orders-waiting-card" onclick="location.href='/applications/warehouse/orders?status=new'">
+                    <div class="action-icon">📋</div>
+                    <h3 id="orders-waiting">0</h3>
+                    <p>Orders Waiting</p>
+                </div>
+                <div class="action-card" id="orders-in-progress-card" onclick="location.href='/applications/warehouse/picking'">
+                    <div class="action-icon">⚡</div>
+                    <h3 id="orders-in-progress">0</h3>
+                    <p>Orders In Progress</p>
+                </div>
+                <div class="action-card warning" id="short-picks-card" onclick="location.href='/applications/warehouse/orders?shortPicks=true'">
+                    <div class="action-icon">⚠️</div>
+                    <h3 id="short-picks">0</h3>
+                    <p>Short Picks</p>
+                </div>
+                <div class="action-card success" id="orders-completed-card" onclick="location.href='/applications/warehouse/orders?status=despatched'">
+                    <div class="action-icon">✅</div>
+                    <h3 id="orders-completed">0</h3>
+                    <p>Orders Completed Today</p>
+                </div>
+                <div class="action-card danger" id="low-stock-card" onclick="location.href='/applications/warehouse/inventory?stockLevel=low'">
+                    <div class="action-icon">📦</div>
+                    <h3 id="low-stock-items">0</h3>
+                    <p>Low Stock Items</p>
+                </div>
+                <div class="action-card" id="inventory-value-card" onclick="location.href='/applications/warehouse/inventory'">
+                    <div class="action-icon">💰</div>
+                    <h3 id="inventory-value">$0</h3>
+                    <p>Inventory Value</p>
+                </div>
+            </div>
+
+            <!-- Fulfillment Pipeline -->
+            <div class="fulfillment-pipeline">
+                <div class="view-header">
+                    <h2>Fulfillment Pipeline</h2>
+                    <button class="btn btn-secondary" id="refresh-pipeline">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+                
+                <div class="pipeline-stages">
+                    <div class="pipeline-stage">
+                        <h3>
+                            🆕 New Orders 
+                            <span class="stage-count" id="new-orders-count">0</span>
+                        </h3>
+                        <div class="order-queue" id="new-orders-queue"></div>
+                    </div>
+                    <div class="pipeline-stage">
+                        <h3>
+                            📋 Picking 
+                            <span class="stage-count" id="picking-count">0</span>
+                        </h3>
+                        <div class="order-queue" id="picking-queue"></div>
+                    </div>
+                    <div class="pipeline-stage">
+                        <h3>
+                            📦 Packing 
+                            <span class="stage-count" id="packing-count">0</span>
+                        </h3>
+                        <div class="order-queue" id="packing-queue"></div>
+                    </div>
+                    <div class="pipeline-stage">
+                        <h3>
+                            🚚 Despatching 
+                            <span class="stage-count" id="despatching-count">0</span>
+                        </h3>
+                        <div class="order-queue" id="despatching-queue"></div>
+                    </div>
+                    <div class="pipeline-stage">
+                        <h3>
+                            ✅ Despatched 
+                            <span class="stage-count" id="despatched-count">0</span>
+                        </h3>
+                        <div class="order-queue" id="despatched-queue"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Performance -->
+            <div class="dashboard-widgets">
+                <div class="widget">
+                    <h3>📊 Today's Performance</h3>
+                    <div class="widget-content">
+                        <div class="widget-item">
+                            <div class="widget-item-title">Orders Processed</div>
+                            <div class="widget-item-meta" id="orders-processed">0 orders</div>
+                        </div>
+                        <div class="widget-item">
+                            <div class="widget-item-title">Average Pick Time</div>
+                            <div class="widget-item-meta" id="avg-pick-time">-- minutes</div>
+                        </div>
+                        <div class="widget-item">
+                            <div class="widget-item-title">Pick Accuracy</div>
+                            <div class="widget-item-meta" id="pick-accuracy">--% accurate</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="widget">
+                    <h3>⚠️ Alerts & Issues</h3>
+                    <div class="widget-content">
+                        <div class="widget-item" id="alerts-container">
+                            <div class="widget-item-title">No alerts</div>
+                            <div class="widget-item-meta">All systems operating normally</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="widget">
+                    <h3>🚀 Quick Actions</h3>
+                    <div class="widget-content">
+                        <div class="widget-item">
+                            <a href="/applications/warehouse/picking" class="widget-item-title">Start Picking Session</a>
+                            <div class="widget-item-meta">Begin picking orders from queue</div>
+                        </div>
+                        <div class="widget-item">
+                            <a href="/applications/warehouse/inventory" class="widget-item-title">Inventory Count</a>
+                            <div class="widget-item-meta">Perform cycle count</div>
+                        </div>
+                        <div class="widget-item">
+                            <a href="/applications/warehouse/orders" class="widget-item-title">Create Order</a>
+                            <div class="widget-item-meta">Add new customer order</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/applications/warehouse/js/index.js"></script>
+</body>
+</html>
