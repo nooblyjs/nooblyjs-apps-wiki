@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="css/wiki-layout.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- SVG Icons Sprite -->
+    <svg style="display: none;">
+        <defs>
+            <!-- Book/Wiki Icon -->
+            <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </symbol>
+            
+            <!-- Home Icon -->
+            <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
+            </symbol>
+            
+            <!-- Folder/Spaces Icon -->
+            <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </symbol>
+            
+            <!-- Open Folder Icon -->
+            <symbol id="icon-folder-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2z"/>
+                <path d="M2 10h20"/>
+            </symbol>
+            
+            <!-- Plus/Create Icon -->
+            <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </symbol>
+            
+            <!-- Template/Clipboard Icon -->
+            <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            </symbol>
+            
+            <!-- Logout/Exit Icon -->
+            <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16,17 21,12 16,7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </symbol>
+            
+            <!-- Search Icon -->
+            <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+            </symbol>
+            
+            <!-- Edit/Pen Icon -->
+            <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            </symbol>
+            
+            <!-- File/Document Icon -->
+            <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <line x1="10" y1="9" x2="8" y2="9"/>
+            </symbol>
+            
+            <!-- Browse/Eye Icon -->
+            <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </symbol>
+            
+            <!-- Share Icon -->
+            <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16,6 12,2 8,6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+            </symbol>
+            
+            <!-- History/Clock Icon -->
+            <symbol id="icon-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+            </symbol>
+            
+            <!-- Settings/Gear Icon -->
+            <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m10.5-5.5L7 5m0 14 3.5-3.5M16.5 7.5L17 17m-14 0 3.5-3.5"/>
+            </symbol>
+            
+            <!-- Close/X Icon -->
+            <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </symbol>
+            
+            <!-- Star Icon -->
+            <symbol id="icon-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+            </symbol>
+        </defs>
+    </svg>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-form">
+            <h1>Design Artifacts Wiki</h1>
+            <p class="login-subtitle">Enterprise Knowledge Management Platform</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div id="loginError" class="alert alert-danger hidden"></div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <div class="text-center" style="margin-top: 1rem;">
+                <small style="color: var(--muted-foreground);">Use: admin / password</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Wiki Application -->
+    <div id="wikiApp" class="hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg class="logo-icon" width="20" height="20">
+                        <use href="#icon-book"></use>
+                    </svg>
+                    <span class="logo-text">Wiki</span>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <input type="text" id="globalSearch" placeholder="Search knowledge base..." class="search-input">
+                    <div id="searchSuggestions" class="search-suggestions hidden">
+                        <!-- Search suggestions will be populated here -->
+                    </div>
+                </div>
+
+                <!-- User Profile -->
+                <div id="userProfile" class="user-profile" title="Click to edit profile">
+                    <div class="user-avatar">
+                        <span id="userInitials">AD</span>
+                    </div>
+                    <div class="user-info">
+                        <span id="userName" class="user-name">Admin User</span>
+                        <span id="userRole" class="user-role">Administrator</span>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="nav">
+                    <a href="#" id="logoutBtn" class="nav-link">
+                        <svg class="nav-icon" width="16" height="16">
+                            <use href="#icon-logout"></use>
+                        </svg>
+                        Logout
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Left Sidebar -->
+            <aside id="leftSidebar" class="left-sidebar">
+                <!-- Collapsible Shortcuts Section -->
+                <div class="sidebar-section">
+                    <div class="section-header" id="shortcutsHeader">
+                        <svg class="collapse-icon" width="20" height="16">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                        <span>Shortcuts</span>
+                    </div>
+                    <div id="shortcutsContent" class="section-content">
+                        <nav class="shortcuts-nav">
+                            <a href="#" id="shortcutHome" class="shortcut-item">
+                                <svg class="shortcut-icon" width="16" height="16">
+                                    <use href="#icon-home"></use>
+                                </svg>
+                                <span>Home</span>
+                            </a>
+                            <a href="#" id="shortcutRecent" class="shortcut-item">
+                                <svg class="shortcut-icon" width="16" height="16">
+                                    <use href="#icon-history"></use>
+                                </svg>
+                                <span>Recent</span>
+                            </a>
+                            <a href="#" id="shortcutStarred" class="shortcut-item">
+                                <svg class="shortcut-icon" width="16" height="16">
+                                    <use href="#icon-star"></use>
+                                </svg>
+                                <span>Starred</span>
+                            </a>
+                            <a href="#" id="shortcutTemplates" class="shortcut-item">
+                                <svg class="shortcut-icon" width="16" height="16">
+                                    <use href="#icon-clipboard"></use>
+                                </svg>
+                                <span>Templates</span>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Files Section -->
+                <div class="sidebar-section files-section">
+                    <div class="section-header">
+                        <span>Files</span>
+                        <div class="file-actions">
+                            <button id="publishBtn" class="action-btn" title="Publish">
+                                <svg width="12" height="12">
+                                    <use href="#icon-share"></use>
+                                </svg>
+                            </button>
+                            <button id="createFolderBtn" class="action-btn" title="New Folder">
+                                <svg width="12" height="12">
+                                    <use href="#icon-folder"></use>
+                                </svg>
+                            </button>
+                            <button id="createFileBtn" class="action-btn" title="New File">
+                                <svg width="12" height="12">
+                                    <use href="#icon-plus"></use>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="fileTree" class="file-tree">
+                        <!-- Dynamic file tree content -->
+                    </div>
+                </div>
+
+                <!-- Collapsible Spaces Section at Bottom -->
+                <div class="sidebar-section spaces-section">
+                    <div class="section-header" id="spacesHeader">
+                        <svg class="collapse-icon" width="20" height="16">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                        <span>Spaces</span>
+                        <div class="spaces-actions">
+                            <button id="createSpaceBtn" class="action-btn" title="New Space">
+                                <svg width="12" height="12">
+                                    <use href="#icon-plus"></use>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="spacesContent" class="section-content">
+                        <div id="spacesList" class="spaces-list">
+                            <!-- Dynamic spaces content -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main id="mainContent" class="main-content">
+                <!-- Home View -->
+                <div id="homeView" class="view">
+                    <div class="workspace-header">
+                        <div class="workspace-title">
+                            <h1 id="workspaceTitle">Welcome to Architecture Artifacts</h1>
+                            <p id="workspaceSubtitle">Your documentation workspace dashboard</p>
+                        </div>
+                        <button id="createNewMarkdownBtn" class="btn btn-primary">
+                            <svg width="16" height="16">
+                                <use href="#icon-plus"></use>
+                            </svg>
+                            Create New Markdown File
+                        </button>
+                    </div>
+
+                    <!-- Content Sections -->
+                    <div class="content-sections">
+                        <!-- Recent Files Section -->
+                        <section class="content-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20">
+                                        <use href="#icon-history"></use>
+                                    </svg>
+                                    <h2>Recent Files</h2>
+                                </div>
+                                <button id="refreshRecentBtn" class="refresh-btn">
+                                    <span>Refresh</span>
+                                </button>
+                            </div>
+                            <div id="recentFilesContent" class="files-content">
+                                <div class="no-content-message">
+                                    <svg width="48" height="48" class="no-content-icon">
+                                        <use href="#icon-history"></use>
+                                    </svg>
+                                    <p>No recent markdown files found</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Starred Files Section -->
+                        <section class="content-section">
+                            <div class="section-title">
+                                <svg width="20" height="20">
+                                    <use href="#icon-star"></use>
+                                </svg>
+                                <h2>Starred Files</h2>
+                            </div>
+                            <div id="starredFilesContent" class="files-content">
+                                <div class="no-content-message">
+                                    <svg width="48" height="48" class="no-content-icon">
+                                        <use href="#icon-star"></use>
+                                    </svg>
+                                    <p>No starred markdown files found</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Templates Section -->
+                        <section class="content-section">
+                            <div class="section-title">
+                                <div class="section-title-content">
+                                    <svg width="20" height="20">
+                                        <use href="#icon-clipboard"></use>
+                                    </svg>
+                                    <h2>Templates</h2>
+                                </div>
+                                <div class="section-actions">
+                                    <button id="templatesNewBtn" class="action-btn" title="New Template">
+                                        <svg width="12" height="12">
+                                            <use href="#icon-plus"></use>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="templatesContent" class="templates-content">
+                                <!-- Templates will be loaded here -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Spaces View -->
+                <div id="spacesView" class="view hidden">
+                    <div class="view-header">
+                        <h1>Spaces</h1>
+                        <button id="createSpaceFromView" class="btn btn-primary">+ Create Space</button>
+                    </div>
+                    <div id="spacesGrid" class="spaces-grid">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Space Detail View -->
+                <div id="spaceView" class="view hidden">
+                    <div class="space-header">
+                        <nav class="breadcrumb">
+                            <a href="#" id="backToHome">Home</a>
+                            <span class="breadcrumb-separator">/</span>
+                            <span id="currentSpaceName"></span>
+                        </nav>
+                        <div class="space-actions">
+                            <button id="createDocInSpace" class="btn btn-primary">+ New Document</button>
+                            <button id="createFolderInSpace" class="btn btn-secondary">+ New Folder</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-content-sections">
+                        <!-- Recent Files in Space -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-history"></use>
+                                    </svg>
+                                    <h2>Recent Files</h2>
+                                </div>
+                            </div>
+                            <div id="spaceRecentFiles" class="files-grid">
+                                <!-- Recent files will be loaded here -->
+                            </div>
+                        </section>
+
+                        <!-- Starred Files in Space -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-star"></use>
+                                    </svg>
+                                    <h2>Starred Files</h2>
+                                </div>
+                            </div>
+                            <div id="spaceStarredFiles" class="files-grid">
+                                <!-- Starred files will be loaded here -->
+                            </div>
+                        </section>
+
+                        <!-- Root Files and Folders -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-folder"></use>
+                                    </svg>
+                                    <h2>Files & Folders</h2>
+                                </div>
+                            </div>
+                            <div id="spaceRootItems" class="items-grid">
+                                <!-- Root level files and folders will be loaded here -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Editor View -->
+                <div id="editorView" class="view hidden">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <div class="editor-header-left">
+                                <input type="text" id="docTitle" placeholder="Document Title" class="doc-title-input">
+                                <span id="editingStatus" class="editing-status">Unsaved changes</span>
+                            </div>
+                            <div class="editor-actions">
+                                <button id="saveDoc" class="btn btn-primary">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-file"></use>
+                                    </svg>
+                                    Save
+                                    <span class="shortcut">Ctrl+S</span>
+                                </button>
+                                <button id="previewDoc" class="btn btn-secondary">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-eye"></use>
+                                    </svg>
+                                    Preview
+                                </button>
+                                <button id="closeEditor" class="btn btn-secondary">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-x"></use>
+                                    </svg>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-main">
+                            <div id="markdownEditor" class="editor-pane">
+                                <div class="editor-toolbar">
+                                    <div class="toolbar-group">
+                                        <button id="boldBtn" class="toolbar-btn" title="Bold (Ctrl+B)">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button id="italicBtn" class="toolbar-btn" title="Italic (Ctrl+I)">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button id="codeBtn" class="toolbar-btn" title="Inline Code">
+                                            <i class="fas fa-code"></i>
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button id="h1Btn" class="toolbar-btn" title="Heading 1">H1</button>
+                                        <button id="h2Btn" class="toolbar-btn" title="Heading 2">H2</button>
+                                        <button id="h3Btn" class="toolbar-btn" title="Heading 3">H3</button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button id="listBtn" class="toolbar-btn" title="Unordered List">
+                                            <i class="fas fa-list-ul"></i>
+                                        </button>
+                                        <button id="numberedListBtn" class="toolbar-btn" title="Ordered List">
+                                            <i class="fas fa-list-ol"></i>
+                                        </button>
+                                        <button id="linkBtn" class="toolbar-btn" title="Link">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="editorTextarea" placeholder="Start writing..."></textarea>
+                            </div>
+                            <div id="previewPane" class="preview-pane hidden">
+                                <div class="preview-header">
+                                    <h3>Preview</h3>
+                                </div>
+                                <div id="previewContent" class="preview-content markdown-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document View -->
+                <div id="documentView" class="view hidden">
+                    <div class="document-container">
+                        <div class="document-header">
+                            <nav class="breadcrumb">
+                                <a href="#" id="docBackToSpace">Space</a>
+                                <span class="breadcrumb-separator">/</span>
+                                <span id="currentDocTitle"></span>
+                            </nav>
+                            <div class="document-actions">
+                                <button id="editDocBtn" class="btn btn-primary">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-edit"></use>
+                                    </svg>
+                                    Edit
+                                </button>
+                                <button id="starDocBtn" class="btn btn-secondary star-btn">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-star"></use>
+                                    </svg>
+                                    <span class="star-text">Star</span>
+                                </button>
+                                <button id="downloadDocBtn" class="btn btn-secondary">
+                                    <svg width="16" height="16">
+                                        <use href="#icon-share"></use>
+                                    </svg>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Content will be inserted directly here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Search Results View -->
+                <div id="searchView" class="view hidden">
+                    <div class="view-header">
+                        <h1>Search Results</h1>
+                        <span id="searchQuery" class="search-query"></span>
+                    </div>
+                    <div id="searchResults" class="search-results">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="createSpaceModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Space</h2>
+                <button id="closeCreateSpaceModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="createSpaceForm">
+                <div class="form-group">
+                    <label for="spaceName">Space Name</label>
+                    <input type="text" id="spaceName" name="spaceName" required>
+                </div>
+                <div class="form-group">
+                    <label for="spaceDescription">Description</label>
+                    <textarea id="spaceDescription" name="spaceDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="spaceVisibility">Visibility</label>
+                    <select id="spaceVisibility" name="spaceVisibility">
+                        <option value="private">Private</option>
+                        <option value="team">Team</option>
+                        <option value="public">Public</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelCreateSpace" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Space</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div id="createFolderModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Folder</h2>
+                <button id="closeCreateFolderModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="createFolderForm">
+                <div class="form-group">
+                    <label for="folderName">Folder Name</label>
+                    <input type="text" id="folderName" name="folderName" required>
+                </div>
+                <div class="form-group">
+                    <label for="folderLocation">Location</label>
+                    <select id="folderLocation" name="folderLocation">
+                        <option value="">Root</option>
+                        <!-- Dynamic options will be added here -->
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelCreateFolder" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create File Modal -->
+    <div id="createFileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New File</h2>
+                <button id="closeCreateFileModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="createFileForm">
+                <div class="form-group">
+                    <label for="fileName">File Name</label>
+                    <input type="text" id="fileName" name="fileName" placeholder="filename.md" required>
+                </div>
+                <div class="form-group">
+                    <label for="fileLocation">Location</label>
+                    <select id="fileLocation" name="fileLocation">
+                        <option value="">Root</option>
+                        <!-- Dynamic options will be added here -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fileTemplate">Template (Optional)</label>
+                    <select id="fileTemplate" name="fileTemplate">
+                        <option value="">Blank Document</option>
+                        <option value="basic">Basic Article</option>
+                        <option value="api">API Documentation</option>
+                        <option value="meeting">Meeting Notes</option>
+                        <option value="requirements">Requirements Doc</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelCreateFile" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal hidden">
+        <div class="modal-content user-profile-modal">
+            <div class="modal-header">
+                <h2>User Profile</h2>
+                <button id="closeUserProfileModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="userProfileForm">
+                <div class="profile-section">
+                    <div class="profile-avatar-section">
+                        <div class="profile-avatar-large">
+                            <span id="profileInitials">AD</span>
+                        </div>
+                        <button type="button" id="changeAvatarBtn" class="btn btn-secondary">
+                            <i class="fas fa-camera"></i>
+                            Change Avatar
+                        </button>
+                    </div>
+                    
+                    <div class="profile-form-section">
+                        <div class="form-group">
+                            <label for="profileName">Full Name</label>
+                            <input type="text" id="profileName" name="profileName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileEmail">Email Address</label>
+                            <input type="email" id="profileEmail" name="profileEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileRole">Role</label>
+                            <select id="profileRole" name="profileRole">
+                                <option value="administrator">Administrator</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileBio">Bio</label>
+                            <textarea id="profileBio" name="profileBio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileLocation">Location</label>
+                            <input type="text" id="profileLocation" name="profileLocation" placeholder="City, Country">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileTimezone">Timezone</label>
+                            <select id="profileTimezone" name="profileTimezone">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time</option>
+                                <option value="America/Chicago">Central Time</option>
+                                <option value="America/Denver">Mountain Time</option>
+                                <option value="America/Los_Angeles">Pacific Time</option>
+                                <option value="Europe/London">London</option>
+                                <option value="Europe/Paris">Paris</option>
+                                <option value="Asia/Tokyo">Tokyo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-settings-section">
+                    <h3>Preferences</h3>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                            <span class="checkmark"></span>
+                            Email notifications
+                        </label>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="darkMode" name="darkMode">
+                            <span class="checkmark"></span>
+                            Dark mode (coming soon)
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="defaultLanguage">Default Language</label>
+                        <select id="defaultLanguage" name="defaultLanguage">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="ja">Japanese</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelUserProfile" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu for File Tree -->
+    <div id="fileContextMenu" class="context-menu hidden">
+        <div class="context-menu-item" id="contextCreateFolder">
+            <svg width="16" height="16">
+                <use href="#icon-folder"></use>
+            </svg>
+            <span>Create Folder</span>
+        </div>
+        <div class="context-menu-item" id="contextCreateFile">
+            <svg width="16" height="16">
+                <use href="#icon-plus"></use>
+            </svg>
+            <span>Create File</span>
+        </div>
+        <div class="context-menu-item" id="contextUpload">
+            <svg width="16" height="16">
+                <use href="#icon-share"></use>
+            </svg>
+            <span>Upload File</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item context-menu-item-danger" id="contextDelete">
+            <svg width="16" height="16">
+                <use href="#icon-x"></use>
+            </svg>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Hidden file input for uploads -->
+    <input type="file" id="fileUploadInput" multiple style="display: none;">
+
+    <div id="overlay" class="overlay hidden"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
