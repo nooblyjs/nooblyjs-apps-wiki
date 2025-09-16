@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write - Medium</title>
+    <link rel="stylesheet" href="css/medium-style.css">
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link rel="stylesheet" href="css/editor-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="editor-body">
+    <!-- Editor Header ---->
+    <header class="editor-header">
+        <div class="editor-header-container">
+            <div class="editor-header-left">
+                <a href="/applications/blog/admin/stories" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="save-status">
+                    <span id="saveStatus">Saved</span>
+                </div>
+            </div>
+
+            <div class="editor-header-center">
+                <button class="btn-ghost btn-sm" onclick="previewPost()">
+                    <i class="fas fa-eye"></i>
+                    Preview
+                </button>
+            </div>
+
+            <div class="editor-header-right">
+                <button class="btn-ghost btn-sm" onclick="showPublishModal()">
+                    Publish
+                </button>
+                <div class="editor-menu">
+                    <button class="btn-ghost btn-icon" onclick="toggleEditorMenu()">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                    <div class="editor-dropdown hidden" id="editorDropdown">
+                        <button class="dropdown-item" onclick="saveDraft()">
+                            <i class="fas fa-save"></i>
+                            Save draft
+                        </button>
+                        <button class="dropdown-item" onclick="showSettingsModal()">
+                            <i class="fas fa-cog"></i>
+                            Story settings
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="deletePost()">
+                            <i class="fas fa-trash"></i>
+                            Delete story
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Editor Main Content -->
+    <main class="editor-main">
+        <div class="editor-container">
+            <!-- Title Input -->
+            <div class="title-section">
+                <textarea
+                    id="titleInput"
+                    placeholder="Title"
+                    class="title-input"
+                    rows="1"
+                ></textarea>
+            </div>
+
+            <!-- Subtitle Input -->
+            <div class="subtitle-section">
+                <textarea
+                    id="subtitleInput"
+                    placeholder="Tell your story..."
+                    class="subtitle-input"
+                    rows="2"
+                ></textarea>
+            </div>
+
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar" id="editorToolbar">
+                <button class="toolbar-btn" onclick="formatText('bold')" title="Bold">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('italic')" title="Italic">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('underline')" title="Underline">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button class="toolbar-btn" onclick="formatText('h1')" title="Heading 1">
+                    H1
+                </button>
+                <button class="toolbar-btn" onclick="formatText('h2')" title="Heading 2">
+                    H2
+                </button>
+                <button class="toolbar-btn" onclick="formatText('h3')" title="Heading 3">
+                    H3
+                </button>
+                <div class="toolbar-separator"></div>
+                <button class="toolbar-btn" onclick="formatText('quote')" title="Quote">
+                    <i class="fas fa-quote-left"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('code')" title="Code">
+                    <i class="fas fa-code"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('link')" title="Link">
+                    <i class="fas fa-link"></i>
+                </button>
+                <div class="toolbar-separator"></div>
+                <button class="toolbar-btn" onclick="insertImage()" title="Image">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('list')" title="Bullet List">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button class="toolbar-btn" onclick="formatText('numbered-list')" title="Numbered List">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+            </div>
+
+            <!-- Content Editor -->
+            <div class="content-section">
+                <div id="contentEditor" class="content-editor" contenteditable="true" data-placeholder="Tell your story..."></div>
+            </div>
+
+            <!-- Tags Section -->
+            <div class="tags-section">
+                <div class="tags-input-container">
+                    <input
+                        type="text"
+                        id="tagsInput"
+                        placeholder="Add tags (press Enter to add)"
+                        class="tags-input"
+                    >
+                    <div class="tags-list" id="tagsList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Publish Modal -->
+    <div class="modal hidden" id="publishModal">
+        <div class="modal-overlay" onclick="closePublishModal()"></div>
+        <div class="modal-content publish-modal">
+            <div class="modal-header">
+                <h2>Ready to publish?</h2>
+                <button class="modal-close" onclick="closePublishModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="publish-content">
+                <div class="publish-preview">
+                    <div class="preview-title" id="previewTitle">Story preview</div>
+                    <div class="preview-subtitle" id="previewSubtitle">Subtitle will appear here</div>
+                </div>
+
+                <div class="publish-settings">
+                    <div class="setting-group">
+                        <label>Publishing to:</label>
+                        <div class="author-info">
+                            <img src="https://via.placeholder.com/32" alt="Author" class="author-avatar">
+                            <span class="author-name">Your Name</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="categorySelect">Category:</label>
+                        <select id="categorySelect" class="form-select">
+                            <option value="">Select a category</option>
+                            <option value="technology">Technology</option>
+                            <option value="lifestyle">Lifestyle</option>
+                            <option value="business">Business</option>
+                            <option value="health">Health</option>
+                            <option value="education">Education</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="allowComments" checked>
+                            <span class="checkmark"></span>
+                            Allow responses
+                        </label>
+                    </div>
+                </div>
+
+                <div class="publish-actions">
+                    <button class="btn-secondary" onclick="publishAsUnlisted()">
+                        Publish as unlisted
+                    </button>
+                    <button class="btn-primary" onclick="publishStory()">
+                        Publish now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal hidden" id="settingsModal">
+        <div class="modal-overlay" onclick="closeSettingsModal()"></div>
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h2>Story settings</h2>
+                <button class="modal-close" onclick="closeSettingsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label for="storySlug">Story URL:</label>
+                    <div class="url-preview">
+                        <span class="url-base">medium.com/</span>
+                        <input type="text" id="storySlug" class="slug-input" placeholder="your-story-title">
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="metaDescription">Meta description:</label>
+                    <textarea
+                        id="metaDescription"
+                        class="form-textarea"
+                        rows="3"
+                        placeholder="Brief description for search engines..."
+                    ></textarea>
+                </div>
+
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="canonicalUrl">
+                        <span class="checkmark"></span>
+                        This is a canonical story
+                    </label>
+                    <input type="url" id="canonicalUrlInput" class="form-input hidden" placeholder="https://...">
+                </div>
+
+                <div class="settings-actions">
+                    <button class="btn-secondary" onclick="closeSettingsModal()">
+                        Cancel
+                    </button>
+                    <button class="btn-primary" onclick="saveSettings()">
+                        Save settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Modal -->
+    <div class="modal hidden" id="linkModal">
+        <div class="modal-overlay" onclick="closeLinkModal()"></div>
+        <div class="modal-content link-modal">
+            <div class="modal-header">
+                <h2>Add link</h2>
+                <button class="modal-close" onclick="closeLinkModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="link-content">
+                <div class="form-group">
+                    <input type="url" id="linkUrl" class="form-input" placeholder="Paste or type a link...">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="linkText" class="form-input" placeholder="Text to display">
+                </div>
+                <div class="link-actions">
+                    <button class="btn-secondary" onclick="closeLinkModal()">
+                        Cancel
+                    </button>
+                    <button class="btn-primary" onclick="insertLink()">
+                        Add link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div class="modal hidden" id="imageModal">
+        <div class="modal-overlay" onclick="closeImageModal()"></div>
+        <div class="modal-content image-modal">
+            <div class="modal-header">
+                <h2>Add image</h2>
+                <button class="modal-close" onclick="closeImageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="image-content">
+                <div class="upload-area" onclick="triggerFileInput()">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drop an image here, or click to select</p>
+                        <small>Supports JPG, PNG, GIF up to 10MB</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="imageCaption" class="form-input" placeholder="Add a caption (optional)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="imageAlt" class="form-input" placeholder="Alt text for accessibility">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-write.js"></script>
+</body>
+</html>
