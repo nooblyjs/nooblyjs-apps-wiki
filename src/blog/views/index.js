@@ -1,3 +1,5 @@
+
+
 /**
  * @fileoverview Blog service views module for noobly-applications framework.
  * This module provides Express.js view registration and static file serving
@@ -33,7 +35,7 @@ module.exports = (options, eventEmitter, services) => {
 
   try {
     // Serve static blog assets
-    const blogAssetsPath = path.join(__dirname, '../views');
+    const blogAssetsPath = path.join(__dirname, '../../../assets');
     app.use('/applications/blog/assets', express.static(blogAssetsPath));
 
     // Main blog application route
@@ -45,11 +47,21 @@ module.exports = (options, eventEmitter, services) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog Platform - NooblyJS</title>
-    <link rel="stylesheet" href="/applications/blog/assets/css/blog-theme.css">
     <link rel="icon" type="image/x-icon" href="/applications/blog/assets/favicon.ico">
     <meta name="description" content="A modern blog platform built with NooblyJS framework">
     <meta name="keywords" content="blog, NooblyJS, content management, publishing">
     <meta name="author" content="NooblyJS Team">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+          --primary-color: #3B82F6;
+          --secondary-color: #10B981;
+          --accent-color: #F59E0B;
+          --text-color: #1F2937;
+          --bg-color: #FFFFFF;
+          --border-color: #E5E7EB;
+        }
+    </style>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -98,352 +110,92 @@ module.exports = (options, eventEmitter, services) => {
             padding: 0 20px;
         }
 
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 3rem 0;
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .header p {
-            font-size: 1.25rem;
-            opacity: 0.9;
-        }
-
-        .nav {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .medium-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
+            background: white;
             z-index: 100;
-            margin-bottom: 2rem;
         }
-
-        .nav-container {
+        .medium-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .medium-header .search-bar {
+            flex-grow: 1;
+            margin: 0 2rem;
+        }
+        .medium-header .search-bar input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--gray-50);
+        }
+        .medium-header .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .medium-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 300px;
+            gap: 2rem;
+            padding-top: 2rem;
+        }
+        .left-sidebar {
+            position: sticky;
+            top: 70px; /* height of header */
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+        .left-sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .left-sidebar li {
+            margin-bottom: 1rem;
+        }
+        .left-sidebar a {
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .right-sidebar {
+            position: sticky;
+            top: 70px; /* height of header */
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+        .post-card {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
+            margin-bottom: 2rem;
         }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
+        .post-card .post-content {
+            flex-grow: 1;
         }
-
-        .nav-links a {
-            color: var(--text-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary-color);
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-
-        .posts-grid {
-            display: grid;
-            gap: 2rem;
-        }
-
-        .post-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .post-card img {
-            width: 100%;
-            height: 200px;
+        .post-card .post-image {
+            width: 150px;
+            height: 100px;
             object-fit: cover;
         }
-
-        .post-content {
-            padding: 1.5rem;
-        }
-
-        .post-meta {
+        .author-info {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            margin-bottom: 1rem;
-        }
-
-        .post-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--text-color);
-        }
-
-        .post-excerpt {
-            color: var(--gray-600);
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-
-        .post-tags {
-            display: flex;
             gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .tag {
-            background: var(--gray-100);
-            color: var(--gray-600);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .tag:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .sidebar {
-            background: var(--gray-50);
-            border-radius: 12px;
-            padding: 2rem;
-            height: fit-content;
-        }
-
-        .widget {
-            margin-bottom: 2rem;
-        }
-
-        .widget:last-child {
-            margin-bottom: 0;
-        }
-
-        .widget h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .category-list {
-            list-style: none;
-        }
-
-        .category-list li {
             margin-bottom: 0.5rem;
         }
-
-        .category-list a {
-            color: var(--text-color);
-            text-decoration: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: background-color 0.3s;
-        }
-
-        .category-list a:hover {
-            background: var(--border-color);
-        }
-
-        .category-count {
-            background: var(--primary-color);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-        }
-
-        .footer {
-            background: var(--gray-800);
-            color: white;
-            text-align: center;
-            padding: 3rem 0;
-            margin-top: 4rem;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 3rem 0;
-        }
-
-        .error {
-            background: #FEF2F2;
-            color: #B91C1C;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: background-color 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background: #2563EB;
-        }
-
-        .btn-secondary {
-            background: var(--gray-600);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gray-800);
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            .nav-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .nav-links {
-                gap: 1rem;
-            }
-
-            .container {
-                padding: 0 15px;
-            }
-        }
-
-        .login-link {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            z-index: 1000;
-            transition: all 0.3s;
-        }
-
-        .login-link:hover {
-            background: #2563EB;
-            transform: translateY(-1px);
-        }
-
-        .login-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1100;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-modal.active {
-            display: flex;
-        }
-
-        .login-modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .login-input {
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        .login-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .admin-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: none;
-        }
-
-        .admin-panel.active {
-            display: block;
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
         }
     </style>
 </head>
@@ -492,28 +244,34 @@ module.exports = (options, eventEmitter, services) => {
         </div>
     </div>
 
-    <header class="header">
-        <div class="container">
-            <h1>Blog Platform</h1>
-            <p>Powered by NooblyJS Framework</p>
+    <header class="medium-header">
+        <div class="logo">
+            <i class="fa-brands fa-medium"></i>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search">
+        </div>
+        <div class="right-nav">
+            <a href="#"><i class="fa-regular fa-pen-to-square"></i> Write</a>
+            <a href="#"><i class="fa-regular fa-bell"></i></a>
+            <a href="#"><img src="https://via.placeholder.com/32" alt="Profile" style="border-radius: 50%;"></a>
         </div>
     </header>
 
-    <nav class="nav">
-        <div class="container nav-container">
-            <div class="logo">
-                <strong>My Blog</strong>
-            </div>
-            <ul class="nav-links">
-                <li><a href="/applications/blog">Home</a></li>
-                <li><a href="/applications/blog/categories">Categories</a></li>
-                <li><a href="/applications/blog/authors">Authors</a></li>
-                <li><a href="/applications/blog/about">About</a></li>
+    <div class="container medium-layout">
+        <aside class="left-sidebar">
+            <ul>
+                <li><a href="#"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="#"><i class="fa-solid fa-book-bookmark"></i> Library</a></li>
+                <li><a href="#"><i class="fa-regular fa-user"></i> Profile</a></li>
+                <li><a href="#"><i class="fa-regular fa-file-lines"></i> Stories</a></li>
+                <li><a href="#"><i class="fa-solid fa-chart-line"></i> Stats</a></li>
+                <li><a href="#"><i class="fa-solid fa-user-group"></i> Following</a></li>
             </ul>
-        </div>
-    </nav>
-
-    <div class="container">
+            <hr>
+            <p>Discover more writers and publications to follow.</p>
+            <a href="#">See suggestions</a>
+        </aside>
         <main class="main-content">
             <section class="posts-section">
                 <div id="loading" class="loading">
@@ -523,41 +281,21 @@ module.exports = (options, eventEmitter, services) => {
                 <div id="postsContainer" class="posts-grid"></div>
                 <div id="pagination" style="text-align: center; margin-top: 2rem;"></div>
             </section>
-
-            <aside class="sidebar">
-                <div class="widget">
-                    <h3>Search</h3>
-                    <input type="text" class="search-box" id="searchInput" placeholder="Search posts..." onkeyup="performSearch()">
-                    <div id="searchResults" style="margin-top: 1rem; display: none;"></div>
-                </div>
-
-                <div class="widget">
-                    <h3>Categories</h3>
-                    <ul class="category-list" id="categoriesList">
-                        <li>Loading categories...</li>
-                    </ul>
-                </div>
-
-                <div class="widget">
-                    <h3>Recent Posts</h3>
-                    <div id="recentPosts">Loading...</div>
-                </div>
-
-                <div class="widget">
-                    <h3>Newsletter</h3>
-                    <p style="margin-bottom: 1rem; font-size: 0.9rem;">Subscribe to get the latest posts delivered to your email.</p>
-                    <form onsubmit="subscribe(event)">
-                        <input type="email" id="subscribeEmail" placeholder="Your email" style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                        <button type="submit" class="btn" style="width: 100%;">Subscribe</button>
-                    </form>
-                </div>
-
-                <div class="widget">
-                    <h3>Blog Stats</h3>
-                    <div id="blogStats">Loading stats...</div>
-                </div>
-            </aside>
         </main>
+        <aside class="right-sidebar">
+            <div class="widget">
+                <h3>Staff Picks</h3>
+                <div id="staff-picks"></div>
+            </div>
+            <div class="widget">
+                <h3>Recommended topics</h3>
+                <div id="recommended-topics"></div>
+            </div>
+            <div class="widget">
+                <h3>Recently viewed</h3>
+                <div id="recently-viewed"></div>
+            </div>
+        </aside>
     </div>
 
     <footer class="footer">
@@ -580,9 +318,7 @@ module.exports = (options, eventEmitter, services) => {
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
             loadPosts();
-            loadCategories();
-            loadRecentPosts();
-            loadBlogStats();
+            loadRightSidebar();
         });
 
         // Authentication functions
@@ -670,7 +406,7 @@ module.exports = (options, eventEmitter, services) => {
 
                 const select = document.getElementById('quickPostCategory');
                 select.innerHTML = '<option value="">Select Category</option>' +
-                    categories.map(cat => \`<option value="\${cat.id}">\${cat.name}</option>\`).join('');
+                    categories.map(cat => '<option value="' + cat.id + '">' + cat.name + '</option>').join('');
             } catch (error) {
                 console.error('Error loading categories:', error);
             }
@@ -712,7 +448,7 @@ module.exports = (options, eventEmitter, services) => {
             container.innerHTML = '';
 
             try {
-                const response = await fetch(\`/applications/blog/api/posts?page=\${page}&limit=10\`);
+                const response = await fetch('/applications/blog/api/posts?page=' + page + '&limit=10');
                 const data = await response.json();
 
                 loading.style.display = 'none';
@@ -734,27 +470,31 @@ module.exports = (options, eventEmitter, services) => {
             const publishedDate = new Date(post.publishedAt).toLocaleDateString();
             const readingTime = post.readingTime || 1;
 
-            return \`
-                <article class="post-card" onclick="viewPost('\${post.slug}')">
-                    \${post.featuredImage ? \`<img src="\${post.featuredImage}" alt="\${post.title}">\` : ''}
-                    <div class="post-content">
-                        <div class="post-meta">
-                            <span>📅 \${publishedDate}</span>
-                            <span>⏱️ \${readingTime} min read</span>
-                            <span>👁️ \${post.viewCount || 0} views</span>
-                        </div>
-                        <h2 class="post-title">\${post.title}</h2>
-                        <p class="post-excerpt">\${post.excerpt}</p>
-                        <div class="post-tags">
-                            \${post.tags.map(tag => \`<a href="#" class="tag">\${tag}</a>\`).join('')}
-                        </div>
-                    </div>
-                </article>
-            \`;
+            return (
+                '<article class="post-card" onclick="viewPost('' + post.slug + '')">' +
+                    '<div class="post-content">' +
+                        '<div class="author-info">' +
+                            '<img src="' + (post.author && post.author.avatar ? post.author.avatar : 'https://via.placeholder.com/24') + '" alt="' + (post.author ? post.author.displayName : '') + '" class="author-avatar">' +
+                            '<span>' + (post.author ? post.author.displayName : '') + '</span>' +
+                        '</div>' +
+                        '<h2 class="post-title">' + post.title + '</h2>' +
+                        '<p class="post-excerpt">' + post.excerpt + '</p>' +
+                        '<div class="post-meta">' +
+                            '<span>' + publishedDate + '</span>' +
+                            '<span>' + readingTime + ' min read</span>' +
+                            '<div class="actions">' +
+                                '<a href="#"><i class="fa-regular fa-bookmark"></i></a>' +
+                                '<a href="#"><i class="fa-solid fa-ellipsis"></i></a>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    (post.featuredImage ? '<img src="' + post.featuredImage + '" alt="' + post.title + '" class="post-image">' : '') +
+                '</article>'
+            );
         }
 
         function viewPost(slug) {
-            window.location.href = \`/applications/blog/posts/\${slug}\`;
+            window.location.href = '/applications/blog/posts/' + slug;
         }
 
         function createPagination(pagination) {
@@ -764,84 +504,59 @@ module.exports = (options, eventEmitter, services) => {
             let paginationHTML = '';
 
             if (pagination.hasPrev) {
-                paginationHTML += \`<button class="btn btn-secondary" onclick="loadPosts(\${pagination.page - 1})">Previous</button> \`;
+                paginationHTML += '<button class="btn btn-secondary" onclick="loadPosts(' + (pagination.page - 1) + ')">Previous</button> ';
             }
 
-            paginationHTML += \`<span style="margin: 0 1rem;">Page \${pagination.page}</span>\`;
+            paginationHTML += '<span style="margin: 0 1rem;">Page ' + pagination.page + '</span>';
 
             if (pagination.hasNext) {
-                paginationHTML += \` <button class="btn" onclick="loadPosts(\${pagination.page + 1})">Next</button>\`;
+                paginationHTML += ' <button class="btn" onclick="loadPosts(' + (pagination.page + 1) + ')">Next</button>';
             }
 
             container.innerHTML = paginationHTML;
         }
 
-        async function loadCategories() {
+        async function loadRightSidebar() {
+            // Staff Picks
+            const staffPicksContainer = document.getElementById('staff-picks');
+            staffPicksContainer.innerHTML = 'Loading...';
+            try {
+                const response = await fetch('/applications/blog/api/posts?featured=true&limit=3');
+                const data = await response.json();
+                if (data.posts && data.posts.length > 0) {
+                    staffPicksContainer.innerHTML = data.posts.map(post =>
+                        '<div class="sidebar-post">' +
+                            '<a href="/applications/blog/posts/' + post.slug + '">' + post.title + '</a>' +
+                            '<span>by ' + (post.author ? post.author.displayName : '') + '</span>' +
+                        '</div>'
+                    ).join('');
+                } else {
+                    staffPicksContainer.innerHTML = 'No staff picks found.';
+                }
+            } catch (error) {
+                staffPicksContainer.innerHTML = 'Error loading staff picks.';
+            }
+
+            // Recommended Topics
+            const recommendedTopicsContainer = document.getElementById('recommended-topics');
+            recommendedTopicsContainer.innerHTML = 'Loading...';
             try {
                 const response = await fetch('/applications/blog/api/categories');
                 const categories = await response.json();
-                const container = document.getElementById('categoriesList');
-
-                if (categories.length > 0) {
-                    container.innerHTML = categories.map(category => \`
-                        <li>
-                            <a href="/applications/blog/categories/\${category.slug}">
-                                \${category.name}
-                                <span class="category-count">\${category.postCount || 0}</span>
-                            </a>
-                        </li>
-                    \`).join('');
+                if (categories && categories.length > 0) {
+                    recommendedTopicsContainer.innerHTML = categories.slice(0, 5).map(category =>
+                        '<a href="/applications/blog/categories/' + category.slug + '" class="tag">' + category.name + '</a>'
+                    ).join('');
                 } else {
-                    container.innerHTML = '<li>No categories found</li>';
+                    recommendedTopicsContainer.innerHTML = 'No recommended topics found.';
                 }
             } catch (error) {
-                document.getElementById('categoriesList').innerHTML = '<li>Failed to load categories</li>';
+                recommendedTopicsContainer.innerHTML = 'Error loading topics.';
             }
-        }
 
-        async function loadRecentPosts() {
-            try {
-                const response = await fetch('/applications/blog/api/posts?limit=5');
-                const data = await response.json();
-                const container = document.getElementById('recentPosts');
-
-                if (data.posts && data.posts.length > 0) {
-                    container.innerHTML = data.posts.map(post => \`
-                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-                            <a href="/applications/blog/posts/\${post.slug}" style="text-decoration: none; color: var(--text-color); font-weight: 500;">
-                                \${post.title}
-                            </a>
-                            <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
-                                \${new Date(post.publishedAt).toLocaleDateString()}
-                            </div>
-                        </div>
-                    \`).join('');
-                } else {
-                    container.innerHTML = 'No recent posts';
-                }
-            } catch (error) {
-                document.getElementById('recentPosts').innerHTML = 'Failed to load recent posts';
-            }
-        }
-
-        async function loadBlogStats() {
-            try {
-                const response = await fetch('/applications/blog/api/analytics/stats');
-                const stats = await response.json();
-                const container = document.getElementById('blogStats');
-
-                container.innerHTML = \`
-                    <div style="display: grid; gap: 0.5rem;">
-                        <div>📝 <strong>\${stats.totalPosts || 0}</strong> Posts</div>
-                        <div>💬 <strong>\${stats.totalComments || 0}</strong> Comments</div>
-                        <div>👥 <strong>\${stats.totalAuthors || 0}</strong> Authors</div>
-                        <div>📧 <strong>\${stats.totalSubscribers || 0}</strong> Subscribers</div>
-                        <div>👀 <strong>\${stats.totalViews || 0}</strong> Total Views</div>
-                    </div>
-                \`;
-            } catch (error) {
-                document.getElementById('blogStats').innerHTML = 'Failed to load stats';
-            }
+            // Recently Viewed
+            const recentlyViewedContainer = document.getElementById('recently-viewed');
+            recentlyViewedContainer.innerHTML = 'No recently viewed posts.';
         }
 
         // Search functionality
@@ -858,20 +573,20 @@ module.exports = (options, eventEmitter, services) => {
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(\`/applications/blog/api/search?q=\${encodeURIComponent(query)}\`);
+                    const response = await fetch('/applications/blog/api/search?q=' + encodeURIComponent(query));
                     const results = await response.json();
 
                     if (results.length > 0) {
-                        resultsContainer.innerHTML = results.map(result => \`
-                            <div style="margin: 0.5rem 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--border-color);">
-                                <a href="/applications/blog/posts/\${result.slug}" style="text-decoration: none; color: var(--text-color); font-weight: 500;">
-                                    \${result.title}
-                                </a>
-                                <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
-                                    \${result.excerpt.substring(0, 100)}...
-                                </div>
-                            </div>
-                        \`).join('');
+                        resultsContainer.innerHTML = results.map(result =>
+                            '<div style="margin: 0.5rem 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--border-color);">' +
+                                '<a href="/applications/blog/posts/' + result.slug + '" style="text-decoration: none; color: var(--text-color); font-weight: 500;">' +
+                                    result.title +
+                                '</a>' +
+                                '<div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">' +
+                                    result.excerpt.substring(0, 100) + '...' +
+                                '</div>' +
+                            '</div>'
+                        ).join('');
                         resultsContainer.style.display = 'block';
                     } else {
                         resultsContainer.innerHTML = '<div style="padding: 0.5rem; text-align: center; color: var(--gray-600);">No results found</div>';
@@ -1410,8 +1125,8 @@ module.exports = (options, eventEmitter, services) => {
       `);
     });
 
-    // Admin interface route
-    app.get('/applications/blog/admin', (req, res) => {
+    // Admin interface route (disabled)
+    app.get('/applications/blog/admin-disabled', (req, res) => {
       if (!req.session.blogAuthenticated) {
         return res.redirect('/applications/blog?login=required');
       }
@@ -2012,17 +1727,17 @@ module.exports = (options, eventEmitter, services) => {
 
                 const recentPosts = posts.slice(0, 5);
                 const activityHtml = recentPosts.length > 0 ?
-                    recentPosts.map(post => \`
-                        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 500;">\${post.title}</div>
-                                <div style="font-size: 0.875rem; color: var(--gray-600);">
-                                    \${post.status === 'published' ? 'Published' : 'Draft'} • \${new Date(post.createdAt).toLocaleDateString()}
-                                </div>
-                            </div>
-                            <span class="status status-\${post.status}">\${post.status}</span>
-                        </div>
-                    \`).join('') :
+                    recentPosts.map(post =>
+                        '<div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">' +
+                            '<div>' +
+                                '<div style="font-weight: 500;">' + post.title + '</div>' +
+                                '<div style="font-size: 0.875rem; color: var(--gray-600);">' +
+                                    (post.status === 'published' ? 'Published' : 'Draft') + ' • ' + new Date(post.createdAt).toLocaleDateString() +
+                                '</div>' +
+                            '</div>' +
+                            '<span class="status status-' + post.status + '">' + post.status + '</span>' +
+                        '</div>'
+                    ).join('') :
                     '<div class="empty-state">No recent activity</div>';
 
                 document.getElementById('recentActivity').innerHTML = activityHtml;
@@ -2038,38 +1753,38 @@ module.exports = (options, eventEmitter, services) => {
                 currentPosts = await response.json();
 
                 const postsHtml = currentPosts.length > 0 ?
-                    \`<table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Views</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            \${currentPosts.map(post => \`
-                                <tr>
-                                    <td>
-                                        <div style="font-weight: 500;">\${post.title}</div>
-                                        <div style="font-size: 0.875rem; color: var(--gray-600);">\${post.excerpt ? post.excerpt.substring(0, 50) + '...' : ''}</div>
-                                    </td>
-                                    <td>\${post.category ? post.category.name : 'Uncategorized'}</td>
-                                    <td><span class="status status-\${post.status}">\${post.status}</span></td>
-                                    <td>\${new Date(post.createdAt).toLocaleDateString()}</td>
-                                    <td>\${post.viewCount || 0}</td>
-                                    <td>
-                                        <div class="actions">
-                                            <button onclick="editPost(\${post.id})" class="btn btn-secondary">Edit</button>
-                                            <button onclick="deletePost(\${post.id})" class="btn btn-danger">Delete</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            \`).join('')}
-                        </tbody>
-                    </table>\` :
+                    '<table class="data-table">' +
+                        '<thead>' +
+                            '<tr>' +
+                                '<th>Title</th>' +
+                                '<th>Category</th>' +
+                                '<th>Status</th>' +
+                                '<th>Date</th>' +
+                                '<th>Views</th>' +
+                                '<th>Actions</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody>' +
+                            currentPosts.map(post =>
+                                '<tr>' +
+                                    '<td>' +
+                                        '<div style="font-weight: 500;">' + post.title + '</div>' +
+                                        '<div style="font-size: 0.875rem; color: var(--gray-600);">' + (post.excerpt ? post.excerpt.substring(0, 50) + '...' : '') + '</div>' +
+                                    '</td>' +
+                                    '<td>' + (post.category ? post.category.name : 'Uncategorized') + '</td>' +
+                                    '<td><span class="status status-' + post.status + '">' + post.status + '</span></td>' +
+                                    '<td>' + new Date(post.createdAt).toLocaleDateString() + '</td>' +
+                                    '<td>' + (post.viewCount || 0) + '</td>' +
+                                    '<td>' +
+                                        '<div class="actions">' +
+                                            '<button onclick="editPost(' + post.id + ')" class="btn btn-secondary">Edit</button>' +
+                                            '<button onclick="deletePost(' + post.id + ')" class="btn btn-danger">Delete</button>' +
+                                        '</div>' +
+                                    '</td>' +
+                                '</tr>'
+                            ).join('') +
+                        '</tbody>' +
+                    '</table>' :
                     '<div class="empty-state">No posts found. <button onclick="showCreatePostModal()" class="btn btn-primary">Create your first post</button></div>';
 
                 document.getElementById('postsTable').innerHTML = postsHtml;
@@ -2084,35 +1799,35 @@ module.exports = (options, eventEmitter, services) => {
                 currentCategories = await response.json();
 
                 const categoriesHtml = currentCategories.length > 0 ?
-                    \`<table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Posts</th>
-                                <th>Color</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            \${currentCategories.map(category => \`
-                                <tr>
-                                    <td style="font-weight: 500;">\${category.name}</td>
-                                    <td>\${category.description || 'No description'}</td>
-                                    <td>\${category.postCount || 0}</td>
-                                    <td>
-                                        <div style="width: 20px; height: 20px; background: \${category.color}; border-radius: 4px;"></div>
-                                    </td>
-                                    <td>
-                                        <div class="actions">
-                                            <button onclick="editCategory(\${category.id})" class="btn btn-secondary">Edit</button>
-                                            <button onclick="deleteCategory(\${category.id})" class="btn btn-danger">Delete</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            \`).join('')}
-                        </tbody>
-                    </table>\` :
+                    '<table class="data-table">' +
+                        '<thead>' +
+                            '<tr>' +
+                                '<th>Name</th>' +
+                                '<th>Description</th>' +
+                                '<th>Posts</th>' +
+                                '<th>Color</th>' +
+                                '<th>Actions</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody>' +
+                            currentCategories.map(category =>
+                                '<tr>' +
+                                    '<td style="font-weight: 500;">' + category.name + '</td>' +
+                                    '<td>' + (category.description || 'No description') + '</td>' +
+                                    '<td>' + (category.postCount || 0) + '</td>' +
+                                    '<td>' +
+                                        '<div style="width: 20px; height: 20px; background: ' + category.color + '; border-radius: 4px;"></div>' +
+                                    '</td>' +
+                                    '<td>' +
+                                        '<div class="actions">' +
+                                            '<button onclick="editCategory(' + category.id + ')" class="btn btn-secondary">Edit</button>' +
+                                            '<button onclick="deleteCategory(' + category.id + ')" class="btn btn-danger">Delete</button>' +
+                                        '</div>' +
+                                    '</td>' +
+                                '</tr>'
+                            ).join('') +
+                        '</tbody>' +
+                    '</table>' :
                     '<div class="empty-state">No categories found. <button onclick="showCreateCategoryModal()" class="btn btn-primary">Create your first category</button></div>';
 
                 document.getElementById('categoriesTable').innerHTML = categoriesHtml;
@@ -2154,7 +1869,7 @@ module.exports = (options, eventEmitter, services) => {
         // Post management functions
         async function editPost(postId) {
             try {
-                const response = await fetch(\`/applications/blog/api/admin/posts/\${postId}\`);
+                const response = await fetch('/applications/blog/api/admin/posts/' + postId);
                 const post = await response.json();
 
                 loadCategoriesForSelect();
@@ -2182,7 +1897,7 @@ module.exports = (options, eventEmitter, services) => {
             if (!confirm('Are you sure you want to delete this post?')) return;
 
             try {
-                const response = await fetch(\`/applications/blog/api/posts/\${postId}\`, {
+                const response = await fetch('/applications/blog/api/posts/' + postId, {
                     method: 'DELETE'
                 });
 
@@ -2219,7 +1934,7 @@ module.exports = (options, eventEmitter, services) => {
             if (!confirm('Are you sure you want to delete this category?')) return;
 
             try {
-                const response = await fetch(\`/applications/blog/api/categories/\${categoryId}\`, {
+                const response = await fetch('/applications/blog/api/categories/' + categoryId, {
                     method: 'DELETE'
                 });
 
@@ -2249,7 +1964,7 @@ module.exports = (options, eventEmitter, services) => {
 
             try {
                 const response = await fetch(
-                    isEdit ? \`/applications/blog/api/posts/\${postId}\` : '/applications/blog/api/posts',
+                    isEdit ? '/applications/blog/api/posts/' + postId : '/applications/blog/api/posts',
                     {
                         method: isEdit ? 'PUT' : 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2260,14 +1975,14 @@ module.exports = (options, eventEmitter, services) => {
                 const result = await response.json();
 
                 if (result.success) {
-                    alert(\`Post \${isEdit ? 'updated' : 'created'} successfully\`);
+                    alert('Post ' + (isEdit ? 'updated' : 'created') + ' successfully');
                     closeModal('postModal');
                     loadPosts();
                 } else {
-                    alert(\`Error \${isEdit ? 'updating' : 'creating'} post: \` + result.error);
+                    alert('Error ' + (isEdit ? 'updating' : 'creating') + ' post: ' + result.error);
                 }
             } catch (error) {
-                alert(\`Error \${isEdit ? 'updating' : 'creating'} post: \` + error.message);
+                alert('Error ' + (isEdit ? 'updating' : 'creating') + ' post: ' + error.message);
             }
         });
 
@@ -2282,7 +1997,7 @@ module.exports = (options, eventEmitter, services) => {
 
             try {
                 const response = await fetch(
-                    isEdit ? \`/applications/blog/api/categories/\${categoryId}\` : '/applications/blog/api/categories',
+                    isEdit ? '/applications/blog/api/categories/' + categoryId : '/applications/blog/api/categories',
                     {
                         method: isEdit ? 'PUT' : 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2293,14 +2008,14 @@ module.exports = (options, eventEmitter, services) => {
                 const result = await response.json();
 
                 if (result.success) {
-                    alert(\`Category \${isEdit ? 'updated' : 'created'} successfully\`);
+                    alert('Category ' + (isEdit ? 'updated' : 'created') + ' successfully');
                     closeModal('categoryModal');
                     loadCategories();
                 } else {
-                    alert(\`Error \${isEdit ? 'updating' : 'creating'} category: \` + result.error);
+                    alert('Error ' + (isEdit ? 'updating' : 'creating') + ' category: ' + result.error);
                 }
             } catch (error) {
-                alert(\`Error \${isEdit ? 'updating' : 'creating'} category: \` + error.message);
+                alert('Error ' + (isEdit ? 'updating' : 'creating') + ' category: ' + error.message);
             }
         });
 
@@ -2312,7 +2027,7 @@ module.exports = (options, eventEmitter, services) => {
 
                 const select = document.getElementById('postCategory');
                 select.innerHTML = '<option value="">Select Category</option>' +
-                    categories.map(cat => \`<option value="\${cat.id}">\${cat.name}</option>\`).join('');
+                    categories.map(cat => '<option value="' + cat.id + '">' + cat.name + '</option>').join('');
             } catch (error) {
                 console.error('Error loading categories for select:', error);
             }
@@ -2349,10 +2064,9 @@ module.exports = (options, eventEmitter, services) => {
             currentTags.forEach((tag, index) => {
                 const tagEl = document.createElement('span');
                 tagEl.className = 'tag';
-                tagEl.innerHTML = \`
-                    \${tag}
-                    <button type="button" class="tag-remove" onclick="removeTag(\${index})">&times;</button>
-                \`;
+                tagEl.innerHTML =
+                    tag +
+                    '<button type="button" class="tag-remove" onclick="removeTag(' + index + ')">&times;</button>';
                 container.insertBefore(tagEl, input);
             });
 

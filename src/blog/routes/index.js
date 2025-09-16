@@ -967,5 +967,80 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
+  // Get all comments for admin
+  app.get('/applications/blog/api/admin/comments', async (req, res) => {
+    try {
+      if (!req.session.blogAuthenticated) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const comments = await dataManager.read('comments');
+      const posts = await dataManager.read('posts');
+
+      const enrichedComments = comments.map(comment => {
+        const post = posts.find(p => p.id === comment.postId);
+        return {
+          ...comment,
+          postTitle: post ? post.title : 'N/A'
+        };
+      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      res.json(enrichedComments);
+    } catch (error) {
+      logger.error('Error fetching admin comments:', error);
+      res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+  });
+
+  // Approve a comment
+  app.put('/applications/blog/api/admin/comments/:id/approve', async (req, res) => {
+    try {
+      if (!req.session.blogAuthenticated) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const commentId = parseInt(req.params.id);
+      const success = await dataManager.update('comments', commentId, { status: 'approved' });
+
+      if (!success) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      res.json({ success: true, message: 'Comment approved successfully' });
+    } catch (error) {
+      logger.error('Error approving comment:', error);
+      res.status(500).json({ error: 'Failed to approve comment' });
+    }
+  });
+
+  // Delete a comment
+  app.delete('/applications/blog/api/admin/comments/:id', async (req, res) => {
+    try {
+      if (!req.session.blogAuthenticated) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const commentId = parseInt(req.params.id);
+      const success = await dataManager.delete('comments', commentId);
+
+      if (!success) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      res.json({ success: true, message: 'Comment deleted successfully' });
+    } catch (error) {
+      logger.error('Error deleting comment:', error);
+      res.status(500).json({ error: 'Failed to delete comment' });
+    }
+  });
+
+  app.get('/applications/blog/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/admin.html'));
+  });
+
+  app.get('/applications/blog/post-edit', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/post-edit.html'));
+  });
+
   logger.info('Blog routes registered successfully');
 };
