@@ -62,8 +62,14 @@ const notifying = serviceRegistry.notifying('memory');
 const worker = serviceRegistry.working('memory');
 const workflow = serviceRegistry.workflow('memory');
 
-const wiki = require('./index');
+const wiki = require('./src/wiki/index');
 wiki(app,eventEmitter,serviceRegistry);
+
+const blog = require('./src/blog/index');
+blog(app,eventEmitter,serviceRegistry);
+
+const cms = require('./src/cms/index');
+cms(app,eventEmitter,serviceRegistry);
 
 // Authentication routes
 const authRoutes = require('./src/auth/routes');

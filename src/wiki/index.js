@@ -9,11 +9,11 @@
 
 'use strict';
 
-const Routes = require('./src/routes');
-const Views = require('./src/views');
-const { initializeDocumentFiles } = require('./src/activities/documentContent');
-const { processTask } = require('./src/activities/taskProcessor');
-const DataManager = require('./src/components/dataManager');
+const Routes = require('./routes');
+const Views = require('./views');
+const { initializeDocumentFiles } = require('./activities/documentContent');
+const { processTask } = require('./activities/taskProcessor');
+const DataManager = require('./components/dataManager');
 
 /**
  * Creates the wiki service

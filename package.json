@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node app.js",
-    "dev:web": "nodemon app.js",
+    "dev:web": "nodemon --watch src app.js",
     "kill": "  kill -9 $(lsof -t -i:3002)"
   },
   "dependencies": {
@@ -16,7 +16,7 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "mime-types": "^3.0.1",
-    "noobly-core": "1.3.1",
+    "nooblyjs-core": "1.0.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",

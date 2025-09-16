@@ -1,1 +1,1 @@
-# nooblyjs-applications-wiki
+# nooblyjs-applications-contentmanager
