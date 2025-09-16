@@ -518,8 +518,20 @@ class AdminStoriesApp {
                         <button class="comment-action-btn reject-btn" onclick="rejectComment(${comment.id})">
                             Reject
                         </button>
+                        <button class="comment-action-btn spam-btn" onclick="markCommentAsSpam(${comment.id})">
+                            Mark as Spam
+                        </button>
+                        <button class="comment-action-btn delete-btn" onclick="deleteComment(${comment.id})">
+                            Delete
+                        </button>
                     </div>
-                ` : ''}
+                ` : `
+                    <div class="comment-actions">
+                        <button class="comment-action-btn delete-btn" onclick="deleteComment(${comment.id})">
+                            Delete
+                        </button>
+                    </div>
+                `}
             </div>
         `).join('');
     }
@@ -796,6 +808,18 @@ function approveComment(commentId) {
 function rejectComment(commentId) {
     if (window.adminApp) {
         window.adminApp.rejectComment(commentId);
+    }
+}
+
+function markCommentAsSpam(commentId) {
+    if (window.adminApp) {
+        window.adminApp.markCommentAsSpam(commentId);
+    }
+}
+
+function deleteComment(commentId) {
+    if (window.adminApp) {
+        window.adminApp.deleteComment(commentId);
     }
 }
 

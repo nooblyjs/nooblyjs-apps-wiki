@@ -13,6 +13,7 @@
 const path = require('path');
 const { readPostContent, savePostContent, updatePostContent, deletePostContent } = require('../activities/postContent');
 const CommentManager = require('../components/commentManager');
+const NotificationManager = require('../components/notificationManager');
 
 /**
  * Configures and registers blog routes with the Express application.
@@ -26,14 +27,23 @@ const CommentManager = require('../components/commentManager');
  */
 module.exports = (options, eventEmitter, services) => {
   const app = options;
-  const { dataManager, filing, cache, logger, queue, search, measuring, notifying, authService } = services;
+  const { dataManager, filing, cache, logger, queue, search, measuring, notifying, emailing, authService } = services;
 
   // Get authentication middleware
   const requireAuth = authService ? authService.getMiddleware() : (req, res, next) => next();
   const requireAdmin = authService ? authService.getAdminMiddleware() : (req, res, next) => next();
 
-  // Initialize comment manager
-  const commentManager = new CommentManager(dataManager, logger, notifying);
+  // Initialize notification manager
+  const emailProvider = emailing || null; // Optional email service
+  const notificationManager = new NotificationManager({
+    emailProvider,
+    adminEmail: 'admin@blog.local',
+    fromEmail: 'noreply@blog.local',
+    siteUrl: 'http://localhost:3000'
+  });
+
+  // Initialize comment manager with notification manager
+  const commentManager = new CommentManager(dataManager, logger, notifying, notificationManager);
 
   // ===== BLOG API ROUTES =====
 

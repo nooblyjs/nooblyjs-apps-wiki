@@ -2,20 +2,39 @@
   {
     "id": 1,
     "username": "admin",
-    "displayName": "Admin User",
+    "displayName": "Alex Chen",
     "email": "admin@example.com",
-    "bio": "System administrator and content creator",
-    "avatar": "https://via.placeholder.com/80",
-    "website": "",
+    "bio": "Tech enthusiast and platform creator. Passionate about building tools that empower content creators and developers.",
+    "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+    "website": "https://example.com",
     "socialLinks": {
-      "twitter": "",
-      "linkedin": "",
-      "github": ""
+      "twitter": "@alexchen",
+      "linkedin": "alexchen",
+      "github": "alexchen"
     },
-    "postCount": 0,
+    "postCount": 3,
     "isActive": true,
     "role": "admin",
-    "createdAt": "2025-09-16T20:02:22.604Z",
-    "updatedAt": "2025-09-16T20:02:22.604Z"
+    "createdAt": "2025-09-16T23:20:47.931Z",
+    "updatedAt": "2025-09-17T09:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "sarah_dev",
+    "displayName": "Sarah Rodriguez",
+    "email": "sarah@example.com",
+    "bio": "Full-stack developer and technical writer. Loves explaining complex concepts in simple terms and helping others learn to code.",
+    "avatar": "https://images.unsplash.com/photo-1494790108755-2616b612b742?w=80&h=80&fit=crop&crop=face",
+    "website": "https://sarahdev.blog",
+    "socialLinks": {
+      "twitter": "@sarah_codes",
+      "linkedin": "sarahrodriguez",
+      "github": "sarahdev"
+    },
+    "postCount": 2,
+    "isActive": true,
+    "role": "author",
+    "createdAt": "2025-09-15T08:00:00Z",
+    "updatedAt": "2025-09-17T09:00:00Z"
   }
 ]

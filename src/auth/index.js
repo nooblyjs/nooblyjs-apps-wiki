@@ -37,7 +37,8 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   });
 
   const logger = serviceRegistry.logger('console');
-  const dataManager = require('../blog/components/dataManager');
+  const DataManager = require('../blog/components/dataManager');
+  const dataManager = new DataManager('./data');
 
   // Initialize user manager
   const userManager = new UserManager(authProvider, dataManager, logger);

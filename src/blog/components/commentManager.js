@@ -18,11 +18,13 @@ class CommentManager {
    * @param {Object} dataManager - Blog data manager instance
    * @param {Object} logger - Logger instance
    * @param {Object} notifying - Notification service (optional)
+   * @param {Object} notificationManager - Notification manager instance (optional)
    */
-  constructor(dataManager, logger, notifying = null) {
+  constructor(dataManager, logger, notifying = null, notificationManager = null) {
     this.dataManager = dataManager;
     this.logger = logger;
     this.notifying = notifying;
+    this.notificationManager = notificationManager;
 
     // Comment status constants
     this.STATUS = {
@@ -163,9 +165,27 @@ class CommentManager {
       // Update post comment count
       await this.updatePostCommentCount(postId);
 
-      // Send notifications if approved
-      if (comment.status === this.STATUS.APPROVED) {
-        await this.sendNotifications(comment, post);
+      // Send notifications using new notification manager
+      await this.sendNotifications(comment, post);
+
+      // Send email notifications using notification manager
+      if (this.notificationManager) {
+        try {
+          // Get parent comment if this is a reply
+          let parentComment = null;
+          if (parentId) {
+            parentComment = comments.find(c => c.id === parentId);
+          }
+
+          await this.notificationManager.notifyNewComment(comment, post, parentComment);
+
+          // If marked as spam, send spam notification
+          if (comment.status === this.STATUS.SPAM) {
+            await this.notificationManager.notifySpamDetected(comment, post);
+          }
+        } catch (error) {
+          this.logger.error('Error sending email notifications:', error);
+        }
       }
 
       this.logger.info(`Comment created: ${comment.id} for post ${postId}`);
@@ -322,6 +342,28 @@ class CommentManager {
         const post = posts.find(p => p.id === comment.postId);
         if (post) {
           await this.sendNotifications(comment, post);
+
+          // Send approval email notification
+          if (this.notificationManager) {
+            try {
+              await this.notificationManager.notifyCommentApproved(comment, post);
+            } catch (error) {
+              this.logger.error('Error sending approval notification:', error);
+            }
+          }
+        }
+      }
+
+      // Send spam notification if marked as spam
+      if (action === 'spam' && this.notificationManager) {
+        try {
+          const posts = await this.dataManager.read('posts');
+          const post = posts.find(p => p.id === comment.postId);
+          if (post) {
+            await this.notificationManager.notifySpamDetected(comment, post);
+          }
+        } catch (error) {
+          this.logger.error('Error sending spam notification:', error);
         }
       }
 

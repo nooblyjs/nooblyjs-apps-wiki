@@ -490,7 +490,7 @@ class BlogApp {
         this.updateNavigationForFeed();
 
         // Update URL
-        history.pushState({ view: 'feed' }, 'Medium', '/applications/blog');
+        history.pushState({ view: 'feed' }, 'Blog', '/applications/blog');
     }
 
     renderSinglePost(post) {

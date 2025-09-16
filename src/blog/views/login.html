@@ -3,30 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Medium</title>
-    <link rel="stylesheet" href="css/medium-style.css">
-    <link rel="stylesheet" href="css/login-style.css">
+    <title>Sign In - Blog</title>
+    <link rel="stylesheet" href="/applications/blog/css/medium-style.css">
+    <link rel="stylesheet" href="/applications/blog/css/login-style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="login-body">
+<body>
     <!-- Header -->
-    <header class="login-header">
+    <header class="header">
         <div class="header-container">
-            <a href="/applications/blog" class="logo">
-                <div class="logo-icon">M</div>
-                <span>Medium</span>
-            </a>
+            <div class="header-left">
+                <a href="/applications/blog" class="logo">
+                    <div class="logo-icon"><i class="fas fa-blog"></i></div>
+                    <span>Blog</span>
+                </a>
+            </div>
+            <div class="header-right">
+                <a href="/applications/blog" class="btn-ghost">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Blog
+                </a>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="login-main">
+    <main class="main-content">
         <div class="login-container">
             <div class="login-card">
-                <div class="login-header-content">
-                    <h1>Welcome back.</h1>
-                    <p>Sign in to access your blog dashboard</p>
+                <div class="login-header">
+                    <h1>Welcome back</h1>
+                    <p>Sign in to your account</p>
                 </div>
 
                 <form id="loginForm" class="login-form">
@@ -45,26 +53,21 @@
 
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <div class="password-input-container">
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="form-input"
-                                placeholder="Enter your password"
-                                required
-                                autocomplete="current-password"
-                            >
-                            <button type="button" class="password-toggle" onclick="togglePassword()">
-                                <i class="fas fa-eye" id="passwordToggleIcon"></i>
-                            </button>
-                        </div>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
                     </div>
 
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="rememberMe" name="rememberMe">
-                            <span class="checkmark"></span>
+                            <span class="checkbox-custom"></span>
                             Remember me for 30 days
                         </label>
                     </div>
@@ -91,63 +94,17 @@
                     </div>
                 </form>
 
-                <div class="login-footer">
-                    <div class="login-help">
-                        <p>Default credentials for demo:</p>
+                <div class="login-help">
+                    <div class="help-card">
+                        <h3>Demo Credentials</h3>
                         <p><strong>Username:</strong> admin</p>
                         <p><strong>Password:</strong> admin123</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="login-side">
-                <div class="login-side-content">
-                    <h2>Start your publishing journey</h2>
-                    <p>Share your stories, thoughts, and expertise with a global audience. Join the community of writers and readers on Medium.</p>
-
-                    <div class="features-list">
-                        <div class="feature-item">
-                            <i class="fas fa-pen-fancy"></i>
-                            <div>
-                                <h3>Powerful Writing Tools</h3>
-                                <p>Rich text editor with formatting, images, and embeds</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-chart-line"></i>
-                            <div>
-                                <h3>Analytics & Insights</h3>
-                                <p>Track your story performance and audience engagement</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-users"></i>
-                            <div>
-                                <h3>Engaged Community</h3>
-                                <p>Connect with readers through comments and responses</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="login-footer-bottom">
-        <div class="footer-container">
-            <div class="footer-links">
-                <a href="/applications/blog">Back to Blog</a>
-                <a href="#">Help</a>
-                <a href="#">Status</a>
-                <a href="#">About</a>
-            </div>
-            <div class="footer-text">
-                <p>&copy; 2025 Medium Blog. Built with NooblyJS.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="js/login.js"></script>
+    <script src="/applications/blog/js/login.js"></script>
 </body>
 </html>

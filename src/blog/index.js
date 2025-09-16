@@ -42,6 +42,7 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   const scheduling = serviceRegistry.scheduling ? serviceRegistry.scheduling('memory') : null;
   const measuring = serviceRegistry.measuring ? serviceRegistry.measuring('memory') : null;
   const notifying = serviceRegistry.notifying ? serviceRegistry.notifying('console') : null;
+  const emailing = serviceRegistry.emailing ? serviceRegistry.emailing('console') : null;
 
   // Initialize authentication service
   const authService = BlogAuth(options, eventEmitter, serviceRegistry);
@@ -56,18 +57,18 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   })();
 
   // Start background queue worker
-  startQueueWorker({ dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying });
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing });
 
   // Register authentication routes first
   authService.registerRoutes(options);
 
   // Register routes and views with auth middleware
   Routes(options, eventEmitter, {
-    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying,
+    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing,
     authService
   });
   Views(options, eventEmitter, {
-    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying,
+    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing,
     authService
   });
 }

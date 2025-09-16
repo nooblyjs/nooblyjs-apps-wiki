@@ -48,6 +48,8 @@ module.exports = (options, eventEmitter, services) => {
       res.sendFile(path.join(__dirname, 'admin-stats.html'));
     });
 
+    // Note: Login page route is handled by auth service
+
     // Static assets
     app.get('/applications/blog/css/:file', (req, res) => {
       const fileName = req.params.file;
