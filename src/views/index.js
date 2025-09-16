@@ -28,7 +28,7 @@ const express = require('express');
  * @returns {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  const app = options['express-app'];
+  const app = options;
   const { logger } = services;
   
   // Serve static files for the wiki application

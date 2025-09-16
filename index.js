@@ -1,154 +1,171 @@
 /**
- * @fileoverview NooblyJS Core - Application Registry
- * A powerful set of modular Node.js Applications with singleton pattern.
+ * @fileoverview Wiki Application
+ * Factory module for creating a Wiki application instance.
+ * 
+ * @author NooblyJS Team
+ * @version 1.0.14
+ * @since 2025-08-22
  */
 
-const EventEmitter = require('events');
-const path = require('path');
-const serviceRegistry = require('noobly-core');
+'use strict';
 
-const {
-  createApiKeyAuthMiddleware,
-  generateApiKey,
-} = require('./src/middleware/apiKeyAuth');
+const Routes = require('./src/routes');
+const Views = require('./src/views');
+const { initializeDocumentFiles } = require('./src/activities/documentContent');
+const { processTask } = require('./src/activities/taskProcessor');
+const DataManager = require('./src/components/dataManager');
 
-class ApplicatioRegistry {
-  constructor() {
-    this.applications = new Map();
-    this.initialized = false;
-    this.eventEmitter = new EventEmitter();
-  }
-
-  /**
-   * Initializes the application registry with an Express app
-   * @param {Object} expressApp - Express application instance
-   * @param {Object} eventEmitter - EventEmitter instance
-   * @param {Object} globalOptions - Global configuration options
-   */
-  initialize(expressApp, eventEmitter, serviceRegistry, globalOptions = {}) {
-    if (this.initialized) {s
-      return this;
-    }
-
-    this.expressApp = expressApp;
-    this.eventEmitter = eventEmitter;
-    this.serviceRegistry = serviceRegistry;
-
-    this.globalOptions = {
-      'express-app': expressApp,
-      ...globalOptions,
-    };
-
-    // Setup API key authentication if configured
-    if (globalOptions.apiKeys && globalOptions.apiKeys.length > 0) {
-      this.authMiddleware = createApiKeyAuthMiddleware(
-        {
-          apiKeys: globalOptions.apiKeys,
-          requireApiKey: globalOptions.requireApiKey !== false,
-          excludePaths: globalOptions.excludePaths || [
-            '/applications/*/status',
-            '/applications/',
-            '/applications/*/views/*',
-          ],
-        },
-        this.eventEmitter,
-      );
-
-      // Store auth config for services to use
-      this.globalOptions.authMiddleware = this.authMiddleware;
-
-      // Log API key authentication setup
-      this.eventEmitter.emit('api-auth-setup', {
-        message: 'API key authentication enabled',
-        keyCount: globalOptions.apiKeys.length,
-        requireApiKey: globalOptions.requireApiKey !== false,
-      });
-    }
-
-    // Serve the application registry landing page
-    this.expressApp.get('/applications/', (req, res) => {
-      res.sendFile(path.join(__dirname, 'src/views', 'index.html'));
-    });
-
-    this.initialized = true;
-    return this;
-  }
-
-  /**
-   * Gets or creates a application instance (singleton pattern)
-   * @param {string} applicationName - Name of the application
-   * @param {Object} options - Application-specific options
-   * @returns {Object} Service instance
-   */
-  getApplication(applicationName, options = {}) {
-    
-    if (!this.initialized) {
-      throw new Error(
-        'ApplicationRegistry must be initialized before getting services',
-      );
-    }
-
-    const applicationKey = `${applicationName}`;
-
-    if (this.applications.has(applicationKey)) {
-      return this.services.get(applicationKey);
-    }
-
-    const mergedOptions = {
-      ...this.globalOptions,
-      ...options,
-    };
-
-    let application;
+/**
+ * Creates the wiki service
+ * Automatically configures routes and views for the wiki service.
+ * Integrates with noobly-core services for data persistence, file storage, caching, etc.
+ * @param {Object} options - Configuration options
+ * @param {EventEmitter} eventEmitter - Global event emitter for inter-service communication
+ * @param {Object} serviceRegistry - NooblyJS Core service registry
+ * @return {void}
+ */
+module.exports = (options, eventEmitter, serviceRegistry) => {
+  // Initialize data manager for JSON file storage
+  const dataManager = new DataManager('./data');
+  
+  // Initialize noobly-core services for the wiki
+  const filing = serviceRegistry.filing('local', { 
+    baseDir: './wiki-files' 
+  });
+  const cache = serviceRegistry.cache('memory');
+  const logger = serviceRegistry.logger('console');
+  const queue = serviceRegistry.queue('memory');
+  const search = serviceRegistry.searching('memory');
+  
+  // Initialize wiki data if not exists
+  (async () => {
     try {
-      const applicationFactory = require(`${__dirname}/src/${applicationName}`);
-      application = applicationFactory(mergedOptions, this.eventEmitter, this.serviceRegistry);
+      await initializeWikiData(dataManager, filing, cache, logger, queue, search);
     } catch (error) {
-      throw new Error(
-        `Failed to create application '${applicationName}' : ${error.message}`,
-      );
+      logger.error('Failed to initialize wiki data:', error);
     }
+  })();
+  
+  // Start background queue worker
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search });
+  
+  // Register routes and views
+  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+}
 
-    this.applications.set(applicationKey, application);
-    return application;
-  }
-
-  /**
-   * Get the event emitter for inter-application communication
-   * @returns {EventEmitter} The global event emitter
-   */
-  getEventEmitter() {
-    return this.eventEmitter;
-  }
-
-  /**
-   * Lists all initialized applications
-   * @returns {Array} Array of application keys
-   */
-  listSApplications() {
-    return Array.from(this.applications.keys());
-  }
-
-  /**
-   * Generate a new API key
-   * @param {number} length - Length of the API key (default: 32)
-   * @returns {string} Generated API key
-   */
-  generateApiKey(length = 32) {
-    return generateApiKey(length);
-  }
-
-  /**
-   * Clears all application instances (useful for testing)
-   */
-  reset() {
-    this.applications.clear();
-    this.initialized = false;
-    this.eventEmitter.removeAllListeners();
+/**
+ * Initialize default wiki data
+ */
+async function initializeWikiData(dataManager, filing, cache, logger, queue, search) {
+  try {
+    logger.info('Starting wiki data initialization with JSON file storage...');
+    
+    // Check if we already have stored wiki data
+    const existingSpaces = await dataManager.read('spaces');
+    const existingDocuments = await dataManager.read('documents');
+    
+    if (existingSpaces.length === 0 || existingDocuments.length === 0) {
+      logger.info('Initializing default wiki data');
+      
+      // Initialize default spaces
+      const defaultSpaces = [
+        {
+          id: 1,
+          name: 'Personal Space',
+          description: 'This space is for you personal data',
+          icon: '🏗️',
+          visibility: 'private',
+          documentCount: 0,
+          createdAt: '2024-01-15T10:00:00Z',
+          updatedAt: '2024-08-20T14:30:00Z',
+          author: 'System'
+        }
+      ];
+      
+      logger.info(`Storing ${defaultSpaces.length} spaces with JSON file storage...`);
+      
+      // Store spaces
+      await dataManager.write('spaces', defaultSpaces);
+      logger.info('Stored all spaces to spaces.json');
+      
+      // Initialize default documents
+      const defaultDocuments = [
+      ];
+      
+      // Store documents
+      await dataManager.write('documents', defaultDocuments);
+      logger.info('Stored all documents to documents.json');
+      
+      // Initialize document content files
+      await initializeDocumentFiles({ filing, logger });
+      
+      // Index documents for search
+      defaultDocuments.forEach(doc => {
+        search.add(doc.id.toString(), {
+          id: doc.id,
+          title: doc.title,
+          content: '', // Will be filled when files are read
+          tags: doc.tags || [],
+          spaceName: doc.spaceName,
+          excerpt: doc.excerpt
+        });
+      });
+      
+      logger.info('Default wiki data initialized successfully');
+    } else {
+      logger.info('Wiki data already exists, skipping initialization');
+    }
+    
+    // Always initialize document files
+    try {
+      await initializeDocumentFiles({ filing, logger });
+    } catch (error) {
+      logger.error('Error initializing document files:', error);
+    }
+    
+    // Always populate search index
+    try {
+      const documents = await dataManager.read('documents');
+      documents.forEach(doc => {
+        search.add(doc.id.toString(), {
+          id: doc.id,
+          title: doc.title,
+          content: '', // Will be filled when files are read
+          tags: doc.tags || [],
+          spaceName: doc.spaceName,
+          excerpt: doc.excerpt
+        });
+      });
+      logger.info(`Populated search index with ${documents.length} documents`);
+    } catch (error) {
+      logger.error('Error populating search index:', error);
+    }
+  } catch (error) {
+    logger.error('Error initializing wiki data:', error.message);
+    logger.error('Stack trace:', error.stack);
   }
 }
 
-// Export singleton instance
-const applicationRegistry = new ApplicatioRegistry();
-
-module.exports = applicationRegistry;
+/**
+ * Start background queue worker for processing tasks
+ */
+function startQueueWorker(services) {
+  const { queue, logger } = services;
+  
+  // Process queue every 5 seconds
+  setInterval(async () => {
+    try {
+      const task = queue.dequeue();
+      if (task && task.type) {
+        logger.info(`Processing task: ${task.type}`);
+        await processTask(services, task);
+        logger.info(`Completed task: ${task.type}`);
+      }
+    } catch (error) {
+      logger.error('Error processing queue task:', error);
+    }
+  }, 5000);
+  
+  logger.info('Wiki queue worker started');
+}

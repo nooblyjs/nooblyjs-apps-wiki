@@ -24,7 +24,7 @@ const SearchIndexer = require('../activities/searchIndexer');
  */
 module.exports = (options, eventEmitter, services) => {
 
-  const app = options['express-app'];
+  const app = options;
   const { dataManager, filing, cache, logger, queue, search } = services;
   
   // Initialize enhanced search indexer
@@ -988,7 +988,7 @@ ${documentPath}\
       const docId = parseInt(id);
       
       // Get current documents
-      const documents = await dataServe.get('wiki:documents') || [];
+      const documents = await dataManager.read('documents') || [];
       const docIndex = documents.findIndex(doc => doc.id === docId);
       
       if (docIndex === -1) {

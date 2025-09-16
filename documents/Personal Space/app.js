@@ -40,7 +40,7 @@ function patchEmitter(eventEmitter) {
 }(eventEmitter);
 
 // Initiate the service Registry
-const serviceRegistry = require('noobly-core');
+const serviceRegistry = require('nooblyjs-core');
 serviceRegistry.initialize(app,eventEmitter);
 
 const log = serviceRegistry.logger('console');
