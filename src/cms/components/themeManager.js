@@ -200,7 +200,8 @@ class ThemeManager {
       const themePath = `${themeDir}/theme.json`;
 
       // Ensure directory exists
-      await this.filing.createDirectory(themeDir);
+      const fs = require('fs').promises;
+      await fs.mkdir(themeDir, { recursive: true });
 
       // Save theme configuration
       await this.filing.create(themePath, JSON.stringify(theme, null, 2));
@@ -559,8 +560,16 @@ a:hover {
       // Generate CSS if it doesn't exist
       const theme = await this.getTheme(themeId);
       if (theme) {
-        await this.generateThemeCSS(theme);
-        return await this.getThemeCSS(themeId);
+        try {
+          await this.generateThemeCSS(theme);
+          // Try to read the generated CSS file directly, without recursion
+          const cssPath = `${this.themesDir}/${themeId}/styles.css`;
+          const cssContent = await this.filing.read(cssPath);
+          return Buffer.isBuffer(cssContent) ? cssContent.toString('utf8') : cssContent;
+        } catch (generateError) {
+          this.logger.error(`Failed to generate CSS for theme ${themeId}:`, generateError);
+          return null;
+        }
       }
 
       return null;

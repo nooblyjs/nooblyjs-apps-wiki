@@ -45,7 +45,7 @@ class SiteBuilder {
 
       // Create site output directory
       const siteOutputDir = path.join(this.outputDir, siteId);
-      await this.filing.createDirectory(siteOutputDir);
+      await fs.mkdir(siteOutputDir, { recursive: true });
 
       // Generate CSS file
       await this.generateSiteCSS(siteId, theme);
@@ -140,7 +140,7 @@ class SiteBuilder {
       if (themeCSS) {
         // Create CSS directory
         const cssDir = path.join(this.outputDir, siteId, 'css');
-        await this.filing.createDirectory(cssDir);
+        await fs.mkdir(cssDir, { recursive: true });
 
         // Save CSS file
         const cssPath = path.join(cssDir, 'styles.css');
@@ -207,7 +207,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
     try {
       // Create assets directory
       const assetsDir = path.join(this.outputDir, siteId, 'assets');
-      await this.filing.createDirectory(assetsDir);
+      await fs.mkdir(assetsDir, { recursive: true });
 
       // In a real implementation, you would:
       // 1. Get all assets used by the site

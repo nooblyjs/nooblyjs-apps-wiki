@@ -4,15 +4,12 @@
     "name": "Demo Portfolio Site",
     "domain": "",
     "subdomain": "demo-portfolio.mysite.com",
-    "theme": "portfolio",
-    "status": "draft",
+    "theme": "business",
+    "status": "published",
     "userId": "admin",
     "settings": {
       "title": "My Portfolio",
       "description": "Professional portfolio website showcasing my work and skills",
-      "logo": "/assets/logo.png",
-      "favicon": "/assets/favicon.ico",
-      "analytics": "",
       "seo": {
         "metaTitle": "My Portfolio - Creative Professional",
         "metaDescription": "Showcasing creative work and professional experience",
@@ -29,7 +26,7 @@
       "page-contact"
     ],
     "createdAt": "2025-09-17T03:35:02.303Z",
-    "updatedAt": "2025-09-17T03:35:02.303Z",
-    "publishedAt": null
+    "updatedAt": "2025-09-17T05:00:26.527Z",
+    "publishedAt": "2025-09-17T04:58:30.846Z"
   }
 ]
