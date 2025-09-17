@@ -1,263 +1,372 @@
 /**
- * Blog-specific data manager with enhanced features for blog operations
+ * @fileoverview Blog Data Manager
+ * Handles JSON file-based data persistence for blog posts, categories,
+ * authors, comments, and analytics with advanced querying capabilities.
+ *
+ * @author NooblyJS Team
+ * @version 1.0.0
+ * @since 2025-09-16
  */
+
+'use strict';
 
 const fs = require('fs').promises;
 const path = require('path');
 
-class BlogDataManager {
-  constructor(dataDir = './data') {
-    this.dataDir = dataDir;
-    this.ensureDataDir();
+class DataManager {
+  constructor(baseDir = './data') {
+    this.baseDir = baseDir;
+    this.ensureDirectoryExists();
   }
 
-  async ensureDataDir() {
+  /**
+   * Ensure the data directory exists
+   */
+  async ensureDirectoryExists() {
     try {
-      await fs.mkdir(this.dataDir, { recursive: true });
+      await fs.mkdir(this.baseDir, { recursive: true });
     } catch (error) {
-      // Directory might already exist
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
     }
   }
 
-  getFilePath(type) {
-    return path.join(this.dataDir, `blog-${type}.json`);
+  /**
+   * Get the file path for a data type
+   */
+  getFilePath(dataType) {
+    return path.join(this.baseDir, `${dataType}.json`);
   }
 
-  async read(type) {
+  /**
+   * Read data from JSON file
+   */
+  async read(dataType) {
     try {
-      const filePath = this.getFilePath(type);
+      const filePath = this.getFilePath(dataType);
       const data = await fs.readFile(filePath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
-      // File doesn't exist or is invalid, return empty array or appropriate default
-      if (type === 'analytics' || type === 'settings') {
-        return {};
+      if (error.code === 'ENOENT') {
+        return [];
       }
-      return [];
+      throw error;
     }
   }
 
-  async write(type, data) {
+  /**
+   * Write data to JSON file
+   */
+  async write(dataType, data) {
     try {
-      const filePath = this.getFilePath(type);
-      await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+      await this.ensureDirectoryExists();
+      const filePath = this.getFilePath(dataType);
+      await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
       return true;
     } catch (error) {
-      console.error(`Error writing blog ${type} data:`, error);
-      return false;
+      throw error;
     }
   }
 
-  async add(type, item) {
-    const data = await this.read(type);
-    if (Array.isArray(data)) {
+  /**
+   * Add new item to collection
+   */
+  async add(dataType, item) {
+    try {
+      const data = await this.read(dataType);
       data.push(item);
-      return await this.write(type, data);
+      await this.write(dataType, data);
+      return item;
+    } catch (error) {
+      throw error;
     }
-    return false;
   }
 
-  async update(type, id, updates) {
-    const data = await this.read(type);
-    if (Array.isArray(data)) {
+  /**
+   * Update item in collection
+   */
+  async update(dataType, id, updates) {
+    try {
+      const data = await this.read(dataType);
       const index = data.findIndex(item => item.id === id);
-      if (index !== -1) {
-        data[index] = { ...data[index], ...updates };
-        return await this.write(type, data);
+
+      if (index === -1) {
+        return false;
       }
+
+      data[index] = { ...data[index], ...updates };
+      await this.write(dataType, data);
+      return true;
+    } catch (error) {
+      throw error;
     }
-    return false;
   }
 
-  async delete(type, id) {
-    const data = await this.read(type);
-    if (Array.isArray(data)) {
-      const filtered = data.filter(item => item.id !== id);
-      if (filtered.length !== data.length) {
-        return await this.write(type, filtered);
+  /**
+   * Delete item from collection
+   */
+  async delete(dataType, id) {
+    try {
+      const data = await this.read(dataType);
+      const filteredData = data.filter(item => item.id !== id);
+
+      if (filteredData.length === data.length) {
+        return false;
       }
+
+      await this.write(dataType, filteredData);
+      return true;
+    } catch (error) {
+      throw error;
     }
-    return false;
   }
 
-  async findById(type, id) {
-    const data = await this.read(type);
-    if (Array.isArray(data)) {
-      return data.find(item => item.id === id);
+  /**
+   * Find item by ID
+   */
+  async findById(dataType, id) {
+    try {
+      const data = await this.read(dataType);
+      return data.find(item => item.id === id) || null;
+    } catch (error) {
+      throw error;
     }
-    return null;
   }
 
-  async findBySlug(type, slug) {
-    const data = await this.read(type);
-    if (Array.isArray(data)) {
-      return data.find(item => item.slug === slug);
+  /**
+   * Find item by slug
+   */
+  async findBySlug(dataType, slug) {
+    try {
+      const data = await this.read(dataType);
+      return data.find(item => item.slug === slug) || null;
+    } catch (error) {
+      throw error;
     }
-    return null;
   }
 
-  async getNextId(type) {
-    const data = await this.read(type);
-    if (Array.isArray(data) && data.length > 0) {
+  /**
+   * Get next available ID for a collection
+   */
+  async getNextId(dataType) {
+    try {
+      const data = await this.read(dataType);
+      if (data.length === 0) {
+        return 1;
+      }
       return Math.max(...data.map(item => item.id)) + 1;
-    }
-    return 1;
-  }
-
-  // Blog-specific methods
-  async getPublishedPosts(limit = null, offset = 0) {
-    const posts = await this.read('posts');
-    const published = posts
-      .filter(post => post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    if (limit) {
-      return published.slice(offset, offset + limit);
-    }
-    return published;
-  }
-
-  async getPostsByCategory(categoryId, limit = null) {
-    const posts = await this.read('posts');
-    const categoryPosts = posts
-      .filter(post => post.categoryId === categoryId && post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    if (limit) {
-      return categoryPosts.slice(0, limit);
-    }
-    return categoryPosts;
-  }
-
-  async getPostsByAuthor(authorId, limit = null) {
-    const posts = await this.read('posts');
-    const authorPosts = posts
-      .filter(post => post.authorId === authorId && post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    if (limit) {
-      return authorPosts.slice(0, limit);
-    }
-    return authorPosts;
-  }
-
-  async getPostsByTag(tag, limit = null) {
-    const posts = await this.read('posts');
-    const taggedPosts = posts
-      .filter(post => post.tags && post.tags.includes(tag) && post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    if (limit) {
-      return taggedPosts.slice(0, limit);
-    }
-    return taggedPosts;
-  }
-
-  async getFeaturedPosts(limit = 5) {
-    const posts = await this.read('posts');
-    return posts
-      .filter(post => post.isFeatured && post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-      .slice(0, limit);
-  }
-
-  async getRecentPosts(limit = 10) {
-    return await this.getPublishedPosts(limit);
-  }
-
-  async getPopularPosts(limit = 10) {
-    const posts = await this.read('posts');
-    return posts
-      .filter(post => post.status === 'published' && post.visibility === 'public')
-      .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
-      .slice(0, limit);
-  }
-
-  async incrementViewCount(postId) {
-    const posts = await this.read('posts');
-    const postIndex = posts.findIndex(post => post.id === postId);
-    if (postIndex !== -1) {
-      posts[postIndex].viewCount = (posts[postIndex].viewCount || 0) + 1;
-      posts[postIndex].updatedAt = new Date().toISOString();
-      await this.write('posts', posts);
-      return posts[postIndex].viewCount;
-    }
-    return null;
-  }
-
-  async getCommentsByPost(postId) {
-    const comments = await this.read('comments');
-    return comments
-      .filter(comment => comment.postId === postId && comment.status === 'approved')
-      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  }
-
-  async updatePostCommentCount(postId) {
-    const comments = await this.getCommentsByPost(postId);
-    const posts = await this.read('posts');
-    const postIndex = posts.findIndex(post => post.id === postId);
-    if (postIndex !== -1) {
-      posts[postIndex].commentCount = comments.length;
-      posts[postIndex].updatedAt = new Date().toISOString();
-      await this.write('posts', posts);
+    } catch (error) {
+      throw error;
     }
   }
 
-  async getBlogStats() {
-    const posts = await this.read('posts');
-    const comments = await this.read('comments');
-    const authors = await this.read('authors');
-    const subscribers = await this.read('subscribers');
+  /**
+   * Get published posts with pagination
+   */
+  async getPublishedPosts(limit = 10, offset = 0) {
+    try {
+      const posts = await this.read('posts');
+      const publishedPosts = posts
+        .filter(post => post.status === 'published' && post.visibility === 'public')
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(offset, offset + limit);
 
-    const publishedPosts = posts.filter(post => post.status === 'published');
-    const totalViews = posts.reduce((sum, post) => sum + (post.viewCount || 0), 0);
-    const approvedComments = comments.filter(comment => comment.status === 'approved');
-
-    return {
-      totalPosts: publishedPosts.length,
-      totalComments: approvedComments.length,
-      totalAuthors: authors.filter(author => author.isActive).length,
-      totalSubscribers: subscribers.length,
-      totalViews: totalViews,
-      lastUpdated: new Date().toISOString()
-    };
+      return publishedPosts;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async searchPosts(query, limit = 20) {
-    const posts = await this.read('posts');
-    const queryLower = query.toLowerCase();
+  /**
+   * Get posts by category
+   */
+  async getPostsByCategory(categoryId, limit = 10) {
+    try {
+      const posts = await this.read('posts');
+      return posts
+        .filter(post => post.categoryId === categoryId && post.status === 'published')
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(0, limit);
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    const matchingPosts = posts
-      .filter(post =>
-        post.status === 'published' &&
-        post.visibility === 'public' &&
-        (
-          post.title.toLowerCase().includes(queryLower) ||
-          post.excerpt.toLowerCase().includes(queryLower) ||
-          post.content.toLowerCase().includes(queryLower) ||
-          (post.tags && post.tags.some(tag => tag.toLowerCase().includes(queryLower)))
+  /**
+   * Get posts by author
+   */
+  async getPostsByAuthor(authorId, limit = 10) {
+    try {
+      const posts = await this.read('posts');
+      return posts
+        .filter(post => post.authorId === authorId && post.status === 'published')
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(0, limit);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get posts by tag
+   */
+  async getPostsByTag(tag, limit = 10) {
+    try {
+      const posts = await this.read('posts');
+      return posts
+        .filter(post =>
+          post.tags &&
+          post.tags.includes(tag) &&
+          post.status === 'published'
         )
-      )
-      .map(post => {
-        // Calculate relevance score
-        let score = 0;
-        const titleMatch = post.title.toLowerCase().includes(queryLower);
-        const excerptMatch = post.excerpt.toLowerCase().includes(queryLower);
-        const contentMatch = post.content.toLowerCase().includes(queryLower);
-        const tagMatch = post.tags && post.tags.some(tag => tag.toLowerCase().includes(queryLower));
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(0, limit);
+    } catch (error) {
+      throw error;
+    }
+  }
 
-        if (titleMatch) score += 5;
-        if (excerptMatch) score += 3;
-        if (contentMatch) score += 2;
-        if (tagMatch) score += 4;
+  /**
+   * Get featured posts
+   */
+  async getFeaturedPosts(limit = 5) {
+    try {
+      const posts = await this.read('posts');
+      return posts
+        .filter(post => post.isFeatured && post.status === 'published')
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(0, limit);
+    } catch (error) {
+      throw error;
+    }
+  }
 
-        return { ...post, relevanceScore: score };
-      })
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, limit);
+  /**
+   * Get comments for a post
+   */
+  async getCommentsByPost(postId) {
+    try {
+      const comments = await this.read('comments');
+      return comments
+        .filter(comment => comment.postId === postId && comment.status === 'approved')
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    return matchingPosts;
+  /**
+   * Search posts
+   */
+  async searchPosts(query, limit = 10) {
+    try {
+      const posts = await this.read('posts');
+      const searchTerms = query.toLowerCase().split(' ');
+
+      const results = posts
+        .filter(post => {
+          if (post.status !== 'published') return false;
+
+          const searchableContent = `
+            ${post.title}
+            ${post.excerpt}
+            ${post.content || ''}
+            ${(post.tags || []).join(' ')}
+          `.toLowerCase();
+
+          return searchTerms.some(term => searchableContent.includes(term));
+        })
+        .sort((a, b) => {
+          // Sort by relevance (title matches first, then content)
+          const aTitle = a.title.toLowerCase();
+          const bTitle = b.title.toLowerCase();
+          const queryLower = query.toLowerCase();
+
+          if (aTitle.includes(queryLower) && !bTitle.includes(queryLower)) return -1;
+          if (!aTitle.includes(queryLower) && bTitle.includes(queryLower)) return 1;
+
+          return new Date(b.publishedAt) - new Date(a.publishedAt);
+        })
+        .slice(0, limit);
+
+      return results;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get blog statistics
+   */
+  async getBlogStats() {
+    try {
+      const [posts, comments, analytics] = await Promise.all([
+        this.read('posts'),
+        this.read('comments'),
+        this.read('analytics')
+      ]);
+
+      const publishedPosts = posts.filter(post => post.status === 'published');
+      const totalViews = publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0);
+      const totalLikes = publishedPosts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
+      const approvedComments = comments.filter(comment => comment.status === 'approved');
+
+      return {
+        totalPosts: publishedPosts.length,
+        totalDrafts: posts.filter(post => post.status === 'draft').length,
+        totalViews,
+        totalLikes,
+        totalComments: approvedComments.length,
+        pendingComments: comments.filter(comment => comment.status === 'pending').length,
+        popularPosts: publishedPosts
+          .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+          .slice(0, 5)
+          .map(post => ({
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            viewCount: post.viewCount || 0,
+            likeCount: post.likeCount || 0,
+            commentCount: post.commentCount || 0
+          })),
+        recentPosts: publishedPosts
+          .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+          .slice(0, 5)
+          .map(post => ({
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            publishedAt: post.publishedAt,
+            viewCount: post.viewCount || 0
+          })),
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Increment view count for a post
+   */
+  async incrementViewCount(postId) {
+    try {
+      const posts = await this.read('posts');
+      const postIndex = posts.findIndex(post => post.id === postId);
+
+      if (postIndex !== -1) {
+        posts[postIndex].viewCount = (posts[postIndex].viewCount || 0) + 1;
+        posts[postIndex].updatedAt = new Date().toISOString();
+        await this.write('posts', posts);
+        return posts[postIndex].viewCount;
+      }
+
+      return 0;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
-module.exports = BlogDataManager;
+module.exports = DataManager;

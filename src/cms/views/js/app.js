@@ -39,5 +39,5 @@ class CMSApp {
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.cmsApp = new WikiApp();
+    window.cmsApp = new CMSApp();
 });

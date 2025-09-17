@@ -1,7 +1,8 @@
 /**
  * @fileoverview Blog Application
- * Factory module for creating a Blog Platform application instance.
- * Implements comprehensive content publishing and community engagement system.
+ * Factory module for creating a Blog application instance.
+ * Provides Medium.com-style blogging platform with content management,
+ * analytics, and community features.
  *
  * @author NooblyJS Team
  * @version 1.0.0
@@ -12,9 +13,10 @@
 
 const Routes = require('./routes');
 const Views = require('./views');
-const { initializeBlogFiles } = require('./activities/contentManager');
+const { initializePostFiles } = require('./activities/postContent');
 const { processTask } = require('./activities/taskProcessor');
-const BlogDataManager = require('./components/dataManager');
+const DataManager = require('./components/dataManager');
+const BlogAuth = require('../auth');
 
 /**
  * Creates the blog service
@@ -27,21 +29,23 @@ const BlogDataManager = require('./components/dataManager');
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
   // Initialize data manager for JSON file storage
-  const dataManager = new BlogDataManager('./data');
+  const dataManager = new DataManager('./data');
 
   // Initialize noobly-core services for the blog
   const filing = serviceRegistry.filing('local', {
-    baseDir: './blog-files'
+    baseDir: './blog-posts'
   });
   const cache = serviceRegistry.cache('memory');
   const logger = serviceRegistry.logger('console');
   const queue = serviceRegistry.queue('memory');
   const search = serviceRegistry.searching('memory');
-  const scheduling = serviceRegistry.scheduling('memory');
-  const measuring = serviceRegistry.measuring('memory');
-  const notifying = serviceRegistry.notifying('memory');
-  const worker = serviceRegistry.working('memory');
-  const workflow = serviceRegistry.workflow('memory');
+  const scheduling = serviceRegistry.scheduling ? serviceRegistry.scheduling('memory') : null;
+  const measuring = serviceRegistry.measuring ? serviceRegistry.measuring('memory') : null;
+  const notifying = serviceRegistry.notifying ? serviceRegistry.notifying('console') : null;
+  const emailing = serviceRegistry.emailing ? serviceRegistry.emailing('console') : null;
+
+  // Initialize authentication service
+  const authService = BlogAuth(options, eventEmitter, serviceRegistry);
 
   // Initialize blog data if not exists
   (async () => {
@@ -53,11 +57,20 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   })();
 
   // Start background queue worker
-  startQueueWorker({ dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, worker, workflow });
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing });
 
-  // Register routes and views
-  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, worker, workflow });
-  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, worker, workflow });
+  // Register authentication routes first
+  authService.registerRoutes(options);
+
+  // Register routes and views with auth middleware
+  Routes(options, eventEmitter, {
+    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing,
+    authService
+  });
+  Views(options, eventEmitter, {
+    dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, emailing,
+    authService
+  });
 }
 
 /**
@@ -68,11 +81,14 @@ async function initializeBlogData(dataManager, filing, cache, logger, queue, sea
     logger.info('Starting blog data initialization with JSON file storage...');
 
     // Check if we already have stored blog data
-    const existingCategories = await dataManager.read('categories');
     const existingPosts = await dataManager.read('posts');
+    const existingCategories = await dataManager.read('categories');
     const existingAuthors = await dataManager.read('authors');
+    const existingComments = await dataManager.read('comments');
+    const existingAnalytics = await dataManager.read('analytics');
+    const existingSettings = await dataManager.read('settings');
 
-    if (existingCategories.length === 0 || existingPosts.length === 0 || existingAuthors.length === 0) {
+    if (existingPosts.length === 0) {
       logger.info('Initializing default blog data');
 
       // Initialize default categories
@@ -81,197 +97,144 @@ async function initializeBlogData(dataManager, filing, cache, logger, queue, sea
           id: 1,
           name: 'Technology',
           slug: 'technology',
-          description: 'Latest technology trends and insights',
+          description: 'Latest in tech trends and innovations',
           color: '#3B82F6',
-          parentId: null,
           postCount: 0,
           isActive: true,
           seoTitle: 'Technology Articles',
-          seoDescription: 'Explore the latest in technology trends, programming, and digital innovation.',
-          createdAt: '2024-01-15T10:00:00Z',
-          updatedAt: '2024-08-20T14:30:00Z'
+          seoDescription: 'Latest technology articles and insights',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           id: 2,
-          name: 'Business',
-          slug: 'business',
-          description: 'Business strategies and industry insights',
+          name: 'Programming',
+          slug: 'programming',
+          description: 'Programming tutorials and best practices',
           color: '#10B981',
-          parentId: null,
           postCount: 0,
           isActive: true,
-          seoTitle: 'Business Articles',
-          seoDescription: 'Business strategies, market insights, and industry analysis.',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-08-20T14:35:00Z'
+          seoTitle: 'Programming Articles',
+          seoDescription: 'Programming tutorials and development insights',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           id: 3,
-          name: 'Lifestyle',
-          slug: 'lifestyle',
-          description: 'Lifestyle tips and personal development',
+          name: 'Design',
+          slug: 'design',
+          description: 'UI/UX design principles and trends',
           color: '#F59E0B',
-          parentId: null,
           postCount: 0,
           isActive: true,
-          seoTitle: 'Lifestyle Articles',
-          seoDescription: 'Tips for better living, personal development, and life balance.',
-          createdAt: '2024-01-15T11:00:00Z',
-          updatedAt: '2024-08-20T14:40:00Z'
+          seoTitle: 'Design Articles',
+          seoDescription: 'Design principles and creative inspiration',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       ];
-
-      logger.info(`Storing ${defaultCategories.length} categories with JSON file storage...`);
-      await dataManager.write('categories', defaultCategories);
-      logger.info('Stored all categories to categories.json');
 
       // Initialize default authors
       const defaultAuthors = [
         {
           id: 1,
           username: 'admin',
-          email: 'admin@blog.com',
-          firstName: 'Blog',
-          lastName: 'Administrator',
-          displayName: 'Admin',
-          bio: 'Blog platform administrator and content curator.',
-          avatar: null,
+          displayName: 'Admin User',
+          email: 'admin@example.com',
+          bio: 'System administrator and content creator',
+          avatar: 'https://via.placeholder.com/80',
           website: '',
           socialLinks: {
             twitter: '',
             linkedin: '',
             github: ''
           },
-          role: 'administrator',
-          isActive: true,
-          emailVerified: true,
           postCount: 0,
-          followerCount: 0,
-          followingCount: 0,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-08-20T14:45:00Z',
-          lastLoginAt: '2024-08-20T14:45:00Z'
+          isActive: true,
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       ];
 
-      logger.info(`Storing ${defaultAuthors.length} authors with JSON file storage...`);
+      // Initialize default settings
+      const defaultSettings = {
+        siteName: 'My Blog',
+        siteDescription: 'A modern blogging platform built with NooblyJS',
+        siteUrl: 'http://localhost:3002',
+        seoTitle: 'My Blog - Insights and Stories',
+        seoDescription: 'Discover insights, stories, and knowledge on our modern blogging platform',
+        seoKeywords: ['blog', 'stories', 'insights', 'technology'],
+        socialLinks: {
+          twitter: '',
+          facebook: '',
+          linkedin: '',
+          instagram: ''
+        },
+        analytics: {
+          googleAnalytics: '',
+          enableComments: true,
+          moderateComments: true,
+          allowGuestComments: true
+        },
+        appearance: {
+          theme: 'default',
+          primaryColor: '#1a8917',
+          accentColor: '#3B82F6'
+        },
+        updatedAt: new Date().toISOString()
+      };
+
+      // Store data
+      await dataManager.write('categories', defaultCategories);
       await dataManager.write('authors', defaultAuthors);
-      logger.info('Stored all authors to authors.json');
-
-      // Initialize default posts
-      const defaultPosts = [
-        {
-          id: 1,
-          title: 'Welcome to Your New Blog Platform',
-          slug: 'welcome-to-your-new-blog-platform',
-          excerpt: 'Get started with your new blog platform built on NooblyJS. This comprehensive blogging solution offers everything you need to create engaging content.',
-          content: '# Welcome to Your New Blog Platform\n\nCongratulations on setting up your new blog platform! This system is built on the powerful NooblyJS framework and offers a comprehensive set of features for content creation and community engagement.\n\n## Features\n\n- Rich text editor with markdown support\n- SEO optimization tools\n- Comment system\n- Social sharing\n- Analytics integration\n- Content scheduling\n- Multi-author support\n\n## Getting Started\n\n1. Create your first post\n2. Set up categories and tags\n3. Customize your blog settings\n4. Invite other authors\n5. Engage with your community\n\nEnjoy blogging!',
-          authorId: 1,
-          categoryId: 1,
-          status: 'published',
-          visibility: 'public',
-          featuredImage: null,
-          tags: ['welcome', 'getting-started', 'blogging'],
-          seoTitle: 'Welcome to Your New Blog Platform - Getting Started Guide',
-          seoDescription: 'Learn how to get started with your new NooblyJS-powered blog platform. Complete guide to features and setup.',
-          seoKeywords: ['blog platform', 'NooblyJS', 'content management', 'blogging'],
-          publishedAt: '2024-08-20T15:00:00Z',
-          createdAt: '2024-08-20T14:50:00Z',
-          updatedAt: '2024-08-20T15:00:00Z',
-          viewCount: 0,
-          likeCount: 0,
-          commentCount: 0,
-          shareCount: 0,
-          readingTime: 2,
-          isSticky: true,
-          isFeatured: true,
-          allowComments: true,
-          customFields: {}
-        }
-      ];
-
-      // Store posts
-      await dataManager.write('posts', defaultPosts);
-      logger.info('Stored all posts to posts.json');
-
-      // Initialize blog content files
-      await initializeBlogFiles({ filing, logger });
-
-      // Initialize search index with posts
-      defaultPosts.forEach(post => {
-        search.add(post.id.toString(), {
-          id: post.id,
-          title: post.title,
-          content: post.content,
-          excerpt: post.excerpt,
-          tags: post.tags || [],
-          categoryName: 'Technology', // Default category
-          authorName: 'Admin',
-          publishedAt: post.publishedAt,
-          slug: post.slug
-        });
-      });
-
-      // Initialize other data structures
+      await dataManager.write('posts', []);
       await dataManager.write('comments', []);
-      await dataManager.write('subscribers', []);
       await dataManager.write('analytics', {
         totalViews: 0,
-        totalPosts: 1,
+        totalPosts: 0,
         totalComments: 0,
         totalSubscribers: 0,
+        monthlyViews: {},
+        popularPosts: [],
         lastUpdated: new Date().toISOString()
       });
-      await dataManager.write('settings', {
-        siteName: 'My Blog',
-        siteDescription: 'A modern blog platform built with NooblyJS',
-        siteUrl: 'http://localhost:3002',
-        postsPerPage: 10,
-        allowComments: true,
-        requireApproval: true,
-        allowGuestComments: false,
-        seoEnabled: true,
-        analyticsEnabled: true,
-        socialSharing: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      await dataManager.write('settings', defaultSettings);
+
+      logger.info('Stored all blog data to JSON files');
+
+      // Initialize post content files
+      await initializePostFiles({ filing, logger });
 
       logger.info('Default blog data initialized successfully');
     } else {
       logger.info('Blog data already exists, skipping initialization');
     }
 
-    // Always initialize blog files
+    // Always initialize post files
     try {
-      await initializeBlogFiles({ filing, logger });
+      await initializePostFiles({ filing, logger });
     } catch (error) {
-      logger.error('Error initializing blog files:', error);
+      logger.error('Error initializing post files:', error);
     }
 
     // Always populate search index
     try {
       const posts = await dataManager.read('posts');
-      const categories = await dataManager.read('categories');
-      const authors = await dataManager.read('authors');
-
       posts.forEach(post => {
-        const category = categories.find(c => c.id === post.categoryId);
-        const author = authors.find(a => a.id === post.authorId);
-
-        search.add(post.id.toString(), {
-          id: post.id,
-          title: post.title,
-          content: post.content,
-          excerpt: post.excerpt,
-          tags: post.tags || [],
-          categoryName: category ? category.name : 'Uncategorized',
-          authorName: author ? author.displayName : 'Unknown',
-          publishedAt: post.publishedAt,
-          slug: post.slug
-        });
+        if (post.status === 'published') {
+          search.add(post.id.toString(), {
+            id: post.id,
+            title: post.title,
+            content: post.excerpt || '',
+            tags: post.tags || [],
+            categoryName: post.categoryName || '',
+            authorName: post.authorName || '',
+            excerpt: post.excerpt
+          });
+        }
       });
-      logger.info(`Populated search index with ${posts.length} posts`);
+      logger.info(`Populated search index with ${posts.filter(p => p.status === 'published').length} published posts`);
     } catch (error) {
       logger.error('Error populating search index:', error);
     }

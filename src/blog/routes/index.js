@@ -11,7 +11,9 @@
 'use strict';
 
 const path = require('path');
-const mime = require('mime-types');
+const { readPostContent, savePostContent, updatePostContent, deletePostContent } = require('../activities/postContent');
+const CommentManager = require('../components/commentManager');
+const NotificationManager = require('../components/notificationManager');
 
 /**
  * Configures and registers blog routes with the Express application.
@@ -25,31 +27,27 @@ const mime = require('mime-types');
  */
 module.exports = (options, eventEmitter, services) => {
   const app = options;
-  const { dataManager, filing, cache, logger, queue, search, scheduling, measuring, notifying, worker, workflow } = services;
+  const { dataManager, filing, cache, logger, queue, search, measuring, notifying, emailing, authService } = services;
 
-  // ===== AUTHENTICATION ROUTES =====
+  // Get authentication middleware
+  const requireAuth = authService ? authService.getMiddleware() : (req, res, next) => next();
+  const requireAdmin = authService ? authService.getAdminMiddleware() : (req, res, next) => next();
 
-  app.post('/applications/blog/login', (req, res) => {
-    const { username, password } = req.body;
-
-    if (username === 'admin' && password === 'password') {
-      req.session.blogAuthenticated = true;
-      res.json({ success: true, message: 'Login successful' });
-    } else {
-      res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
+  // Initialize notification manager
+  const emailProvider = emailing || null; // Optional email service
+  const notificationManager = new NotificationManager({
+    emailProvider,
+    adminEmail: 'admin@blog.local',
+    fromEmail: 'noreply@blog.local',
+    siteUrl: 'http://localhost:3000'
   });
 
-  app.post('/applications/blog/logout', (req, res) => {
-    req.session.blogAuthenticated = false;
-    res.json({ success: true, message: 'Logout successful' });
-  });
+  // Initialize comment manager with notification manager
+  const commentManager = new CommentManager(dataManager, logger, notifying, notificationManager);
 
-  app.get('/applications/blog/api/auth/check', (req, res) => {
-    res.json({ authenticated: !!req.session.blogAuthenticated });
-  });
+  // ===== BLOG API ROUTES =====
 
-  // ===== BLOG POSTS ROUTES =====
+  // ===== PUBLIC BLOG ROUTES =====
 
   // Get all published posts with pagination
   app.get('/applications/blog/api/posts', async (req, res) => {
@@ -137,6 +135,12 @@ module.exports = (options, eventEmitter, services) => {
           return res.status(404).json({ error: 'Post not found' });
         }
 
+        // Get post content from markdown file
+        const postContent = await readPostContent(services, post);
+        if (postContent) {
+          post.content = postContent.content;
+        }
+
         // Enrich with category and author data
         const categories = await dataManager.read('categories');
         const authors = await dataManager.read('authors');
@@ -190,216 +194,32 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
-  // Create new post (authenticated)
-  app.post('/applications/blog/api/posts', async (req, res) => {
+  // Search posts
+  app.get('/applications/blog/api/search', async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
+      const query = req.query.q?.trim();
+      const limit = parseInt(req.query.limit) || 10;
+
+      if (!query) {
+        return res.json([]);
       }
 
-      const {
-        title,
-        content,
-        excerpt,
-        categoryId,
-        tags,
-        status,
-        visibility,
-        featuredImage,
-        seoTitle,
-        seoDescription,
-        seoKeywords,
-        publishAt,
-        isSticky,
-        isFeatured,
-        allowComments
-      } = req.body;
+      logger.info(`Blog search query: ${query}`);
 
-      if (!title || !content) {
-        return res.status(400).json({ error: 'Title and content are required' });
+      // Use search service
+      let searchResults = search.search(query, limit);
+
+      // Fallback to dataManager search if no results
+      if (searchResults.length === 0) {
+        searchResults = await dataManager.searchPosts(query, limit);
       }
 
-      // Generate slug from title
-      const slug = title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
-      // Check if slug exists
-      const existingPost = await dataManager.findBySlug('posts', slug);
-      if (existingPost) {
-        return res.status(400).json({ error: 'A post with this title already exists' });
-      }
-
-      const postId = await dataManager.getNextId('posts');
-      const now = new Date().toISOString();
-
-      const newPost = {
-        id: postId,
-        title,
-        slug,
-        content,
-        excerpt: excerpt || content.substring(0, 150) + '...',
-        authorId: 1, // Default admin author
-        categoryId: categoryId || 1,
-        status: status || 'draft',
-        visibility: visibility || 'public',
-        featuredImage: featuredImage || null,
-        tags: tags || [],
-        seoTitle: seoTitle || title,
-        seoDescription: seoDescription || excerpt,
-        seoKeywords: seoKeywords || [],
-        publishedAt: status === 'published' ? now : (publishAt || null),
-        createdAt: now,
-        updatedAt: now,
-        viewCount: 0,
-        likeCount: 0,
-        commentCount: 0,
-        shareCount: 0,
-        readingTime: Math.ceil(content.split(' ').length / 200),
-        isSticky: isSticky || false,
-        isFeatured: isFeatured || false,
-        allowComments: allowComments !== false,
-        customFields: {}
-      };
-
-      await dataManager.add('posts', newPost);
-
-      // Create post file
-      queue.enqueue({
-        type: 'createPostFile',
-        postId: postId,
-        content: content
-      });
-
-      // Index for search if published
-      if (status === 'published') {
-        queue.enqueue({
-          type: 'indexPostForSearch',
-          postId: postId
-        });
-      }
-
-      // Schedule publishing if needed
-      if (publishAt && status === 'scheduled') {
-        queue.enqueue({
-          type: 'schedulePost',
-          postId: postId,
-          publishAt: publishAt
-        });
-      }
-
-      // Clear relevant caches
-      await cache.delete('blog:posts:*');
-
-      logger.info(`Created new blog post: ${title} (ID: ${postId})`);
-
-      res.json({
-        success: true,
-        message: 'Post created successfully',
-        post: newPost
-      });
+      res.json(searchResults);
     } catch (error) {
-      logger.error('Error creating blog post:', error);
-      res.status(500).json({ error: 'Failed to create blog post' });
+      logger.error('Error performing blog search:', error);
+      res.status(500).json({ error: 'Failed to perform search' });
     }
   });
-
-  // Update post (authenticated)
-  app.put('/applications/blog/api/posts/:id', async (req, res) => {
-    try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const postId = parseInt(req.params.id);
-      const updates = { ...req.body, updatedAt: new Date().toISOString() };
-
-      // Update reading time if content changed
-      if (updates.content) {
-        updates.readingTime = Math.ceil(updates.content.split(' ').length / 200);
-      }
-
-      const success = await dataManager.update('posts', postId, updates);
-
-      if (!success) {
-        return res.status(404).json({ error: 'Post not found' });
-      }
-
-      // Update post file if content changed
-      if (updates.content) {
-        queue.enqueue({
-          type: 'updatePostFile',
-          postId: postId,
-          content: updates.content
-        });
-      }
-
-      // Update search index
-      queue.enqueue({
-        type: 'indexPostForSearch',
-        postId: postId
-      });
-
-      // Clear caches
-      await cache.delete(`blog:post:*`);
-      await cache.delete('blog:posts:*');
-
-      logger.info(`Updated blog post: ${postId}`);
-
-      res.json({
-        success: true,
-        message: 'Post updated successfully'
-      });
-    } catch (error) {
-      logger.error('Error updating blog post:', error);
-      res.status(500).json({ error: 'Failed to update blog post' });
-    }
-  });
-
-  // Delete post (authenticated)
-  app.delete('/applications/blog/api/posts/:id', async (req, res) => {
-    try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const postId = parseInt(req.params.id);
-
-      const success = await dataManager.delete('posts', postId);
-
-      if (!success) {
-        return res.status(404).json({ error: 'Post not found' });
-      }
-
-      // Delete post file
-      queue.enqueue({
-        type: 'deletePostFile',
-        postId: postId
-      });
-
-      // Remove from search index
-      queue.enqueue({
-        type: 'removePostFromSearch',
-        postId: postId
-      });
-
-      // Clear caches
-      await cache.delete(`blog:post:*`);
-      await cache.delete('blog:posts:*');
-
-      logger.info(`Deleted blog post: ${postId}`);
-
-      res.json({
-        success: true,
-        message: 'Post deleted successfully'
-      });
-    } catch (error) {
-      logger.error('Error deleting blog post:', error);
-      res.status(500).json({ error: 'Failed to delete blog post' });
-    }
-  });
-
-  // ===== CATEGORIES ROUTES =====
 
   // Get all categories
   app.get('/applications/blog/api/categories', async (req, res) => {
@@ -426,76 +246,6 @@ module.exports = (options, eventEmitter, services) => {
       res.status(500).json({ error: 'Failed to fetch categories' });
     }
   });
-
-  // Get category by slug
-  app.get('/applications/blog/api/categories/:slug', async (req, res) => {
-    try {
-      const slug = req.params.slug;
-      const category = await dataManager.findBySlug('categories', slug);
-
-      if (!category || !category.isActive) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-
-      const posts = await dataManager.getPostsByCategory(category.id, 10);
-
-      res.json({
-        ...category,
-        posts
-      });
-    } catch (error) {
-      logger.error('Error fetching category:', error);
-      res.status(500).json({ error: 'Failed to fetch category' });
-    }
-  });
-
-  // Create category (authenticated)
-  app.post('/applications/blog/api/categories', async (req, res) => {
-    try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const { name, description, color, parentId, seoTitle, seoDescription } = req.body;
-
-      if (!name) {
-        return res.status(400).json({ error: 'Category name is required' });
-      }
-
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const categoryId = await dataManager.getNextId('categories');
-      const now = new Date().toISOString();
-
-      const newCategory = {
-        id: categoryId,
-        name,
-        slug,
-        description: description || '',
-        color: color || '#3B82F6',
-        parentId: parentId || null,
-        postCount: 0,
-        isActive: true,
-        seoTitle: seoTitle || name,
-        seoDescription: seoDescription || description,
-        createdAt: now,
-        updatedAt: now
-      };
-
-      await dataManager.add('categories', newCategory);
-      await cache.delete('blog:categories:*');
-
-      res.json({
-        success: true,
-        message: 'Category created successfully',
-        category: newCategory
-      });
-    } catch (error) {
-      logger.error('Error creating category:', error);
-      res.status(500).json({ error: 'Failed to create category' });
-    }
-  });
-
-  // ===== AUTHORS ROUTES =====
 
   // Get all active authors
   app.get('/applications/blog/api/authors', async (req, res) => {
@@ -527,38 +277,7 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
-  // Get author by username
-  app.get('/applications/blog/api/authors/:username', async (req, res) => {
-    try {
-      const username = req.params.username;
-      const authors = await dataManager.read('authors');
-      const author = authors.find(a => a.username === username && a.isActive);
-
-      if (!author) {
-        return res.status(404).json({ error: 'Author not found' });
-      }
-
-      const posts = await dataManager.getPostsByAuthor(author.id, 10);
-
-      res.json({
-        id: author.id,
-        username: author.username,
-        displayName: author.displayName,
-        bio: author.bio,
-        avatar: author.avatar,
-        website: author.website,
-        socialLinks: author.socialLinks,
-        postCount: author.postCount,
-        createdAt: author.createdAt,
-        posts
-      });
-    } catch (error) {
-      logger.error('Error fetching author:', error);
-      res.status(500).json({ error: 'Failed to fetch author' });
-    }
-  });
-
-  // ===== COMMENTS ROUTES =====
+  // ===== COMMENT SYSTEM =====
 
   // Get comments for a post
   app.get('/applications/blog/api/posts/:postId/comments', async (req, res) => {
@@ -613,6 +332,13 @@ module.exports = (options, eventEmitter, services) => {
         commentId: commentId
       });
 
+      // Update analytics
+      queue.enqueue({
+        type: 'updateAnalytics',
+        event: 'comment_added',
+        data: { postId, commentId }
+      });
+
       res.json({
         success: true,
         message: 'Comment submitted for moderation',
@@ -624,246 +350,135 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
-  // ===== SEARCH ROUTES =====
+  // ===== COMMENT ROUTES =====
 
-  // Search posts
-  app.get('/applications/blog/api/search', async (req, res) => {
+  // Get comments for a post (public)
+  app.get('/applications/blog/api/posts/:postId/comments', async (req, res) => {
     try {
-      const query = req.query.q?.trim();
-      const limit = parseInt(req.query.limit) || 10;
+      const { postId } = req.params;
+      const { limit = 20, offset = 0, sort = 'asc' } = req.query;
 
-      if (!query) {
-        return res.json([]);
-      }
-
-      logger.info(`Blog search query: ${query}`);
-
-      // Use search service
-      let searchResults = search.search(query, limit);
-
-      // Fallback to dataManager search if no results
-      if (searchResults.length === 0) {
-        searchResults = await dataManager.searchPosts(query, limit);
-      }
-
-      res.json(searchResults);
-    } catch (error) {
-      logger.error('Error performing blog search:', error);
-      res.status(500).json({ error: 'Failed to perform search' });
-    }
-  });
-
-  // ===== ANALYTICS ROUTES =====
-
-  // Get blog statistics
-  app.get('/applications/blog/api/analytics/stats', async (req, res) => {
-    try {
-      const cacheKey = 'blog:analytics:stats';
-      let stats = await cache.get(cacheKey);
-
-      if (!stats) {
-        stats = await dataManager.getBlogStats();
-        await cache.put(cacheKey, stats, 300); // Cache for 5 minutes
-      }
-
-      res.json(stats);
-    } catch (error) {
-      logger.error('Error fetching blog stats:', error);
-      res.status(500).json({ error: 'Failed to fetch blog statistics' });
-    }
-  });
-
-  // Record analytics event
-  app.post('/applications/blog/api/analytics/event', async (req, res) => {
-    try {
-      const { event, data } = req.body;
-
-      if (!event) {
-        return res.status(400).json({ error: 'Event type is required' });
-      }
-
-      // Queue analytics update
-      queue.enqueue({
-        type: 'updateAnalytics',
-        event,
-        data: {
-          ...data,
-          timestamp: new Date().toISOString(),
-          userAgent: req.headers['user-agent'],
-          ip: req.ip
-        }
+      const comments = await commentManager.getCommentsForPost(postId, {
+        status: 'approved',
+        includeReplies: true,
+        sortBy: 'createdAt',
+        sortOrder: sort,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
       });
 
-      res.json({ success: true });
+      res.json({
+        success: true,
+        comments,
+        meta: {
+          total: comments.length,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        }
+      });
     } catch (error) {
-      logger.error('Error recording analytics event:', error);
-      res.status(500).json({ error: 'Failed to record event' });
+      logger.error('Error fetching comments:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch comments'
+      });
     }
   });
 
-  // ===== SUBSCRIPTION ROUTES =====
-
-  // Subscribe to newsletter
-  app.post('/applications/blog/api/subscribe', async (req, res) => {
+  // Submit a new comment (public with rate limiting)
+  app.post('/applications/blog/api/posts/:postId/comments', async (req, res) => {
     try {
-      const { email, name } = req.body;
+      const { postId } = req.params;
+      const { author, email, website, content, parentId } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ error: 'Email is required' });
+      // Basic validation
+      if (!author || !email || !content) {
+        return res.status(400).json({
+          success: false,
+          error: 'Author, email, and content are required'
+        });
       }
 
-      // Check if already subscribed
-      const subscribers = await dataManager.read('subscribers');
-      const existing = subscribers.find(sub => sub.email === email);
-
-      if (existing && existing.status === 'active') {
-        return res.status(400).json({ error: 'Email already subscribed' });
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid email address'
+        });
       }
 
-      const subscriberId = await dataManager.getNextId('subscribers');
-      const now = new Date().toISOString();
+      // Content length validation
+      if (content.length > 1000) {
+        return res.status(400).json({
+          success: false,
+          error: 'Comment is too long (maximum 1000 characters)'
+        });
+      }
 
-      const newSubscriber = {
-        id: subscriberId,
+      // Create comment
+      const comment = await commentManager.createComment({
+        postId,
+        author,
         email,
-        name: name || null,
-        status: 'active',
-        subscribedAt: now,
-        unsubscribeToken: require('crypto').randomBytes(32).toString('hex')
-      };
+        website,
+        content,
+        parentId,
+        userAgent: req.get('User-Agent') || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '127.0.0.1'
+      });
 
-      await dataManager.add('subscribers', newSubscriber);
-
-      // Send welcome email
-      queue.enqueue({
-        type: 'sendNotification',
-        type: 'welcome_subscriber',
-        recipient: email,
-        data: {
-          name: name || 'Subscriber'
+      res.status(201).json({
+        success: true,
+        message: comment.status === 'approved'
+          ? 'Comment posted successfully'
+          : 'Comment submitted for moderation',
+        comment: {
+          id: comment.id,
+          author: comment.author,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          status: comment.status
         }
       });
 
+    } catch (error) {
+      logger.error('Error creating comment:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to create comment'
+      });
+    }
+  });
+
+  // Get comment statistics (public)
+  app.get('/applications/blog/api/comments/stats', async (req, res) => {
+    try {
+      const stats = await commentManager.getCommentStats();
+
+      // Only return public stats
       res.json({
         success: true,
-        message: 'Successfully subscribed to newsletter'
+        stats: {
+          total: stats.approved,
+          thisMonth: stats.thisMonth,
+          thisWeek: stats.thisWeek
+        }
       });
     } catch (error) {
-      logger.error('Error subscribing to newsletter:', error);
-      res.status(500).json({ error: 'Failed to subscribe' });
-    }
-  });
-
-  // ===== SETTINGS ROUTES =====
-
-  // Get blog settings (authenticated)
-  app.get('/applications/blog/api/settings', async (req, res) => {
-    try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const settings = await dataManager.read('settings');
-      res.json(settings);
-    } catch (error) {
-      logger.error('Error fetching blog settings:', error);
-      res.status(500).json({ error: 'Failed to fetch settings' });
-    }
-  });
-
-  // Update blog settings (authenticated)
-  app.put('/applications/blog/api/settings', async (req, res) => {
-    try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const updates = { ...req.body, updatedAt: new Date().toISOString() };
-      await dataManager.write('settings', updates);
-
-      // Clear relevant caches
-      await cache.delete('blog:settings');
-
-      res.json({
-        success: true,
-        message: 'Settings updated successfully'
+      logger.error('Error fetching comment stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch comment statistics'
       });
-    } catch (error) {
-      logger.error('Error updating blog settings:', error);
-      res.status(500).json({ error: 'Failed to update settings' });
     }
   });
 
-  // ===== UTILITY ROUTES =====
-
-  // Generate sitemap
-  app.get('/applications/blog/sitemap.xml', async (req, res) => {
-    try {
-      queue.enqueue({
-        type: 'generateSitemap'
-      });
-
-      res.set('Content-Type', 'text/xml');
-      res.send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>');
-    } catch (error) {
-      logger.error('Error generating sitemap:', error);
-      res.status(500).json({ error: 'Failed to generate sitemap' });
-    }
-  });
-
-  // RSS feed
-  app.get('/applications/blog/feed.xml', async (req, res) => {
-    try {
-      const posts = await dataManager.getPublishedPosts(20);
-      const settings = await dataManager.read('settings');
-
-      let rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>${settings.siteName || 'My Blog'}</title>
-    <description>${settings.siteDescription || 'A blog powered by NooblyJS'}</description>
-    <link>${settings.siteUrl || 'http://localhost:3002'}</link>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`;
-
-      posts.forEach(post => {
-        rss += `
-    <item>
-      <title>${post.title}</title>
-      <description><![CDATA[${post.excerpt}]]></description>
-      <link>${settings.siteUrl}/applications/blog/posts/${post.slug}</link>
-      <guid>${settings.siteUrl}/applications/blog/posts/${post.slug}</guid>
-      <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
-    </item>`;
-      });
-
-      rss += '\n  </channel>\n</rss>';
-
-      res.set('Content-Type', 'application/rss+xml');
-      res.send(rss);
-    } catch (error) {
-      logger.error('Error generating RSS feed:', error);
-      res.status(500).send('Error generating RSS feed');
-    }
-  });
-
-  // Application status endpoint
-  app.get('/applications/blog/api/status', (req, res) => {
-    res.json({
-      status: 'running',
-      application: 'Blog Platform',
-      version: '1.0.0',
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // ===== ADMIN INTERFACE ROUTES =====
+  // ===== ADMIN ROUTES (AUTHENTICATED) =====
 
   // Get all posts for admin (including drafts)
-  app.get('/applications/blog/api/admin/posts', async (req, res) => {
+  app.get('/applications/blog/api/admin/posts', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
 
       const posts = await dataManager.read('posts');
       const categories = await dataManager.read('categories');
@@ -892,17 +507,20 @@ module.exports = (options, eventEmitter, services) => {
   });
 
   // Get single post for editing (admin)
-  app.get('/applications/blog/api/admin/posts/:id', async (req, res) => {
+  app.get('/applications/blog/api/admin/posts/:id', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
 
       const postId = parseInt(req.params.id);
       const post = await dataManager.findById('posts', postId);
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
+      }
+
+      // Get post content from markdown file
+      const postContent = await readPostContent(services, post);
+      if (postContent) {
+        post.content = postContent.content;
       }
 
       res.json(post);
@@ -912,134 +530,406 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
-  // Update category (authenticated)
-  app.put('/applications/blog/api/categories/:id', async (req, res) => {
+  // Create new post (authenticated)
+  app.post('/applications/blog/api/admin/posts', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
+
+      const {
+        title,
+        content,
+        excerpt,
+        categoryId,
+        tags,
+        status,
+        visibility,
+        featuredImage,
+        seoTitle,
+        seoDescription,
+        seoKeywords,
+        publishAt,
+        isSticky,
+        isFeatured,
+        allowComments
+      } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
       }
 
-      const categoryId = parseInt(req.params.id);
+      // Generate slug from title
+      const slug = title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      // Check if slug exists
+      const existingPost = await dataManager.findBySlug('posts', slug);
+      if (existingPost) {
+        return res.status(400).json({ error: 'A post with this title already exists' });
+      }
+
+      const postId = await dataManager.getNextId('posts');
+      const now = new Date().toISOString();
+
+      const newPost = {
+        id: postId,
+        title,
+        slug,
+        excerpt: excerpt || content.substring(0, 150) + '...',
+        authorId: 1, // Default admin author
+        categoryId: categoryId || 1,
+        status: status || 'draft',
+        visibility: visibility || 'public',
+        featuredImage: featuredImage || null,
+        tags: tags || [],
+        seoTitle: seoTitle || title,
+        seoDescription: seoDescription || excerpt,
+        seoKeywords: seoKeywords || [],
+        publishedAt: status === 'published' ? now : (publishAt || null),
+        createdAt: now,
+        updatedAt: now,
+        viewCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+        readingTime: Math.ceil(content.split(' ').length / 200),
+        isSticky: isSticky || false,
+        isFeatured: isFeatured || false,
+        allowComments: allowComments !== false,
+        customFields: {}
+      };
+
+      await dataManager.add('posts', newPost);
+
+      // Create post file
+      queue.enqueue({
+        type: 'createPostFile',
+        postId: postId,
+        content: content
+      });
+
+      // Index for search if published
+      if (status === 'published') {
+        queue.enqueue({
+          type: 'indexPostForSearch',
+          postId: postId
+        });
+      }
+
+      // Schedule publishing if needed
+      if (publishAt && status === 'scheduled') {
+        queue.enqueue({
+          type: 'schedulePost',
+          postId: postId,
+          publishAt: publishAt
+        });
+      }
+
+      // Clear relevant caches
+      await cache.delete('blog:posts:');
+      await cache.delete('blog:categories:');
+
+      logger.info(`Created new blog post: ${title} (ID: ${postId})`);
+
+      res.json({
+        success: true,
+        message: 'Post created successfully',
+        post: newPost
+      });
+    } catch (error) {
+      logger.error('Error creating blog post:', error);
+      res.status(500).json({ error: 'Failed to create blog post' });
+    }
+  });
+
+  // Update post (authenticated)
+  app.put('/applications/blog/api/admin/posts/:id', requireAdmin, async (req, res) => {
+    try {
+
+      const postId = parseInt(req.params.id);
       const updates = { ...req.body, updatedAt: new Date().toISOString() };
+      const oldPost = await dataManager.findById('posts', postId);
 
-      const success = await dataManager.update('categories', categoryId, updates);
-
-      if (!success) {
-        return res.status(404).json({ error: 'Category not found' });
+      if (!oldPost) {
+        return res.status(404).json({ error: 'Post not found' });
       }
 
-      await cache.delete('blog:categories:*');
+      // Update reading time if content changed
+      if (updates.content) {
+        updates.readingTime = Math.ceil(updates.content.split(' ').length / 200);
+      }
+
+      const success = await dataManager.update('posts', postId, updates);
+
+      if (!success) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      // Update post file if content changed
+      if (updates.content) {
+        const updatedPost = { ...oldPost, ...updates };
+        queue.enqueue({
+          type: 'updatePostFile',
+          postId: postId,
+          content: updates.content,
+          oldStatus: oldPost.status
+        });
+      }
+
+      // Update search index
+      queue.enqueue({
+        type: 'indexPostForSearch',
+        postId: postId
+      });
+
+      // Clear caches
+      await cache.delete(`blog:post:`);
+      await cache.delete('blog:posts:');
+
+      logger.info(`Updated blog post: ${postId}`);
 
       res.json({
         success: true,
-        message: 'Category updated successfully'
+        message: 'Post updated successfully'
       });
     } catch (error) {
-      logger.error('Error updating category:', error);
-      res.status(500).json({ error: 'Failed to update category' });
+      logger.error('Error updating blog post:', error);
+      res.status(500).json({ error: 'Failed to update blog post' });
     }
   });
 
-  // Delete category (authenticated)
-  app.delete('/applications/blog/api/categories/:id', async (req, res) => {
+  // Delete post (authenticated)
+  app.delete('/applications/blog/api/admin/posts/:id', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
 
-      const categoryId = parseInt(req.params.id);
+      const postId = parseInt(req.params.id);
 
-      const success = await dataManager.delete('categories', categoryId);
+      const success = await dataManager.delete('posts', postId);
 
       if (!success) {
-        return res.status(404).json({ error: 'Category not found' });
+        return res.status(404).json({ error: 'Post not found' });
       }
 
-      await cache.delete('blog:categories:*');
+      // Delete post file
+      queue.enqueue({
+        type: 'deletePostFile',
+        postId: postId
+      });
+
+      // Remove from search index
+      queue.enqueue({
+        type: 'removePostFromSearch',
+        postId: postId
+      });
+
+      // Clear caches
+      await cache.delete(`blog:post:`);
+      await cache.delete('blog:posts:');
+
+      logger.info(`Deleted blog post: ${postId}`);
 
       res.json({
         success: true,
-        message: 'Category deleted successfully'
+        message: 'Post deleted successfully'
       });
     } catch (error) {
-      logger.error('Error deleting category:', error);
-      res.status(500).json({ error: 'Failed to delete category' });
+      logger.error('Error deleting blog post:', error);
+      res.status(500).json({ error: 'Failed to delete blog post' });
     }
   });
 
-  // Get all comments for admin
-  app.get('/applications/blog/api/admin/comments', async (req, res) => {
+  // Get blog analytics (authenticated)
+  app.get('/applications/blog/api/admin/analytics', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
+
+      const stats = await dataManager.getBlogStats();
+      res.json(stats);
+    } catch (error) {
+      logger.error('Error fetching blog analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+  });
+
+  // Get pending comments for moderation
+  app.get('/applications/blog/api/admin/comments', requireAdmin, async (req, res) => {
+    try {
+      const { status = 'all', limit = 50, offset = 0 } = req.query;
+
+      let comments;
+      if (status === 'pending') {
+        comments = await commentManager.getPendingComments({
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        });
+      } else {
+        // Get all comments with post information
+        const allComments = await dataManager.read('comments');
+        const posts = await dataManager.read('posts');
+
+        comments = allComments
+          .filter(comment => status === 'all' || comment.status === status)
+          .map(comment => {
+            const post = posts.find(p => p.id === comment.postId);
+            return {
+              ...comment,
+              post: post ? {
+                id: post.id,
+                title: post.title,
+                slug: post.slug
+              } : null
+            };
+          })
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
       }
 
-      const comments = await dataManager.read('comments');
-      const posts = await dataManager.read('posts');
+      const stats = await commentManager.getCommentStats();
 
-      const enrichedComments = comments.map(comment => {
-        const post = posts.find(p => p.id === comment.postId);
-        return {
-          ...comment,
-          postTitle: post ? post.title : 'N/A'
-        };
-      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      res.json(enrichedComments);
+      res.json({
+        success: true,
+        comments,
+        stats,
+        meta: {
+          total: comments.length,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        }
+      });
     } catch (error) {
       logger.error('Error fetching admin comments:', error);
-      res.status(500).json({ error: 'Failed to fetch comments' });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch comments'
+      });
     }
   });
 
-  // Approve a comment
-  app.put('/applications/blog/api/admin/comments/:id/approve', async (req, res) => {
+  // Moderate a comment (approve, reject, spam)
+  app.put('/applications/blog/api/admin/comments/:id/moderate', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
+      const { id } = req.params;
+      const { action } = req.body; // approve, reject, spam
+
+      if (!['approve', 'reject', 'spam'].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid moderation action'
+        });
       }
 
-      const commentId = parseInt(req.params.id);
-      const success = await dataManager.update('comments', commentId, { status: 'approved' });
+      const moderatedComment = await commentManager.moderateComment(
+        id,
+        action,
+        req.blogAuth?.user?.username || 'admin'
+      );
 
-      if (!success) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
+      res.json({
+        success: true,
+        message: `Comment ${action}d successfully`,
+        comment: moderatedComment
+      });
+    } catch (error) {
+      logger.error('Error moderating comment:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to moderate comment'
+      });
+    }
+  });
 
-      res.json({ success: true, message: 'Comment approved successfully' });
+  // Legacy approve endpoint (for backward compatibility)
+  app.put('/applications/blog/api/admin/comments/:id/approve', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const moderatedComment = await commentManager.moderateComment(
+        id,
+        'approve',
+        req.blogAuth?.user?.username || 'admin'
+      );
+
+      res.json({
+        success: true,
+        message: 'Comment approved successfully',
+        comment: moderatedComment
+      });
     } catch (error) {
       logger.error('Error approving comment:', error);
-      res.status(500).json({ error: 'Failed to approve comment' });
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to approve comment'
+      });
     }
   });
 
-  // Delete a comment
-  app.delete('/applications/blog/api/admin/comments/:id', async (req, res) => {
+  // Delete a comment and its replies
+  app.delete('/applications/blog/api/admin/comments/:id', requireAdmin, async (req, res) => {
     try {
-      if (!req.session.blogAuthenticated) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const commentId = parseInt(req.params.id);
-      const success = await dataManager.delete('comments', commentId);
+      const { id } = req.params;
+      const success = await commentManager.deleteComment(id);
 
       if (!success) {
-        return res.status(404).json({ error: 'Comment not found' });
+        return res.status(404).json({
+          success: false,
+          error: 'Comment not found'
+        });
       }
 
-      res.json({ success: true, message: 'Comment deleted successfully' });
+      res.json({
+        success: true,
+        message: 'Comment deleted successfully'
+      });
     } catch (error) {
       logger.error('Error deleting comment:', error);
-      res.status(500).json({ error: 'Failed to delete comment' });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete comment'
+      });
     }
   });
 
-  app.get('/applications/blog/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/admin.html'));
+  // Get comment statistics for admin
+  app.get('/applications/blog/api/admin/comments/stats', requireAdmin, async (req, res) => {
+    try {
+      const stats = await commentManager.getCommentStats();
+
+      res.json({
+        success: true,
+        stats
+      });
+    } catch (error) {
+      logger.error('Error fetching comment stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch comment statistics'
+      });
+    }
   });
 
-  app.get('/applications/blog/post-edit', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/post-edit.html'));
+  // ===== STATIC FILE SERVING =====
+
+  // Admin routes
+  app.get('/applications/blog/admin/stories', requireAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/admin-stories.html'));
+  });
+
+  app.get('/applications/blog/admin/write', requireAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/admin-write.html'));
+  });
+
+  app.get('/applications/blog/admin/stats', requireAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/admin-stats.html'));
+  });
+
+  // Legacy routes (redirect to admin)
+  app.get('/applications/blog/admin', (req, res) => {
+    res.redirect('/applications/blog/admin/stories');
+  });
+
+  app.get('/applications/blog/write', (req, res) => {
+    res.redirect('/applications/blog/admin/write');
+  });
+
+  app.get('/applications/blog/stats', (req, res) => {
+    res.redirect('/applications/blog/admin/stats');
   });
 
   logger.info('Blog routes registered successfully');

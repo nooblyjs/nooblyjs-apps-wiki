@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Blog</title>
+    <link rel="stylesheet" href="/applications/blog/css/medium-style.css">
+    <link rel="stylesheet" href="/applications/blog/css/login-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="header-left">
+                <a href="/applications/blog" class="logo">
+                    <div class="logo-icon"><i class="fas fa-blog"></i></div>
+                    <span>Blog</span>
+                </a>
+            </div>
+            <div class="header-right">
+                <a href="/applications/blog" class="btn-ghost">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Blog
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>Welcome back</h1>
+                    <p>Sign in to your account</p>
+                </div>
+
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            class="form-input"
+                            placeholder="Enter your username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe" name="rememberMe">
+                            <span class="checkbox-custom"></span>
+                            Remember me for 30 days
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary btn-full" id="loginButton">
+                            <span class="btn-text">Sign In</span>
+                            <div class="btn-spinner hidden">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div class="error-message hidden" id="errorMessage">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="errorText">Invalid username or password</span>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div class="success-message hidden" id="successMessage">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="successText">Login successful! Redirecting...</span>
+                    </div>
+                </form>
+
+                <div class="login-help">
+                    <div class="help-card">
+                        <h3>Demo Credentials</h3>
+                        <p><strong>Username:</strong> admin</p>
+                        <p><strong>Password:</strong> admin123</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/applications/blog/js/login.js"></script>
+</body>
+</html>

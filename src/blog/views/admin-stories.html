@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stories - Blog</title>
+    <link rel="stylesheet" href="/applications/blog/css/medium-style.css">
+    <link rel="stylesheet" href="/applications/blog/css/admin-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="header-left">
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/applications/blog" class="logo">
+                    <div class="logo-icon"><i class="fas fa-blog"></i></div>
+                    <span>Blog</span>
+                </a>
+            </div>
+
+            <div class="header-center">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search Blog" id="searchInput">
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="btn-ghost btn-icon" onclick="window.location.href='/applications/blog/admin/write'">
+                    <i class="fas fa-pen"></i>
+                    <span>Write</span>
+                </button>
+                <button class="btn-ghost btn-icon">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="user-menu">
+                    <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" onclick="toggleUserMenu()">
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/applications/blog/admin/stories" class="dropdown-item">
+                            <i class="fas fa-file-alt"></i>
+                            Stories
+                        </a>
+                        <a href="/applications/blog/admin/stats" class="dropdown-item">
+                            <i class="fas fa-chart-line"></i>
+                            Stats
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Sign out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <nav class="admin-nav">
+            <a href="/applications/blog" class="admin-nav-item">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="/applications/blog" class="admin-nav-item">
+                <i class="fas fa-book-open"></i>
+                <span>Library</span>
+            </a>
+            <a href="/applications/blog/admin/stories" class="admin-nav-item active">
+                <i class="fas fa-file-alt"></i>
+                <span>Stories</span>
+            </a>
+            <a href="/applications/blog/admin/stats" class="admin-nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Stats</span>
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+            <div class="sidebar-section">
+                <h4>Discover more writers and publications to follow</h4>
+                <a href="#" class="see-more-link">See suggestions</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main-content">
+        <div class="admin-content-header">
+            <div class="admin-header-left">
+                <h1>Stories</h1>
+                <button class="btn-primary import-btn">
+                    <i class="fas fa-upload"></i>
+                    Import story
+                </button>
+            </div>
+        </div>
+
+        <!-- Stories Tabs -->
+        <div class="stories-tabs">
+            <button class="tab-btn active" data-tab="drafts">
+                <span>Drafts</span>
+                <span class="tab-count" id="draftsCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="published">
+                <span>Published</span>
+                <span class="tab-count" id="publishedCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="unlisted">
+                <span>Unlisted</span>
+                <span class="tab-count" id="unlistedCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="submissions">
+                <span>Submissions</span>
+                <span class="tab-badge">New</span>
+            </button>
+        </div>
+
+        <!-- Stories Content -->
+        <div class="stories-content">
+            <!-- Loading State -->
+            <div class="loading-state hidden" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p>Loading stories...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div class="stories-empty-state" id="emptyState">
+                <div class="empty-state-content">
+                    <h2>You have no stories in draft.</h2>
+                    <p>Why not <a href="/applications/blog/admin/write" class="start-writing-link">start writing one?</a></p>
+                </div>
+            </div>
+
+            <!-- Stories List -->
+            <div class="stories-list hidden" id="storiesList">
+                <!-- Stories will be dynamically loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Story Action Modal -->
+    <div class="modal hidden" id="storyActionModal">
+        <div class="modal-overlay" onclick="closeStoryActionModal()"></div>
+        <div class="modal-content story-action-modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Story Actions</h2>
+                <button class="modal-close" onclick="closeStoryActionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="story-actions">
+                <button class="action-btn" onclick="editStory()">
+                    <i class="fas fa-edit"></i>
+                    Edit story
+                </button>
+                <button class="action-btn" onclick="previewStory()">
+                    <i class="fas fa-eye"></i>
+                    Preview
+                </button>
+                <button class="action-btn" onclick="publishStory()">
+                    <i class="fas fa-globe"></i>
+                    Publish
+                </button>
+                <button class="action-btn" onclick="duplicateStory()">
+                    <i class="fas fa-copy"></i>
+                    Duplicate
+                </button>
+                <div class="action-separator"></div>
+                <button class="action-btn danger" onclick="deleteStory()">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Story Modal -->
+    <div class="modal hidden" id="importModal">
+        <div class="modal-overlay" onclick="closeImportModal()"></div>
+        <div class="modal-content import-modal">
+            <div class="modal-header">
+                <h2>Import story</h2>
+                <button class="modal-close" onclick="closeImportModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="import-content">
+                <div class="import-options">
+                    <button class="import-option" onclick="importFromUrl()">
+                        <i class="fas fa-link"></i>
+                        <span>Import from URL</span>
+                    </button>
+                    <button class="import-option" onclick="uploadFile()">
+                        <i class="fas fa-file-upload"></i>
+                        <span>Upload file</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div class="modal hidden" id="commentsModal">
+        <div class="modal-overlay" onclick="closeCommentsModal()"></div>
+        <div class="modal-content comments-modal">
+            <div class="modal-header">
+                <h2>Comments</h2>
+                <button class="modal-close" onclick="closeCommentsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="comments-tabs">
+                <button class="tab-btn active" data-tab="pending">
+                    Pending
+                    <span class="tab-count" id="pendingCommentsCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="approved">
+                    Approved
+                    <span class="tab-count" id="approvedCommentsCount">0</span>
+                </button>
+            </div>
+            <div class="comments-list" id="commentsList">
+                <!-- Comments will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/applications/blog/js/admin-stories.js"></script>
+</body>
+</html>
