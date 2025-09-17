@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS Dashboard</title>
+    <link rel="stylesheet" href="/applications/cms/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-cube"></i> CMS</h2>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="active">
+                    <a href="/applications/cms/dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/sites">
+                        <i class="fas fa-globe"></i>
+                        <span>Sites</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/pages">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Pages</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/assets">
+                        <i class="fas fa-images"></i>
+                        <span>Assets</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/templates">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Templates</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/themes">
+                        <i class="fas fa-palette"></i>
+                        <span>Themes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/analytics">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/applications/cms/settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="current-user">Admin</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-left">
+                    <h1>Dashboard</h1>
+                    <p>Welcome to your CMS dashboard</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="window.location.href='/applications/cms/sites/new'">
+                        <i class="fas fa-plus"></i>
+                        New Site
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-sites">0</h3>
+                        <p>Total Sites</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="published-sites">0</h3>
+                        <p>Published Sites</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-pages">0</h3>
+                        <p>Total Pages</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-assets">0</h3>
+                        <p>Assets</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Actions -->
+            <div class="dashboard-grid">
+                <!-- Recent Sites -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Recent Sites</h2>
+                        <a href="/applications/cms/sites" class="view-all">View All</a>
+                    </div>
+                    <div class="card-content">
+                        <div id="recent-sites" class="sites-list">
+                            <!-- Sites will be loaded dynamically -->
+                            <div class="loading">Loading sites...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Quick Actions</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="window.location.href='/applications/cms/sites/new'">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Create New Site</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="window.location.href='/applications/cms/assets/upload'">
+                                <i class="fas fa-upload"></i>
+                                <span>Upload Assets</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="window.location.href='/applications/cms/templates'">
+                                <i class="fas fa-layer-group"></i>
+                                <span>Browse Templates</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="window.location.href='/applications/cms/themes'">
+                                <i class="fas fa-palette"></i>
+                                <span>Manage Themes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>System Status</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="status-items">
+                            <div class="status-item">
+                                <span class="status-label">CMS Service</span>
+                                <span class="status-indicator status-online">
+                                    <i class="fas fa-circle"></i> Online
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Site Builder</span>
+                                <span class="status-indicator status-online">
+                                    <i class="fas fa-circle"></i> Active
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Asset Manager</span>
+                                <span class="status-indicator status-online">
+                                    <i class="fas fa-circle"></i> Running
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Storage Usage</span>
+                                <span class="status-value" id="storage-usage">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-card full-width">
+                    <div class="card-header">
+                        <h2>Recent Activity</h2>
+                    </div>
+                    <div class="card-content">
+                        <div id="recent-activity" class="activity-list">
+                            <!-- Activity will be loaded dynamically -->
+                            <div class="activity-item">
+                                <i class="fas fa-plus-circle activity-icon"></i>
+                                <div class="activity-content">
+                                    <p><strong>Welcome!</strong> Your CMS is ready to use.</p>
+                                    <span class="activity-time">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/applications/cms/js/dashboard.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load dashboard stats
+                const statsResponse = await fetch('/applications/cms/api/dashboard/stats');
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    updateStats(stats);
+                }
+
+                // Load recent sites
+                const sitesResponse = await fetch('/applications/cms/api/sites?limit=5');
+                if (sitesResponse.ok) {
+                    const sites = await sitesResponse.json();
+                    updateRecentSites(sites);
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('total-sites').textContent = stats.totalSites || 0;
+            document.getElementById('published-sites').textContent = stats.publishedSites || 0;
+            document.getElementById('total-pages').textContent = stats.totalPages || 0;
+            document.getElementById('total-assets').textContent = stats.totalAssets || 0;
+
+            const storageUsage = Math.round((stats.storageUsed || 0) / 1024 / 1024);
+            document.getElementById('storage-usage').textContent = `${storageUsage} MB`;
+        }
+
+        function updateRecentSites(sites) {
+            const container = document.getElementById('recent-sites');
+
+            if (sites.length === 0) {
+                container.innerHTML = '<p class="no-data">No sites yet. <a href="/applications/cms/sites/new">Create your first site</a></p>';
+                return;
+            }
+
+            container.innerHTML = sites.map(site => `
+                <div class="site-item">
+                    <div class="site-info">
+                        <h4>${site.name}</h4>
+                        <p>${site.settings?.description || 'No description'}</p>
+                        <span class="site-status status-${site.status}">${site.status}</span>
+                    </div>
+                    <div class="site-actions">
+                        <a href="/applications/cms/sites/${site.id}/edit" class="btn btn-sm">Edit</a>
+                        ${site.status === 'published' ?
+                            `<a href="${site.url || '#'}" class="btn btn-sm btn-outline" target="_blank">View</a>` :
+                            `<button class="btn btn-sm btn-outline" onclick="publishSite('${site.id}')">Publish</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function publishSite(siteId) {
+            try {
+                const response = await fetch(`/applications/cms/api/sites/${siteId}/publish`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    showNotification('Site published successfully!', 'success');
+                    loadDashboardData(); // Refresh data
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Failed to publish site', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to publish site', 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/applications/cms/api/auth/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/applications/cms/login';
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
