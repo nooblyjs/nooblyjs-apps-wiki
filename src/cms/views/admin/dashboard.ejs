@@ -236,88 +236,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/applications/cms/js/dashboard.js"></script>
+    <script src="/applications/cms/js/app.js"></script>
     <script>
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            loadDashboardData();
-        });
-
-        async function loadDashboardData() {
-            try {
-                // Load dashboard stats
-                const statsResponse = await fetch('/applications/cms/api/dashboard/stats');
-                if (statsResponse.ok) {
-                    const stats = await statsResponse.json();
-                    updateStats(stats);
-                }
-
-                // Load recent sites
-                const sitesResponse = await fetch('/applications/cms/api/sites?limit=5');
-                if (sitesResponse.ok) {
-                    const sites = await sitesResponse.json();
-                    updateRecentSites(sites);
-                }
-
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            }
-        }
-
-        function updateStats(stats) {
-            document.getElementById('total-sites').textContent = stats.totalSites || 0;
-            document.getElementById('published-sites').textContent = stats.publishedSites || 0;
-            document.getElementById('total-pages').textContent = stats.totalPages || 0;
-            document.getElementById('total-assets').textContent = stats.totalAssets || 0;
-
-            const storageUsage = Math.round((stats.storageUsed || 0) / 1024 / 1024);
-            document.getElementById('storage-usage').textContent = `${storageUsage} MB`;
-        }
-
-        function updateRecentSites(sites) {
-            const container = document.getElementById('recent-sites');
-
-            if (sites.length === 0) {
-                container.innerHTML = '<p class="no-data">No sites yet. <a href="/applications/cms/sites/new">Create your first site</a></p>';
-                return;
-            }
-
-            container.innerHTML = sites.map(site => `
-                <div class="site-item">
-                    <div class="site-info">
-                        <h4>${site.name}</h4>
-                        <p>${site.settings?.description || 'No description'}</p>
-                        <span class="site-status status-${site.status}">${site.status}</span>
-                    </div>
-                    <div class="site-actions">
-                        <a href="/applications/cms/sites/${site.id}/edit" class="btn btn-sm">Edit</a>
-                        ${site.status === 'published' ?
-                            `<a href="${site.url || '#'}" class="btn btn-sm btn-outline" target="_blank">View</a>` :
-                            `<button class="btn btn-sm btn-outline" onclick="publishSite('${site.id}')">Publish</button>`
-                        }
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function publishSite(siteId) {
-            try {
-                const response = await fetch(`/applications/cms/api/sites/${siteId}/publish`, {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    showNotification('Site published successfully!', 'success');
-                    loadDashboardData(); // Refresh data
-                } else {
-                    const error = await response.json();
-                    showNotification(error.error || 'Failed to publish site', 'error');
-                }
-            } catch (error) {
-                showNotification('Failed to publish site', 'error');
-            }
-        }
-
+        // Additional logout function for this page
         async function logout() {
             try {
                 const response = await fetch('/applications/cms/api/auth/logout', {
@@ -330,18 +251,6 @@
             } catch (error) {
                 console.error('Logout failed:', error);
             }
-        }
-
-        function showNotification(message, type = 'info') {
-            // Simple notification system
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
         }
     </script>
 </body>

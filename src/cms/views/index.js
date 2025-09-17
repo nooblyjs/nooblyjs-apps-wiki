@@ -34,14 +34,28 @@ module.exports = (options, eventEmitter, services) => {
   // Store services for access in middleware
   app.locals.cmsServices = services;
 
-  // Serve static files for the CMS application
-  app.use('/applications/cms', express.static(path.join(__dirname)));
-
   // Set EJS as the view engine for CMS routes
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'admin'));
 
-  // CMS Admin Routes (serving HTML pages)
+  // Authentication middleware
+  function requireAuth(req, res, next) {
+    if (!req.session.cmsAuthenticated) {
+      return res.redirect('/applications/cms/login');
+    }
+    next();
+  }
+
+  // CMS Admin Routes (serving HTML pages) - Register these BEFORE static middleware
+
+  // Redirect root CMS path to dashboard
+  app.get('/applications/cms', (req, res) => {
+    if (req.session.cmsAuthenticated) {
+      res.redirect('/applications/cms/dashboard');
+    } else {
+      res.redirect('/applications/cms/login');
+    }
+  });
 
   // Login page
   app.get('/applications/cms/login', (req, res) => {
@@ -147,14 +161,11 @@ module.exports = (options, eventEmitter, services) => {
     });
   });
 
-  // Redirect root CMS path to dashboard
-  app.get('/applications/cms', (req, res) => {
-    if (req.session.cmsAuthenticated) {
-      res.redirect('/applications/cms/dashboard');
-    } else {
-      res.redirect('/applications/cms/login');
-    }
-  });
+  // Serve static files for CMS application (CSS, JS, images)
+  // This must come AFTER all route definitions to avoid conflicts
+  app.use('/applications/cms/css', express.static(path.join(__dirname, 'css')));
+  app.use('/applications/cms/js', express.static(path.join(__dirname, 'js')));
+  app.use('/applications/cms/assets', express.static(path.join(__dirname, 'assets')));
 
   // Serve published sites (this would be enhanced in a real implementation)
   app.get('/sites/:siteId/*', async (req, res) => {
@@ -179,14 +190,6 @@ module.exports = (options, eventEmitter, services) => {
       res.status(500).send('Site not available');
     }
   });
-
-  // Authentication middleware
-  function requireAuth(req, res, next) {
-    if (!req.session.cmsAuthenticated) {
-      return res.redirect('/applications/cms/login');
-    }
-    next();
-  }
 
   // Log that CMS views are registered
   logger.info('CMS views and routes registered successfully');

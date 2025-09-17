@@ -1,10 +1,10 @@
-/* Theme: Portfolio Theme */
-/* Generated on: 2025-09-17T04:59:34.724Z */
+/* Theme: Business Pro */
+/* Generated on: 2025-09-17T04:58:09.352Z */
 
 :root {
   /* Colors */
-  --color-primary: #212529;
-  --color-secondary: #6c757d;
+  --color-primary: #0056b3;
+  --color-secondary: #495057;
   --color-success: #28a745;
   --color-danger: #dc3545;
   --color-warning: #ffc107;
@@ -14,18 +14,18 @@
   --color-background: #ffffff;
   --color-text: #212529;
   --color-muted: #6c757d;
-  --color-accent: #fd7e14;
+  --color-accent: #20c997;
 
   /* Typography */
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: "Roboto Slab", Georgia, serif;
   --font-size: 16px;
-  --line-height: 1.6;
+  --line-height: 1.5;
 
   /* Layout */
-  --container-width: 1140px;
+  --container-width: 1200px;
   --grid-columns: 12;
-  --spacing: 2rem;
+  --spacing: 1.5rem;
 }
 
 /* Base Styles */

@@ -1,0 +1,27 @@
+{
+  "id": "business",
+  "name": "Business Pro",
+  "description": "Professional theme for business websites",
+  "category": "business",
+  "author": "NooblyJS Team",
+  "version": "1.0.0",
+  "colors": {
+    "primary": "#0056b3",
+    "secondary": "#495057",
+    "accent": "#20c997",
+    "background": "#ffffff",
+    "text": "#212529",
+    "light": "#f8f9fa"
+  },
+  "typography": {
+    "fontFamily": "\"Roboto\", -apple-system, BlinkMacSystemFont, sans-serif",
+    "headingFont": "\"Roboto Slab\", Georgia, serif",
+    "fontSize": "16px",
+    "lineHeight": "1.5"
+  },
+  "layout": {
+    "containerWidth": "1200px",
+    "gridColumns": 12,
+    "spacing": "1.5rem"
+  }
+}
