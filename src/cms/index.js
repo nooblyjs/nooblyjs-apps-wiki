@@ -28,17 +28,21 @@ const ThemeManager = require('./components/themeManager');
  * @return {void}
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
-  // Initialize data manager for JSON file storage
-  const dataManager = new DataManager('./data');
 
-  // Initialize noobly-core services for the CMS
-  const filing = serviceRegistry.filing('local', {
-    baseDir: './cms-files'
-  });
-  const cache = serviceRegistry.cache('memory');
-  const logger = serviceRegistry.logger('console');
-  const queue = serviceRegistry.queue('memory');
-  const search = serviceRegistry.searching('memory');
+  const dataDirectory = options.dataDirectory || './application/cms-data';
+  const filesDir = options.filesDir || './application/cms-files';
+  const cacheProvider = options.filesDir || 'memory';
+  const filerProvider = options.filesDir || 'local';
+  const loggerProvider = options.filesDir || 'console';
+  const queueProvider = options.filesDir || 'memory';
+  const searchProvider = options.filesDir || 'memory';
+
+  const dataManager = new DataManager(dataDirectory);
+  const filing = serviceRegistry.filing(filerProvider, {baseDir: filesDir});
+  const cache = serviceRegistry.cache(cacheProvider);
+  const logger = serviceRegistry.logger(loggerProvider);
+  const queue = serviceRegistry.queue(queueProvider);
+  const search = serviceRegistry.searching(searchProvider);
   const auth = serviceRegistry.authservice();
   const ai = serviceRegistry.aiservice();
   const workflow = serviceRegistry.workflow();

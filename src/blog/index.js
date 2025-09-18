@@ -28,21 +28,29 @@ const BlogAuth = require('../auth');
  * @return {void}
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
-  // Initialize data manager for JSON file storage
-  const dataManager = new DataManager('./data');
 
-  // Initialize noobly-core services for the blog
-  const filing = serviceRegistry.filing('local', {
-    baseDir: './blog-posts'
-  });
-  const cache = serviceRegistry.cache('memory');
-  const logger = serviceRegistry.logger('console');
-  const queue = serviceRegistry.queue('memory');
-  const search = serviceRegistry.searching('memory');
-  const scheduling = serviceRegistry.scheduling ? serviceRegistry.scheduling('memory') : null;
-  const measuring = serviceRegistry.measuring ? serviceRegistry.measuring('memory') : null;
-  const notifying = serviceRegistry.notifying ? serviceRegistry.notifying('console') : null;
-  const emailing = serviceRegistry.emailing ? serviceRegistry.emailing('console') : null;
+  const dataDirectory = options.dataDirectory || './application/blog-data';
+  const filesDir = options.filesDir || './application/blog-posts';
+  const cacheProvider = options.filesDir || 'memory';
+  const filerProvider = options.filesDir || 'local';
+  const loggerProvider = options.filesDir || 'console';
+  const queueProvider = options.filesDir || 'memory';
+  const searchProvider = options.filesDir || 'memory';
+  const schedulingProvider = options.filesDir || 'memory';
+  const measuringProvider = options.filesDir || 'memory';
+  const notifyingProvider = options.filesDir || 'console';
+  const emailingProvider = options.filesDir || 'console';
+
+  const dataManager = new DataManager(dataDirectory);
+  const filing = serviceRegistry.filing(filerProvider, { baseDir: filesDir});
+  const cache = serviceRegistry.cache(cacheProvider);
+  const logger = serviceRegistry.logger(loggerProvider);
+  const queue = serviceRegistry.queue(queueProvider);
+  const search = serviceRegistry.searching(searchProvider);
+  const scheduling = serviceRegistry.scheduling ? serviceRegistry.scheduling(schedulingProvider) : null;
+  const measuring = serviceRegistry.measuring ? serviceRegistry.measuring(measuringProvider) : null;
+  const notifying = serviceRegistry.notifying ? serviceRegistry.notifying(notifyingProvider) : null;
+  const emailing = serviceRegistry.emailing ? serviceRegistry.emailing(emailingProvider) : null;
 
   // Initialize authentication service
   const authService = BlogAuth(options, eventEmitter, serviceRegistry);

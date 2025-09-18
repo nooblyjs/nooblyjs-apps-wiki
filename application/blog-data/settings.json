@@ -1,0 +1,31 @@
+{
+  "siteName": "My Blog",
+  "siteDescription": "A modern blogging platform built with NooblyJS",
+  "siteUrl": "http://localhost:3002",
+  "seoTitle": "My Blog - Insights and Stories",
+  "seoDescription": "Discover insights, stories, and knowledge on our modern blogging platform",
+  "seoKeywords": [
+    "blog",
+    "stories",
+    "insights",
+    "technology"
+  ],
+  "socialLinks": {
+    "twitter": "",
+    "facebook": "",
+    "linkedin": "",
+    "instagram": ""
+  },
+  "analytics": {
+    "googleAnalytics": "",
+    "enableComments": true,
+    "moderateComments": true,
+    "allowGuestComments": true
+  },
+  "appearance": {
+    "theme": "default",
+    "primaryColor": "#1a8917",
+    "accentColor": "#3B82F6"
+  },
+  "updatedAt": "2025-09-18T10:59:40.645Z"
+}

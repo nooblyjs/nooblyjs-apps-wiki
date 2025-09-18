@@ -25,17 +25,21 @@ const DataManager = require('./components/dataManager');
  * @return {void}
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
-  // Initialize data manager for JSON file storage
-  const dataManager = new DataManager('./data');
   
-  // Initialize noobly-core services for the wiki
-  const filing = serviceRegistry.filing('local', { 
-    baseDir: './wiki-files' 
-  });
-  const cache = serviceRegistry.cache('memory');
-  const logger = serviceRegistry.logger('console');
-  const queue = serviceRegistry.queue('memory');
-  const search = serviceRegistry.searching('memory');
+  const dataDirectory = options.dataDirectory || './application/wiki-data'
+  const filesDir = options.filesDir || './application/wiki-files'
+  const cacheProvider = options.filesDir || 'memory'
+  const filerProvider = options.filesDir || 'local'
+  const loggerProvider = options.filesDir || 'console'
+  const queueProvider = options.filesDir || 'memory'
+  const searchProvider = options.filesDir || 'memory'
+  
+  const dataManager = new DataManager(dataDirectory);
+  const filing = serviceRegistry.filing(filerProvider, { baseDir: filesDir});
+  const cache = serviceRegistry.cache(cacheProvider);
+  const logger = serviceRegistry.logger(loggerProvider);
+  const queue = serviceRegistry.queue(queueProvider);
+  const search = serviceRegistry.searching(searchProvider);
   
   // Initialize wiki data if not exists
   (async () => {
