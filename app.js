@@ -79,5 +79,5 @@ app.use('/api/auth', authRoutes);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`Nooblyjs Wiki Server running on port ${PORT}`);
+  log.info(`Nooblyjs Content Server running on port ${PORT}`);
 });
