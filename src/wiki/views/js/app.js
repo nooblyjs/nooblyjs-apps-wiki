@@ -418,12 +418,11 @@ class WikiApp {
             if (node.type === 'folder') {
                 const hasChildren = node.children && node.children.length > 0;
                 const folderId = `folder-${node.path.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                
+
                 return `
-                    <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${folderId}" style="padding-left: ${16 + level * 16}px">
-                        <svg class="folder-icon" width="16" height="16">
-                            <use href="#icon-folder"></use>
-                        </svg>
+                    <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${folderId}" style="padding-left: ${level * 16}px">
+                        <i class="bi ${hasChildren ? 'bi-chevron-right' : ''} folder-icon"></i>
+                        <i class="bi bi-folder"></i>
                         <span>${node.name}</span>
                     </div>
                     ${hasChildren ? `
@@ -435,13 +434,11 @@ class WikiApp {
             } else if (node.type === 'document') {
                 // Only show root-level documents initially
                 if (isRoot || level > 0) {
-                    const fileTypeInfo = this.getFileTypeInfo(node.path || node.name);
-                    const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
-                    const iconColor = fileTypeInfo.color;
-                    
+                    const fileIcon = this.getFileIcon(node.path || node.name);
+
                     return `
-                        <div class="file-item" data-document-path="${node.path}" data-space-name="${node.spaceName}" style="padding-left: ${16 + level * 16}px">
-                            <i class="fas ${iconClass}" style="color: ${iconColor}; width: 16px; text-align: center;"></i>
+                        <div class="file-item" data-document-path="${node.path}" data-space-name="${node.spaceName}" style="padding-left: ${(level * 16) + 16}px">
+                            <i class="bi ${fileIcon.icon} ${fileIcon.color}"></i>
                             <span>${node.title || node.name}</span>
                         </div>
                     `;
@@ -546,26 +543,127 @@ class WikiApp {
     toggleFolder(folderId) {
         const folderItem = document.querySelector(`[data-folder-id="${folderId}"]`);
         const folderChildren = document.querySelector(`[data-folder-children="${folderId}"]`);
-        
+
         if (!folderItem || !folderChildren) return;
 
         const isExpanded = folderItem.classList.contains('expanded');
-        const folderIcon = folderItem.querySelector('.folder-icon use');
-        
+        const chevronIcon = folderItem.querySelector('.folder-icon');
+        const folderIcon = folderItem.querySelector('.bi-folder');
+
         if (isExpanded) {
             // Collapse
             folderItem.classList.remove('expanded');
             folderChildren.classList.remove('expanded');
+            if (chevronIcon) {
+                chevronIcon.className = 'bi bi-chevron-right folder-icon';
+            }
             if (folderIcon) {
-                folderIcon.setAttribute('href', '#icon-folder');
+                folderIcon.className = 'bi bi-folder';
             }
         } else {
             // Expand
             folderItem.classList.add('expanded');
             folderChildren.classList.add('expanded');
-            if (folderIcon) {
-                folderIcon.setAttribute('href', '#icon-folder-open');
+            if (chevronIcon) {
+                chevronIcon.className = 'bi bi-chevron-down folder-icon';
             }
+            if (folderIcon) {
+                folderIcon.className = 'bi bi-folder-open';
+            }
+        }
+    }
+
+    getFileIcon(filename) {
+        const extension = filename.split('.').pop()?.toLowerCase();
+
+        switch (extension) {
+            case 'md':
+            case 'markdown':
+                return { icon: 'bi-file-text', color: '' };
+            case 'txt':
+                return { icon: 'bi-file-text', color: '' };
+            case 'pdf':
+                return { icon: 'bi-file-pdf', color: '' };
+            case 'doc':
+            case 'docx':
+                return { icon: 'bi-file-word', color: '' };
+            case 'xls':
+            case 'xlsx':
+                return { icon: 'bi-file-excel', color: '' };
+            case 'ppt':
+            case 'pptx':
+                return { icon: 'bi-file-ppt', color: '' };
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg':
+                return { icon: 'bi-file-image', color: '' };
+            case 'js':
+            case 'ts':
+            case 'jsx':
+            case 'tsx':
+                return { icon: 'bi-file-code', color: '' };
+            case 'html':
+            case 'htm':
+                return { icon: 'bi-file-code', color: '' };
+            case 'css':
+            case 'scss':
+            case 'sass':
+                return { icon: 'bi-file-code', color: '' };
+            case 'json':
+            case 'xml':
+                return { icon: 'bi-file-code', color: '' };
+            default:
+                return { icon: 'bi-file', color: '' };
+        }
+    }
+
+    getFileTypeFromExtension(filename) {
+        const extension = filename.split('.').pop()?.toLowerCase();
+
+        switch (extension) {
+            case 'md':
+            case 'markdown':
+                return 'Markdown';
+            case 'txt':
+                return 'Text';
+            case 'pdf':
+                return 'PDF';
+            case 'doc':
+            case 'docx':
+                return 'Word Document';
+            case 'xls':
+            case 'xlsx':
+                return 'Excel';
+            case 'ppt':
+            case 'pptx':
+                return 'PowerPoint';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg':
+                return 'Image';
+            case 'js':
+            case 'ts':
+                return 'JavaScript';
+            case 'jsx':
+            case 'tsx':
+                return 'React';
+            case 'html':
+            case 'htm':
+                return 'HTML';
+            case 'css':
+            case 'scss':
+            case 'sass':
+                return 'CSS';
+            case 'json':
+                return 'JSON';
+            case 'xml':
+                return 'XML';
+            default:
+                return 'File';
         }
     }
 
@@ -627,20 +725,18 @@ class WikiApp {
         const totalFiles = folderContent.stats.files;
         const totalFolders = folderContent.stats.folders;
         
-        // Create folder view HTML matching the reference design
+        // Create folder view HTML with Bootstrap styling
         const folderViewHtml = `
             <div id="folderView" class="view">
                 <div class="folder-header">
-                    <nav class="breadcrumb">
-                        <a href="#" id="backToSpace">${folderContent.spaceName}</a>
+                    <nav class="breadcrumb mb-3">
+                        <a href="#" id="backToSpace" class="text-decoration-none">${folderContent.spaceName}</a>
                         <span class="breadcrumb-separator">/</span>
-                        <span>${folderContent.title}</span>
+                        <span class="text-muted">${folderContent.title}</span>
                     </nav>
-                    
+
                     <div class="folder-title-section">
-                        <svg class="folder-main-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
-                        </svg>
+                        <i class="bi bi-folder folder-main-icon"></i>
                         <div class="folder-title-info">
                             <h1>${folderContent.title}</h1>
                             <div class="folder-stats">
@@ -650,13 +746,11 @@ class WikiApp {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="folder-content">
                     ${folderContent.folders.length === 0 && folderContent.files.length === 0 ? `
                         <div class="empty-folder">
-                            <svg width="48" height="48" class="empty-folder-icon">
-                                <use href="#icon-folder"></use>
-                            </svg>
+                            <i class="bi bi-folder empty-folder-icon"></i>
                             <p>This folder is empty</p>
                         </div>
                     ` : `
@@ -665,9 +759,7 @@ class WikiApp {
                                 const childCount = folder.childCount || 0;
                                 return `
                                     <div class="item-card folder-card" data-folder-path="${folder.path}">
-                                        <svg class="item-icon folder-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
-                                        </svg>
+                                        <i class="bi bi-folder item-icon"></i>
                                         <div class="item-info">
                                             <div class="item-name">${folder.name}</div>
                                             <div class="item-meta">Folder • ${childCount} item${childCount !== 1 ? 's' : ''}</div>
@@ -676,16 +768,14 @@ class WikiApp {
                                 `;
                             }).join('')}
                             ${folderContent.files.map(file => {
-                                const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
-                                const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
-                                const iconColor = fileTypeInfo.color;
-                                
+                                const fileIcon = this.getFileIcon(file.path || file.name);
+
                                 return `
                                 <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                    <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                    <i class="bi ${fileIcon.icon} item-icon"></i>
                                     <div class="item-info">
                                         <div class="item-name">${file.title || file.name}</div>
-                                        <div class="item-meta">File • ${fileTypeInfo.category}</div>
+                                        <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
                                     </div>
                                 </div>
                                 `;

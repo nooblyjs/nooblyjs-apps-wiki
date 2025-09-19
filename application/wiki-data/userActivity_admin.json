@@ -1,7 +1,22 @@
 {
   "userId": "admin",
   "starred": [],
-  "recent": [],
-  "createdAt": "2025-09-18T11:04:59.941Z",
-  "updatedAt": "2025-09-18T11:04:59.941Z"
+  "recent": [
+    {
+      "path": "Beach.jpg",
+      "spaceName": "Personal Space",
+      "title": "Beach.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-09-19T22:36:25.809Z"
+    },
+    {
+      "path": "Home.md",
+      "spaceName": "Personal Space",
+      "title": "Home.md",
+      "action": "viewed",
+      "visitedAt": "2025-09-19T22:36:12.521Z"
+    }
+  ],
+  "createdAt": "2025-09-19T22:35:50.229Z",
+  "updatedAt": "2025-09-19T22:36:25.809Z"
 }
