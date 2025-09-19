@@ -2483,6 +2483,8 @@ class WikiApp {
         container.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
                 const { path, spaceName, title } = item.dataset;
+                // Ensure we exit editor mode before loading new content
+                this.exitEditorMode();
                 this.loadDocumentContent(path, spaceName, title);
             });
         });
