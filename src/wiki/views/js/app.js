@@ -2371,9 +2371,9 @@ class WikiApp {
     
     selectSuggestion(suggestionData) {
         const { path, spaceName, title, type } = suggestionData;
-        
+
         this.hideSuggestions();
-        
+
         // If it's a search term or no specific document, update search box and perform search
         if (type === 'search-term' || (!path || !spaceName)) {
             const searchInput = document.getElementById('globalSearch');
@@ -2382,7 +2382,8 @@ class WikiApp {
             }
             this.performSearch();
         } else {
-            // It's a specific document, load it directly
+            // It's a specific document, ensure we exit editor mode and load it cleanly
+            this.exitEditorMode();
             this.loadDocumentContent(path, spaceName, title);
         }
     }
@@ -2533,46 +2534,59 @@ class WikiApp {
     }
 
     displayDocument(documentData, spaceName, path) {
+        // Ensure we're not in editing mode and switch to document view
         this.setActiveView('document');
-        
+        this.isEditing = false;
+
         // Update breadcrumb
         const spaceLink = document.getElementById('docBackToSpace');
         if (spaceLink) {
             spaceLink.textContent = spaceName;
             spaceLink.onclick = () => this.showHome();
         }
-        
+
         const titleElement = document.getElementById('currentDocTitle');
         if (titleElement) {
             titleElement.textContent = documentData.metadata?.fileName || path;
         }
-        
+
         // Render content based on viewer type
         const container = document.querySelector('#documentView .document-container');
+
+        if (!container) {
+            console.error('Document container not found');
+            return;
+        }
+
+        // Clear any existing content completely
         const existingContent = container.querySelector('.document-content');
         if (existingContent) {
             existingContent.remove();
         }
-        
+
+        // Create fresh content div
         const contentDiv = document.createElement('div');
         contentDiv.className = 'document-content';
-        
+
         if (documentData.metadata?.viewer === 'markdown') {
             // Render markdown
-            contentDiv.innerHTML = `<div class="markdown-content">${marked.parse(documentData.content || '')}</div>`;
+            contentDiv.innerHTML = `<div class="document-content-wrapper"><div class="markdown-content">${marked.parse(documentData.content || '')}</div></div>`;
+        } else if (documentData.metadata?.viewer === 'image') {
+            // Render image
+            contentDiv.innerHTML = `<div class="document-content-wrapper"><div class="image-viewer"><img src="${documentData.url || documentData.path}" alt="${documentData.metadata?.fileName || 'Image'}" /></div></div>`;
         } else {
             // Render as preformatted text
-            contentDiv.innerHTML = `<pre class="document-text">${this.escapeHtml(documentData.content || 'No content available')}</pre>`;
+            contentDiv.innerHTML = `<div class="document-content-wrapper"><pre class="text-viewer">${this.escapeHtml(documentData.content || 'No content available')}</pre></div>`;
         }
-        
+
         container.appendChild(contentDiv);
-        
+
         // Update edit button
         const editBtn = document.getElementById('editDocBtn');
         if (editBtn) {
             editBtn.onclick = () => this.editDocument(path, spaceName, documentData);
         }
-        
+
         // Store current document info
         this.currentDocument = { path, spaceName, data: documentData };
     }
@@ -3545,13 +3559,33 @@ class WikiApp {
         }
     }
     
+    // Exit editor mode without returning to previous document
+    exitEditorMode() {
+        if (this.isEditing) {
+            this.isEditing = false;
+
+            // Remove event listeners
+            document.removeEventListener('keydown', this.handleKeyDown);
+
+            // Clear editor content
+            const titleInput = document.getElementById('docTitle');
+            const textarea = document.getElementById('editorTextarea');
+
+            if (titleInput) titleInput.value = '';
+            if (textarea) textarea.value = '';
+
+            // Clear current document reference
+            this.currentDocument = null;
+        }
+    }
+
     // Close editor
     closeEditor(doc) {
         this.isEditing = false;
-        
+
         // Remove event listeners
         document.removeEventListener('keydown', this.handleKeyDown);
-        
+
         // Return to document view
         this.showEnhancedDocumentView(this.currentDocument || doc);
     }
