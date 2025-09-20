@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "architecture-artifacts-3d0c2858b142",
+    "spaceId": 1,
+    "spaceName": "Personal Space",
+    "path": "architecture-artifacts-3d0c2858b142.json",
+    "excerpt": "{\n  \"type\": \"service_account\",\n  \"project_id\": \"architecture-artifacts\",\n  \"private_key_id\": \"3d0c2858b142823fc87d58cd6885eca8dfce00b2\",\n  \"private_ke...",
+    "author": "Current User",
+    "createdAt": "2025-09-20T05:41:58.718Z",
+    "modifiedAt": "2025-09-20T05:41:58.718Z",
+    "views": 0,
+    "tags": []
+  }
+]

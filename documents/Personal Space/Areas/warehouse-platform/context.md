@@ -1,4 +1,4 @@
-# Digital Commerce Platform - Context View
+# Digital Commerce Platform - Context Views
 
 This view shows the Digital Commerce Platform's integration landscape, including connected systems, communication interfaces, middleware components, and integration patterns used for system-to-system communication.
 

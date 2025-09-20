@@ -100,12 +100,20 @@ class WikiApp {
         });
 
         // File actions
+        document.getElementById('uploadBtn')?.addEventListener('click', () => {
+            this.showUploadDialog(null); // null = root directory
+        });
+
         document.getElementById('createFolderBtn')?.addEventListener('click', () => {
-            this.showCreateFolderModal();
+            this.showCreateFolderModal(null); // null = root directory
         });
 
         document.getElementById('createFileBtn')?.addEventListener('click', () => {
-            this.showCreateFileModal();
+            this.showCreateFileModal(null); // null = root directory
+        });
+
+        document.getElementById('publishBtn')?.addEventListener('click', () => {
+            this.handlePublish();
         });
 
         document.getElementById('createNewMarkdownBtn')?.addEventListener('click', () => {
@@ -172,7 +180,7 @@ class WikiApp {
 
         // File upload handling
         document.getElementById('fileUploadInput')?.addEventListener('change', (e) => {
-            this.handleFileUpload(e.target.files, this.contextMenuTargetPath);
+            this.handleFileUpload(e.target.files, this.uploadTargetPath || this.contextMenuTargetPath);
         });
 
         // Hide context menu when clicking elsewhere
@@ -452,9 +460,6 @@ class WikiApp {
         const fileTree = document.getElementById('fileTree');
         if (!fileTree) return;
 
-        console.log('Binding file tree events. Current file tree HTML:', fileTree.innerHTML);
-        console.log('Found folder items:', fileTree.querySelectorAll('.folder-item').length);
-
         // Handle folder item clicks for toggling
         fileTree.querySelectorAll('.folder-item').forEach(folderItem => {
             folderItem.addEventListener('click', (e) => {
@@ -491,7 +496,6 @@ class WikiApp {
 
         // Add context menu functionality to folder items
         fileTree.querySelectorAll('.folder-item').forEach(folderItem => {
-            console.log('Binding context menu to folder item:', folderItem, 'data-folder-path:', folderItem.dataset.folderPath);
             folderItem.addEventListener('contextmenu', (e) => {
                 const folderPath = folderItem.dataset.folderPath;
                 console.log('Context menu triggered on folder item, folderPath:', folderPath);
@@ -501,7 +505,6 @@ class WikiApp {
 
         // Add context menu functionality to file items
         fileTree.querySelectorAll('.file-item').forEach(fileItem => {
-            console.log('Binding context menu to file item:', fileItem, 'data-document-path:', fileItem.dataset.documentPath);
             fileItem.addEventListener('contextmenu', (e) => {
                 e.stopPropagation(); // Prevent folder context menu from firing
                 const filePath = fileItem.dataset.documentPath;
@@ -517,6 +520,138 @@ class WikiApp {
                 this.showContextMenu(e, null, 'folder'); // null means root directory
             }
         });
+    }
+
+    // Selective tree update methods
+    async updateTreeNode(targetPath = '') {
+        if (!this.currentSpace) return;
+
+        try {
+            // Fetch only the updated tree data from API
+            const response = await fetch(`/applications/wiki/api/spaces/${this.currentSpace.id}/folders`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: API endpoint not available`);
+            }
+            const fullTree = await response.json();
+
+            // Update the stored tree data
+            this.fullFileTree = fullTree;
+
+            if (targetPath === '' || targetPath === null) {
+                // Update root level - replace entire tree
+                this.renderFileTree(fullTree);
+            } else {
+                // Update specific folder node
+                this.updateSpecificTreeNode(targetPath, fullTree);
+            }
+        } catch (error) {
+            console.log('Tree update failed, falling back to full refresh:', error);
+            await this.loadFileTree();
+        }
+    }
+
+    updateSpecificTreeNode(targetPath, fullTree) {
+        const fileTree = document.getElementById('fileTree');
+        if (!fileTree) return;
+
+        // Find the folder element to update
+        const folderElement = fileTree.querySelector(`[data-folder-path="${targetPath}"]`);
+        if (!folderElement) {
+            // If we can't find the specific folder, refresh the whole tree
+            this.renderFileTree(fullTree);
+            return;
+        }
+
+        // Find the folder data in the tree
+        const folderData = this.findNodeInTree(fullTree, targetPath);
+        if (!folderData) {
+            // If we can't find the folder data, refresh the whole tree
+            this.renderFileTree(fullTree);
+            return;
+        }
+
+        // Find the children container for this folder
+        const folderId = folderElement.dataset.folderId;
+        const childrenContainer = fileTree.querySelector(`[data-folder-children="${folderId}"]`);
+
+        if (childrenContainer && folderData.children) {
+            // Update the children content
+            const level = parseInt(folderElement.dataset.level || '0') + 1;
+            childrenContainer.innerHTML = this.renderTreeNodes(folderData.children, level);
+
+            // Rebind events for new elements
+            this.bindFileTreeEvents();
+        }
+    }
+
+    findNodeInTree(tree, targetPath) {
+        for (const node of tree) {
+            if (node.path === targetPath) {
+                return node;
+            }
+            if (node.children) {
+                const found = this.findNodeInTree(node.children, targetPath);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    addItemToTree(targetPath, newItem) {
+        // Add a new item to the tree without full refresh
+        const fileTree = document.getElementById('fileTree');
+        if (!fileTree) return;
+
+        if (targetPath === '' || targetPath === null) {
+            // Adding to root - insert at the beginning
+            const firstChild = fileTree.firstElementChild;
+            const newElement = this.createTreeNodeElement(newItem, 0);
+            if (firstChild) {
+                firstChild.insertAdjacentHTML('beforebegin', newElement);
+            } else {
+                fileTree.innerHTML = newElement;
+            }
+        } else {
+            // Adding to specific folder
+            const folderElement = fileTree.querySelector(`[data-folder-path="${targetPath}"]`);
+            if (folderElement) {
+                const folderId = folderElement.dataset.folderId;
+                const childrenContainer = fileTree.querySelector(`[data-folder-children="${folderId}"]`);
+
+                if (childrenContainer) {
+                    const level = parseInt(folderElement.dataset.level || '0') + 1;
+                    const newElement = this.createTreeNodeElement(newItem, level);
+                    childrenContainer.insertAdjacentHTML('beforeend', newElement);
+                }
+            }
+        }
+
+        // Rebind events for new elements
+        this.bindFileTreeEvents();
+    }
+
+    createTreeNodeElement(node, level) {
+        if (node.type === 'folder') {
+            const hasChildren = node.children && node.children.length > 0;
+            return `
+                <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${node.path}" data-level="${level}" style="padding-left: ${level * 20}px;">
+                    <div class="folder-header">
+                        <i class="bi bi-chevron-${hasChildren ? 'right' : 'right'} folder-toggle"></i>
+                        <i class="bi bi-folder folder-icon"></i>
+                        <span class="folder-name">${node.name}</span>
+                    </div>
+                    ${hasChildren ? `<div class="folder-children collapsed" data-folder-children="${node.path}"></div>` : ''}
+                </div>
+            `;
+        } else {
+            const fileIcon = this.getFileIcon(node.name);
+            return `
+                <div class="file-item" data-document-path="${node.path}" data-space-name="${this.currentSpace?.name}" style="padding-left: ${(level + 1) * 20}px;">
+                    <i class="bi ${fileIcon.icon} ${fileIcon.color}"></i>
+                    <span>${node.title || node.name}</span>
+                </div>
+            `;
+        }
     }
 
     async selectSpace(spaceId) {
@@ -1046,13 +1181,17 @@ class WikiApp {
     }
 
     showCreateFolderModal(prefilledPath = null) {
+        console.log('showCreateFolderModal called with prefilledPath:', prefilledPath);
+        console.log('currentSpace:', this.currentSpace);
+
         if (!this.currentSpace) {
-            alert('Please select a space first');
+            this.showNotification('Please select a space first', 'warning');
             return;
         }
-        
+
+        console.log('About to show modal createFolderModal');
         this.showModal('createFolderModal');
-        
+
         if (prefilledPath !== null) {
             // Hide the location dropdown when pre-filled from context menu
             const folderLocationSelect = document.getElementById('folderLocation');
@@ -1077,7 +1216,7 @@ class WikiApp {
 
     showCreateFileModal(prefilledPath = null) {
         if (!this.currentSpace) {
-            alert('Please select a space first');
+            this.showNotification('Please select a space first', 'warning');
             return;
         }
         
@@ -1115,41 +1254,81 @@ class WikiApp {
 
     async handleFileUpload(files, targetPath = '') {
         if (!files || files.length === 0) return;
-        
+
         const uploadPath = targetPath || '';
-        
+
         for (const file of files) {
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('path', uploadPath);
-                formData.append('spaceName', this.currentSpace?.name || 'Personal Space');
-                
-                const response = await fetch('/applications/wiki/api/files/upload', {
+                // Read file content
+                const content = await this.readFileContent(file);
+
+                // Generate document path
+                const fileName = file.name;
+                const documentPath = uploadPath ? `${uploadPath}/${fileName}` : fileName;
+
+                // Create document using the existing API
+                const response = await fetch('/applications/wiki/api/documents', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: fileName.replace(/\.[^/.]+$/, ''), // Remove extension for title
+                        content: content,
+                        spaceId: this.currentSpace.id,
+                        path: documentPath,
+                        folderPath: uploadPath
+                    })
                 });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    this.showNotification(`File "${file.name}" uploaded successfully`, 'success');
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.showNotification(`File "${fileName}" uploaded successfully`, 'success');
                 } else {
-                    this.showNotification(`Failed to upload "${file.name}"`, 'error');
+                    throw new Error(result.message || 'Failed to upload file');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                this.showNotification(`Failed to upload "${file.name}"`, 'error');
+                this.showNotification(`Failed to upload "${file.name}": ${error.message}`, 'error');
             }
         }
-        
+
         // Reset the file input
         const fileInput = document.getElementById('fileUploadInput');
         if (fileInput) {
             fileInput.value = '';
         }
-        
-        // Refresh the file tree
-        await this.loadFileTree();
+
+        // Update only the affected tree node
+        await this.updateTreeNode(uploadPath);
+    }
+
+    async readFileContent(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                resolve(e.target.result);
+            };
+
+            reader.onerror = (e) => {
+                reject(new Error('Failed to read file'));
+            };
+
+            // Check if it's a text file or binary
+            if (file.type.startsWith('text/') ||
+                file.name.endsWith('.md') ||
+                file.name.endsWith('.txt') ||
+                file.name.endsWith('.json') ||
+                file.name.endsWith('.xml') ||
+                file.name.endsWith('.js') ||
+                file.name.endsWith('.css') ||
+                file.name.endsWith('.html')) {
+                reader.readAsText(file);
+            } else {
+                // For binary files, read as data URL
+                reader.readAsDataURL(file);
+            }
+        });
     }
 
     async handleDeleteItem(itemPath, itemType) {
@@ -1202,8 +1381,9 @@ class WikiApp {
             if (response.ok && result.success) {
                 this.showNotification(`${itemTypeDisplay.charAt(0).toUpperCase() + itemTypeDisplay.slice(1)} "${itemName}" deleted successfully`, 'success');
                 
-                // Refresh the file tree
-                await this.loadFileTree();
+                // Update only the parent tree node
+                const parentPath = itemPath ? itemPath.substring(0, itemPath.lastIndexOf('/')) : '';
+                await this.updateTreeNode(parentPath);
                 
                 // If we're currently viewing the deleted item, go back to home
                 if (this.currentDocument && itemType === 'file' && this.currentDocument.path === itemPath) {
@@ -1279,6 +1459,36 @@ class WikiApp {
         }
     }
 
+    async handlePublish() {
+        if (!this.currentSpace) {
+            this.showNotification('Please select a space first', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/applications/wiki/api/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceId: this.currentSpace.id
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showNotification('Content published successfully!', 'success');
+            } else {
+                throw new Error(result.message || 'Failed to publish content');
+            }
+        } catch (error) {
+            console.error('Publish error:', error);
+            this.showNotification(error.message || 'Failed to publish content', 'error');
+        }
+    }
+
     async handleCreateSpace() {
         const form = document.getElementById('createSpaceForm');
         const formData = new FormData(form);
@@ -1337,7 +1547,14 @@ class WikiApp {
             if (result.success) {
                 this.hideModal('createFolderModal');
                 form.reset();
-                await this.loadFileTree();
+
+                // Get the parent folder path for selective update
+                const parentPath = this.prefilledFolderPath !== null ?
+                    this.prefilledFolderPath :
+                    (formData.get('folderLocation') || '');
+
+                // Update only the affected tree node
+                await this.updateTreeNode(parentPath);
                 this.showNotification('Folder created successfully!', 'success');
             } else {
                 throw new Error(result.message || 'Failed to create folder');
@@ -1377,8 +1594,33 @@ class WikiApp {
             if (result.success) {
                 this.hideModal('createFileModal');
                 form.reset();
-                await this.loadFileTree();
+
+                // Get the parent folder path for selective update
+                const folderPath = this.prefilledFilePath !== null ?
+                    this.prefilledFilePath :
+                    (formData.get('fileLocation') || '');
+
+                // Update only the affected tree node
+                await this.updateTreeNode(folderPath);
                 this.showNotification('File created successfully!', 'success');
+
+                // Auto-open the created file in edit mode
+                const fileName = formData.get('fileName');
+                const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName;
+
+                // Create a document object for the new file
+                const newDocument = {
+                    id: result.documentId || `${this.currentSpace.id}-${Date.now()}`,
+                    title: formData.get('fileName').replace('.md', ''),
+                    path: fullPath,
+                    spaceId: this.currentSpace.id,
+                    content: await this.getTemplateContent(formData.get('fileTemplate')),
+                    metadata: { category: 'markdown', viewer: 'markdown' }
+                };
+
+                // Open in edit mode
+                this.currentDocument = newDocument;
+                this.editDocument(newDocument);
             } else {
                 throw new Error(result.message || 'Failed to create file');
             }
@@ -2076,12 +2318,21 @@ class WikiApp {
 
     // Utility methods
     showModal(modalId) {
+        console.log('showModal called with modalId:', modalId);
         const modal = document.getElementById(modalId);
         const overlay = document.getElementById('overlay');
-        
+
+        console.log('modal element:', modal);
+        console.log('overlay element:', overlay);
+
         if (modal && overlay) {
+            console.log('Removing hidden class from modal and overlay');
             modal.classList.remove('hidden');
             overlay.classList.remove('hidden');
+            console.log('Modal classes after removal:', modal.className);
+            console.log('Overlay classes after removal:', overlay.className);
+        } else {
+            console.error('Modal or overlay element not found!');
         }
     }
 
