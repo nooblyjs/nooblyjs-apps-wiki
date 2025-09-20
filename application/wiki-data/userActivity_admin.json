@@ -1,20 +1,55 @@
 {
   "userId": "admin",
-  "starred": [],
+  "starred": [
+    {
+      "path": "Areas/digital-advertising-platform/business.md",
+      "spaceName": "Personal Space",
+      "title": "business.md",
+      "starredAt": "2025-09-20T05:53:07.408Z"
+    }
+  ],
   "recent": [
     {
-      "path": "architecture-artifacts-3d0c2858b142.json",
+      "path": "Areas/digital-advertising-platform/business.md",
       "spaceName": "Personal Space",
-      "title": "architecture-artifacts-3d0c2858b142.json",
+      "title": "business.md",
       "action": "viewed",
-      "visitedAt": "2025-09-20T05:42:03.039Z"
+      "visitedAt": "2025-09-20T05:52:59.086Z"
+    },
+    {
+      "path": "Resources/SAFe/SAFe for Architects.pdf",
+      "spaceName": "Personal Space",
+      "title": "SAFe for Architects.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-09-20T05:52:50.550Z"
+    },
+    {
+      "path": "Resources/People/Roles/Principle Engineer.md",
+      "spaceName": "Personal Space",
+      "title": "Principle Engineer.md",
+      "action": "viewed",
+      "visitedAt": "2025-09-20T05:52:50.062Z"
     },
     {
       "path": "Test PDF.pdf",
       "spaceName": "Personal Space",
       "title": "Test PDF.pdf",
       "action": "viewed",
-      "visitedAt": "2025-09-20T05:41:29.681Z"
+      "visitedAt": "2025-09-20T05:51:59.440Z"
+    },
+    {
+      "path": "Beach.jpg",
+      "spaceName": "Personal Space",
+      "title": "Beach.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-09-20T05:51:56.204Z"
+    },
+    {
+      "path": "architecture-artifacts-3d0c2858b142.json",
+      "spaceName": "Personal Space",
+      "title": "architecture-artifacts-3d0c2858b142.json",
+      "action": "viewed",
+      "visitedAt": "2025-09-20T05:51:53.191Z"
     },
     {
       "path": "app.js",
@@ -29,13 +64,6 @@
       "title": "context.md",
       "action": "viewed",
       "visitedAt": "2025-09-20T05:02:20.990Z"
-    },
-    {
-      "path": "Beach.jpg",
-      "spaceName": "Personal Space",
-      "title": "Beach.jpg",
-      "action": "viewed",
-      "visitedAt": "2025-09-20T04:52:54.296Z"
     },
     {
       "path": "data.txt",
@@ -67,5 +95,5 @@
     }
   ],
   "createdAt": "2025-09-19T22:35:50.229Z",
-  "updatedAt": "2025-09-20T05:42:03.039Z"
+  "updatedAt": "2025-09-20T05:53:07.408Z"
 }
