@@ -141,6 +141,9 @@ class WikiApp {
 
         // Context menu functionality
         this.initContextMenu();
+
+        // Initialize activity tracking
+        this.ensureActivityData();
     }
 
     initContextMenu() {
@@ -663,7 +666,12 @@ class WikiApp {
         this.renderSpacesList(); // Re-render to show selection
         await this.loadFileTree();
         this.updateWorkspaceHeader();
-        
+
+        // Refresh recent files for the new space
+        if (this.currentView === 'recent') {
+            await this.loadRecentFiles();
+        }
+
         // Show the space view with space content
         this.showSpaceView(space);
     }
@@ -1709,11 +1717,18 @@ class WikiApp {
         this.setActiveShortcut('shortcutRecent');
         this.currentView = 'recent';
         
-        // Update workspace title
+        // Update workspace title with space context
         const workspaceTitle = document.getElementById('workspaceTitle');
         const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        if (workspaceTitle) workspaceTitle.textContent = 'Recent Documents';
-        if (workspaceSubtitle) workspaceSubtitle.textContent = 'Documents you have recently accessed';
+        const currentSpaceName = this.currentSpace ? this.currentSpace.name : 'All Spaces';
+
+        if (workspaceTitle) workspaceTitle.textContent = `Recent Documents - ${currentSpaceName}`;
+        if (workspaceSubtitle) {
+            const subtitle = this.currentSpace
+                ? `Documents you have recently accessed in ${currentSpaceName}`
+                : 'Documents you have recently accessed';
+            workspaceSubtitle.textContent = subtitle;
+        }
         
         // Hide starred section and show only recent
         this.showRecentOnlyView();
@@ -1867,6 +1882,9 @@ class WikiApp {
             
             this.currentDocument = document;
             this.showEnhancedDocumentView(document);
+
+            // Track document view for recent files
+            await this.trackDocumentView(documentPath, spaceName);
         } catch (error) {
             console.error('Error loading document by path:', error);
             
@@ -1882,6 +1900,9 @@ class WikiApp {
             this.currentDocument = document;
             this.showEnhancedDocumentView(document);
             this.showNotification('Failed to load document content', 'error');
+
+            // Track document view for recent files (even if failed to load)
+            await this.trackDocumentView(documentPath, spaceName);
         }
     }
 
@@ -2933,19 +2954,32 @@ class WikiApp {
     async loadRecentFiles() {
         const container = document.getElementById('recentFilesContent');
         if (!container) return;
-        
+
         try {
-            // Use activity data for recent files
-            const recentFiles = this.data.recent || [];
-            
+            // Use activity data for recent files, filtered by current space
+            const allRecentFiles = this.data.recent || [];
+            const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
+
+            // Filter recent files to only show files from the current space
+            const recentFiles = currentSpaceName
+                ? allRecentFiles.filter(file => file.space === currentSpaceName)
+                : allRecentFiles;
+
             if (recentFiles.length === 0) {
+                const noFilesMessage = currentSpaceName
+                    ? `No recent files in ${currentSpaceName}`
+                    : 'No recent files found';
+                const helpText = currentSpaceName
+                    ? `Files you access in ${currentSpaceName} will appear here`
+                    : 'Files you access will appear here';
+
                 container.innerHTML = `
                     <div class="no-content-message">
                         <svg width="48" height="48" class="no-content-icon">
                             <use href="#icon-history"></use>
                         </svg>
-                        <p>No recent files found</p>
-                        <small>Files you access will appear here</small>
+                        <p>${noFilesMessage}</p>
+                        <small>${helpText}</small>
                     </div>
                 `;
                 return;
@@ -3990,6 +4024,77 @@ class WikiApp {
         const date = new Date(dateString);
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
+
+    // Activity tracking methods
+    ensureActivityData() {
+        if (!this.data.recent) {
+            this.data.recent = [];
+        }
+    }
+
+    async trackDocumentView(documentPath, spaceName) {
+        try {
+            // Ensure we have activity data
+            this.ensureActivityData();
+
+            // Remove existing entry if it exists (to move it to the top)
+            this.data.recent = this.data.recent.filter(item =>
+                !(item.path === documentPath && item.space === spaceName)
+            );
+
+            // Add new entry at the beginning
+            const activity = {
+                path: documentPath,
+                space: spaceName,
+                lastVisited: new Date().toISOString(),
+                title: documentPath.split('/').pop()
+            };
+
+            this.data.recent.unshift(activity);
+
+            // Keep only last 10 items
+            this.data.recent = this.data.recent.slice(0, 10);
+
+            // Save to server
+            await this.saveActivityToServer();
+
+        } catch (error) {
+            console.error('Error tracking document view:', error);
+        }
+    }
+
+    async saveActivityToServer() {
+        try {
+            const response = await fetch('/applications/wiki/api/activity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    recent: this.data.recent
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save activity data');
+            }
+        } catch (error) {
+            console.error('Error saving activity to server:', error);
+        }
+    }
+
+    async loadActivityFromServer() {
+        try {
+            const response = await fetch('/applications/wiki/api/activity');
+            if (response.ok) {
+                const data = await response.json();
+                this.data.recent = data.recent || [];
+            }
+        } catch (error) {
+            console.error('Error loading activity from server:', error);
+            this.data.recent = [];
+        }
+    }
     
     getFileTypeIconClass(category) {
         const iconMap = {
@@ -4170,10 +4275,19 @@ class WikiApp {
     // User Activity Management
     async loadUserActivity() {
         try {
+            // First try to load from our new activity API
+            await this.loadActivityFromServer();
+
+            // Then load from the existing user activity API for backward compatibility
             const response = await fetch('/applications/wiki/api/user/activity');
             if (response.ok) {
                 this.userActivity = await response.json();
                 console.log('User activity loaded:', this.userActivity);
+
+                // If we have user activity data but no recent data, merge them
+                if (this.userActivity.recent && (!this.data.recent || this.data.recent.length === 0)) {
+                    this.data.recent = this.userActivity.recent;
+                }
             } else {
                 console.warn('Failed to load user activity, using defaults');
                 this.userActivity = {

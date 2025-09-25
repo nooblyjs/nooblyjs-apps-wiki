@@ -1662,9 +1662,40 @@ ${documentPath}\
     }
   });
 
+  // Activity tracking endpoints
+  app.get('/applications/wiki/api/activity', async (req, res) => {
+    try {
+      const activity = await dataManager.read('activity');
+      res.json(activity[0] || { recent: [] });
+    } catch (error) {
+      logger.error('Error reading activity data:', error);
+      res.json({ recent: [] });
+    }
+  });
+
+  app.post('/applications/wiki/api/activity', async (req, res) => {
+    try {
+      const { recent } = req.body;
+
+      // Validate the data
+      if (!Array.isArray(recent)) {
+        return res.status(400).json({ success: false, message: 'Invalid activity data' });
+      }
+
+      // Store activity data (replace existing)
+      await dataManager.write('activity', [{ recent, updatedAt: new Date().toISOString() }]);
+
+      logger.info('Activity data saved successfully');
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Error saving activity data:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
+
   // Application status endpoint
   app.get('/applications/wiki/api/status', (req, res) => {
-    res.json({ 
+    res.json({
       status: 'running',
       application: 'Wiki Management',
       version: '1.0.0',
