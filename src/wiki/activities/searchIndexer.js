@@ -55,9 +55,6 @@ class SearchIndexer {
             // Index documents directory
             await this.indexDirectory(this.documentsDir, 'documents');
             
-            // Index docs directory
-            await this.indexDirectory(this.docsDir, 'docs');
-            
             this.lastIndexTime = new Date();
             this.logger.info(`Search index built successfully. Indexed ${this.index.files.size} files with ${this.index.tokens.size} unique tokens`);
             
