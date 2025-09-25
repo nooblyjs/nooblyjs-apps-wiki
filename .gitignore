@@ -1,3 +1,13 @@
+#application specific
+documents/
+application/
+assets/
+posts/
+published-sites
+themes/
+templates/
+
+
 # Logs
 logs
 *.log
