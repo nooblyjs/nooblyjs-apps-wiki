@@ -10,6 +10,41 @@
   ],
   "recent": [
     {
+      "path": "Areas/customer-data-platform/business.md",
+      "spaceName": "Personal Space",
+      "title": "business.md",
+      "action": "viewed",
+      "visitedAt": "2025-09-25T10:33:49.407Z"
+    },
+    {
+      "path": "data.txt",
+      "spaceName": "Personal Space",
+      "title": "data.txt",
+      "action": "viewed",
+      "visitedAt": "2025-09-25T10:33:44.213Z"
+    },
+    {
+      "path": "architecture-artifacts-3d0c2858b142.json",
+      "spaceName": "Personal Space",
+      "title": "architecture-artifacts-3d0c2858b142.json",
+      "action": "viewed",
+      "visitedAt": "2025-09-25T10:33:42.705Z"
+    },
+    {
+      "path": "Test PDF.pdf",
+      "spaceName": "Personal Space",
+      "title": "Test PDF.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-09-25T10:33:39.804Z"
+    },
+    {
+      "path": "ed.md",
+      "spaceName": "Personal Space",
+      "title": "ed.md",
+      "action": "viewed",
+      "visitedAt": "2025-09-25T10:33:34.547Z"
+    },
+    {
       "path": "Areas/digital-advertising-platform/business.md",
       "spaceName": "Personal Space",
       "title": "business.md",
@@ -31,25 +66,11 @@
       "visitedAt": "2025-09-20T05:52:50.062Z"
     },
     {
-      "path": "Test PDF.pdf",
-      "spaceName": "Personal Space",
-      "title": "Test PDF.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-09-20T05:51:59.440Z"
-    },
-    {
       "path": "Beach.jpg",
       "spaceName": "Personal Space",
       "title": "Beach.jpg",
       "action": "viewed",
       "visitedAt": "2025-09-20T05:51:56.204Z"
-    },
-    {
-      "path": "architecture-artifacts-3d0c2858b142.json",
-      "spaceName": "Personal Space",
-      "title": "architecture-artifacts-3d0c2858b142.json",
-      "action": "viewed",
-      "visitedAt": "2025-09-20T05:51:53.191Z"
     },
     {
       "path": "app.js",
@@ -64,20 +85,6 @@
       "title": "context.md",
       "action": "viewed",
       "visitedAt": "2025-09-20T05:02:20.990Z"
-    },
-    {
-      "path": "data.txt",
-      "spaceName": "Personal Space",
-      "title": "data.txt",
-      "action": "viewed",
-      "visitedAt": "2025-09-20T04:52:46.078Z"
-    },
-    {
-      "path": "ed.md",
-      "spaceName": "Personal Space",
-      "title": "ed.md",
-      "action": "viewed",
-      "visitedAt": "2025-09-20T04:52:43.233Z"
     },
     {
       "path": ".templates/sample.md",
@@ -95,5 +102,5 @@
     }
   ],
   "createdAt": "2025-09-19T22:35:50.229Z",
-  "updatedAt": "2025-09-20T05:53:07.408Z"
+  "updatedAt": "2025-09-25T10:33:49.407Z"
 }

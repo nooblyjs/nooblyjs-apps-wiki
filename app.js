@@ -2,7 +2,7 @@
  * @fileoverview The file define and instantiates the various NooblyJS applications.
  *
  * @author NooblyJS Core Team
- * @version 1.0.0
+ * @version 1.0.1
  * @since 2025-08-24
  */
 
