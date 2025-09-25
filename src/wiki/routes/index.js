@@ -1675,15 +1675,25 @@ ${documentPath}\
 
   app.post('/applications/wiki/api/activity', async (req, res) => {
     try {
-      const { recent } = req.body;
+      const { recent, starred } = req.body;
 
       // Validate the data
       if (!Array.isArray(recent)) {
-        return res.status(400).json({ success: false, message: 'Invalid activity data' });
+        return res.status(400).json({ success: false, message: 'Invalid recent activity data' });
+      }
+
+      // Validate starred data (optional)
+      if (starred !== undefined && !Array.isArray(starred)) {
+        return res.status(400).json({ success: false, message: 'Invalid starred activity data' });
       }
 
       // Store activity data (replace existing)
-      await dataManager.write('activity', [{ recent, updatedAt: new Date().toISOString() }]);
+      const activityData = {
+        recent,
+        starred: starred || [],
+        updatedAt: new Date().toISOString()
+      };
+      await dataManager.write('activity', [activityData]);
 
       logger.info('Activity data saved successfully');
       res.json({ success: true });

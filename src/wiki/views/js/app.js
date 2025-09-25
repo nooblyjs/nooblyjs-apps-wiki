@@ -672,6 +672,11 @@ class WikiApp {
             await this.loadRecentFiles();
         }
 
+        // Refresh starred files for the new space
+        if (this.currentView === 'starred') {
+            this.loadStarredFiles();
+        }
+
         // Show the space view with space content
         this.showSpaceView(space);
     }
@@ -1049,17 +1054,65 @@ class WikiApp {
     loadSpaceStarredFiles(space) {
         const container = document.getElementById('spaceStarredFiles');
         if (!container) return;
-        
-        // Placeholder for starred files (would need to implement starring functionality)
-        container.innerHTML = `
-            <div class="no-content-message">
-                <svg width="48" height="48" class="no-content-icon">
-                    <use href="#icon-star"></use>
-                </svg>
-                <p>No starred files in this space</p>
-                <small>Star files to see them here</small>
-            </div>
-        `;
+
+        try {
+            // Get starred files for this specific space
+            const allStarredFiles = this.data.starred || [];
+            const starredFiles = allStarredFiles
+                .filter(file => file.space === space.name)
+                .slice(0, 6); // Limit to 6 items for home page
+
+            if (starredFiles.length === 0) {
+                container.innerHTML = `
+                    <div class="no-content-message">
+                        <svg width="48" height="48" class="no-content-icon">
+                            <use href="#icon-star"></use>
+                        </svg>
+                        <p>No starred files in ${space.name}</p>
+                        <small>Star files to see them here</small>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="items-grid">
+                    ${starredFiles.map(file => {
+                        const fileTypeInfo = this.getFileTypeInfo(file.path);
+                        const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                        const iconColor = fileTypeInfo.color;
+                        const fileName = this.getFileNameFromPath(file.path);
+
+                        return `
+                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.space}">
+                                <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                <div class="item-info">
+                                    <div class="item-name">${fileName}</div>
+                                    <div class="item-meta">Starred ${this.formatDate(file.starredAt)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            // Bind click events
+            container.querySelectorAll('.file-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const documentPath = card.dataset.documentPath;
+                    const spaceName = card.dataset.spaceName;
+                    this.openDocumentByPath(documentPath, spaceName);
+                });
+            });
+
+        } catch (error) {
+            console.error('Error loading starred files for space:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <p>Error loading starred files</p>
+                </div>
+            `;
+        }
     }
 
     async loadSpaceRootItems(space) {
@@ -1741,16 +1794,23 @@ class WikiApp {
         this.setActiveView('home');
         this.setActiveShortcut('shortcutStarred');
         this.currentView = 'starred';
-        
-        // Update workspace title
+
+        // Update workspace title with space context
         const workspaceTitle = document.getElementById('workspaceTitle');
         const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        if (workspaceTitle) workspaceTitle.textContent = 'Starred Documents';
-        if (workspaceSubtitle) workspaceSubtitle.textContent = 'Documents you have marked as favorites';
-        
+        const currentSpaceName = this.currentSpace ? this.currentSpace.name : 'All Spaces';
+
+        if (workspaceTitle) workspaceTitle.textContent = `Starred Documents - ${currentSpaceName}`;
+        if (workspaceSubtitle) {
+            const subtitle = this.currentSpace
+                ? `Documents you have starred in ${currentSpaceName}`
+                : 'Documents you have marked as favorites';
+            workspaceSubtitle.textContent = subtitle;
+        }
+
         // Hide recent section and show only starred
         this.showStarredOnlyView();
-        
+
         // Hide template button
         this.hideTemplateButton();
     }
@@ -3028,19 +3088,32 @@ class WikiApp {
     loadStarredFiles() {
         const container = document.getElementById('starredFilesContent');
         if (!container) return;
-        
+
         try {
-            // Use activity data for starred files
-            const starredFiles = this.data.starred || [];
-            
+            // Use activity data for starred files, filtered by current space
+            const allStarredFiles = this.data.starred || [];
+            const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
+
+            // Filter starred files to only show files from the current space
+            const starredFiles = currentSpaceName
+                ? allStarredFiles.filter(file => file.space === currentSpaceName)
+                : allStarredFiles;
+
             if (starredFiles.length === 0) {
+                const noFilesMessage = currentSpaceName
+                    ? `No starred files in ${currentSpaceName}`
+                    : 'No starred files found';
+                const helpText = currentSpaceName
+                    ? `Files you star in ${currentSpaceName} will appear here`
+                    : 'Star files to see them here';
+
                 container.innerHTML = `
                     <div class="no-content-message">
                         <svg width="48" height="48" class="no-content-icon">
                             <use href="#icon-star"></use>
                         </svg>
-                        <p>No starred files found</p>
-                        <small>Star files to see them here</small>
+                        <p>${noFilesMessage}</p>
+                        <small>${helpText}</small>
                     </div>
                 `;
                 return;
