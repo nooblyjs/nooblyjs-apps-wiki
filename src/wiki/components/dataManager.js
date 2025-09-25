@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class DataManager {
-  constructor(dataDir = './data') {
+  constructor(dataDir = './application/wiki-data') {
     this.dataDir = dataDir;
     this.ensureDataDir();
   }

@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const USERS_FILE = path.join(__dirname, '../../data/users.json');
-const GOOGLE_CONFIG = require('../../data/google-oauth-config.json');
+const GOOGLE_CONFIG = {};
 
 async function readUsers() {
   try {
@@ -65,9 +65,9 @@ function configurePassport(passport) {
   }));
 
   passport.use(new GoogleStrategy({
-    clientID: GOOGLE_CONFIG.web.client_id,
+    /*clientID: GOOGLE_CONFIG.web.client_id,
     clientSecret: GOOGLE_CONFIG.web.client_secret,
-    callbackURL: GOOGLE_CONFIG.web.redirect_uris[0]
+    callbackURL: GOOGLE_CONFIG.web.redirect_uris[0]*/
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       let user = await findUserByEmail(profile.emails[0].value);

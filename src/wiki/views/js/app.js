@@ -2666,6 +2666,9 @@ class WikiApp {
     }
 
     showSearchResults(query, results) {
+
+        console.log(results);
+
         // Update search query display
         const queryElement = document.getElementById('searchQuery');
         if (queryElement) {

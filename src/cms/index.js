@@ -29,8 +29,8 @@ const ThemeManager = require('./components/themeManager');
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
 
-  const dataDirectory = options.dataDirectory || './application/cms-data';
-  const filesDir = options.filesDir || './application/cms-files';
+  const dataDirectory = options.dataDirectory || './.application/cms-data';
+  const filesDir = options.filesDir || './.application/cms-files';
   const cacheProvider = options.filesDir || 'memory';
   const filerProvider = options.filesDir || 'local';
   const loggerProvider = options.filesDir || 'console';

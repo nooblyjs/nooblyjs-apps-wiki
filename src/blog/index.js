@@ -29,8 +29,8 @@ const BlogAuth = require('../auth');
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
 
-  const dataDirectory = options.dataDirectory || './application/blog-data';
-  const filesDir = options.filesDir || './application/blog-posts';
+  const dataDirectory = options.dataDirectory || './.application/blog-data';
+  const filesDir = options.filesDir || './.application/blog-posts';
   const cacheProvider = options.filesDir || 'memory';
   const filerProvider = options.filesDir || 'local';
   const loggerProvider = options.filesDir || 'console';

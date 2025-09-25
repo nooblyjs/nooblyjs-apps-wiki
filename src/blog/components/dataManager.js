@@ -14,7 +14,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class DataManager {
-  constructor(baseDir = './data') {
+  constructor(baseDir = './application/blog-data') {
     this.baseDir = baseDir;
     this.ensureDirectoryExists();
   }

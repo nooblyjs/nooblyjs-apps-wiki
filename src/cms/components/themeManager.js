@@ -18,8 +18,8 @@ class ThemeManager {
     this.cache = cache;
     this.logger = logger;
     this.templateEngine = templateEngine;
-    this.themesDir = 'themes';
-    this.customThemesDir = 'custom-themes';
+    this.themesDir = '.application/cms-themes';
+    this.customThemesDir = '.application/custom-themes';
   }
 
   /**
