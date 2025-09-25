@@ -1,22 +1,14 @@
 /**
- * Simple JSON file-based data manager
+ * NooblyJS Core Filer-based data manager for wiki data
+ * Uses filer service for all file operations
  */
 
-const fs = require('fs').promises;
 const path = require('path');
 
 class DataManager {
-  constructor(dataDir = './application/wiki-data') {
+  constructor(dataDir = './application/wiki-data', filerService = null) {
     this.dataDir = dataDir;
-    this.ensureDataDir();
-  }
-
-  async ensureDataDir() {
-    try {
-      await fs.mkdir(this.dataDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist
-    }
+    this.filer = filerService;
   }
 
   getFilePath(type) {
@@ -26,7 +18,7 @@ class DataManager {
   async read(type) {
     try {
       const filePath = this.getFilePath(type);
-      const data = await fs.readFile(filePath, 'utf8');
+      const data = await this.filer.read(filePath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
       // File doesn't exist or is invalid, return empty array
@@ -37,7 +29,7 @@ class DataManager {
   async write(type, data) {
     try {
       const filePath = this.getFilePath(type);
-      await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+      await this.filer.create(filePath, JSON.stringify(data, null, 2));
       return true;
     } catch (error) {
       console.error(`Error writing ${type} data:`, error);
@@ -128,12 +120,23 @@ class DataManager {
 
   async getFolderTreeFromFileSystem(spaceName) {
     try {
-      const documentsDir = path.join(process.cwd(), 'documents');
-      const spaceDir = path.join(documentsDir, spaceName);
-      
-      // Check if space directory exists
+      // Get space configuration to find actual path
+      const spaces = await this.read('spaces');
+      const space = spaces.find(s => s.name === spaceName);
+
+      let spaceDir;
+      if (space && space.path) {
+        // Use absolute path from space configuration
+        spaceDir = space.path;
+      } else {
+        // Fallback to old behavior
+        const documentsDir = path.join(process.cwd(), 'documents');
+        spaceDir = path.join(documentsDir, spaceName);
+      }
+
+      // Check if space directory exists using filer
       try {
-        await fs.access(spaceDir);
+        await this.filer.list(spaceDir);
       } catch (error) {
         // Directory doesn't exist, return empty tree
         return [];
@@ -148,36 +151,39 @@ class DataManager {
 
   async buildFileSystemTree(dirPath, spaceName, relativePath = '') {
     const tree = [];
-    
+
     try {
-      const entries = await fs.readdir(dirPath, { withFileTypes: true });
-      
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
-        const relativeEntryPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
-        
-        if (entry.isDirectory()) {
+      const entries = await this.filer.list(dirPath);
+
+      for (const entryName of entries) {
+        const fullPath = path.join(dirPath, entryName);
+        const relativeEntryPath = relativePath ? `${relativePath}/${entryName}` : entryName;
+
+        try {
+          // Try to list the entry to see if it's a directory
+          await this.filer.list(fullPath);
+
           // It's a folder
           const children = await this.buildFileSystemTree(fullPath, spaceName, relativeEntryPath);
           tree.push({
             type: 'folder',
-            name: entry.name,
+            name: entryName,
             path: relativeEntryPath,
             children: children
           });
-        } else {
-          // It's a file
+        } catch (listError) {
+          // It's a file (list failed)
           tree.push({
             type: 'document',
-            name: entry.name,
-            title: entry.name,
+            name: entryName,
+            title: entryName,
             path: relativeEntryPath,
-            fileName: entry.name,
+            fileName: entryName,
             spaceName: spaceName
           });
         }
       }
-      
+
       // Sort: folders first, then files, both alphabetically
       tree.sort((a, b) => {
         if (a.type !== b.type) {
@@ -185,11 +191,11 @@ class DataManager {
         }
         return a.name.localeCompare(b.name);
       });
-      
+
     } catch (error) {
       console.error('Error reading directory:', dirPath, error);
     }
-    
+
     return tree;
   }
 

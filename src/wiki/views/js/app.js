@@ -429,8 +429,8 @@ class WikiApp {
 
                 return `
                     <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${folderId}" style="padding-left: ${level * 16}px">
-                        <i class="bi ${hasChildren ? 'bi-chevron-right' : ''} folder-icon"></i>
-                        <i class="bi bi-folder"></i>
+                        <i class="bi ${hasChildren ? 'bi-chevron-right' : ''} chevron-icon"></i>
+                        <i class="bi bi-folder folder-icon"></i>
                         <span>${node.name}</span>
                     </div>
                     ${hasChildren ? `
@@ -477,7 +477,7 @@ class WikiApp {
         fileTree.querySelectorAll('.folder-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 // Don't trigger if clicking the toggle
-                if (e.target.closest('.folder-toggle')) return;
+                if (e.target.closest('.chevron-icon')) return;
                 
                 const folderPath = item.dataset.folderPath;
                 this.selectFolder(folderPath);
@@ -636,7 +636,7 @@ class WikiApp {
             return `
                 <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${node.path}" data-level="${level}" style="padding-left: ${level * 20}px;">
                     <div class="folder-header">
-                        <i class="bi bi-chevron-${hasChildren ? 'right' : 'right'} folder-toggle"></i>
+                        <i class="bi bi-chevron-${hasChildren ? 'right' : 'right'} chevron-icon"></i>
                         <i class="bi bi-folder folder-icon"></i>
                         <span class="folder-name">${node.name}</span>
                     </div>
@@ -682,28 +682,21 @@ class WikiApp {
         if (!folderItem || !folderChildren) return;
 
         const isExpanded = folderItem.classList.contains('expanded');
-        const chevronIcon = folderItem.querySelector('.folder-icon');
-        const folderIcon = folderItem.querySelector('.bi-folder');
+        const chevronIcon = folderItem.querySelector('.chevron-icon');
 
         if (isExpanded) {
             // Collapse
             folderItem.classList.remove('expanded');
             folderChildren.classList.remove('expanded');
             if (chevronIcon) {
-                chevronIcon.className = 'bi bi-chevron-right folder-icon';
-            }
-            if (folderIcon) {
-                folderIcon.className = 'bi bi-folder';
+                chevronIcon.className = 'bi bi-chevron-right chevron-icon';
             }
         } else {
             // Expand
             folderItem.classList.add('expanded');
             folderChildren.classList.add('expanded');
             if (chevronIcon) {
-                chevronIcon.className = 'bi bi-chevron-down folder-icon';
-            }
-            if (folderIcon) {
-                folderIcon.className = 'bi bi-folder-open';
+                chevronIcon.className = 'bi bi-chevron-down chevron-icon';
             }
         }
     }

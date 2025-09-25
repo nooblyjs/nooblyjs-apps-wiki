@@ -26,7 +26,36 @@ module.exports = (options, eventEmitter, services) => {
 
   const app = options;
   const { dataManager, filing, cache, logger, queue, search } = services;
-  
+
+  // Helper function to resolve document paths using space configuration
+  async function getDocumentAbsolutePath(spaceName, documentPath) {
+    const spaces = await dataManager.read('spaces');
+    const space = spaces.find(s => s.name === spaceName);
+
+    if (!space) {
+      throw new Error('Space not found');
+    }
+
+    let documentsDir, absolutePath;
+
+    if (space.path) {
+      // Use the absolute path from space configuration
+      documentsDir = space.path;
+      absolutePath = path.resolve(documentsDir, documentPath);
+    } else {
+      // Fallback to old behavior for backward compatibility
+      documentsDir = path.resolve(__dirname, '../../../documents');
+      absolutePath = path.resolve(documentsDir, spaceName, documentPath);
+    }
+
+    // Security check: ensure the path is within the designated space directory
+    if (!absolutePath.startsWith(documentsDir)) {
+      throw new Error('Access denied: path outside space directory');
+    }
+
+    return { documentsDir, absolutePath };
+  }
+
   // Initialize enhanced search indexer
   const searchIndexer = new SearchIndexer(logger);
   
@@ -571,15 +600,15 @@ module.exports = (options, eventEmitter, services) => {
       }
 
       logger.info(`Reading document content from path: ${documentPath} in space: ${spaceName}`);
-      
-      // Resolve the absolute path to the documents folder
-      const documentsDir = path.resolve(__dirname, '../../../documents');
-      const absolutePath = path.resolve(documentsDir, spaceName, documentPath);
-      
-      // Security check: ensure the path is within the documents directory
-      if (!absolutePath.startsWith(documentsDir)) {
-        logger.warn(`Blocked attempt to access file outside documents directory: ${documentPath}`);
-        return res.status(403).json({ error: 'Access denied' });
+
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          error: pathError.message
+        });
       }
       
       try {
@@ -1082,15 +1111,15 @@ ${documentPath}\
       }
 
       logger.info(`Saving document content to path: ${documentPath} in space: ${spaceName}`);
-      
-      // Resolve the absolute path to the documents folder
-      const documentsDir = path.resolve(__dirname, '../../../documents');
-      const absolutePath = path.resolve(documentsDir, spaceName, documentPath);
-      
-      // Security check: ensure the path is within the documents directory
-      if (!absolutePath.startsWith(documentsDir)) {
-        logger.warn(`Blocked attempt to save file outside documents directory: ${documentPath}`);
-        return res.status(403).json({ error: 'Access denied' });
+
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          error: pathError.message
+        });
       }
       
       try {
@@ -1311,15 +1340,15 @@ ${documentPath}\
       }
       
       // Create the file on disk
-      const fs = require('fs').promises;
-      const path = require('path');
-      const documentsDir = path.resolve(__dirname, '../../../documents');
-      const absolutePath = path.resolve(documentsDir, spaceName, finalPath);
-      
-      // Security check
-      if (!absolutePath.startsWith(documentsDir)) {
-        logger.warn(`Blocked attempt to create file outside documents directory: ${finalPath}`);
-        return res.status(403).json({ success: false, message: 'Access denied' });
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, finalPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          success: false,
+          message: pathError.message
+        });
       }
       
       try {
@@ -1467,19 +1496,19 @@ ${documentPath}\
       }
 
       logger.info(`Reading document content from path: ${documentPath} in space: ${spaceName}`);
-      
-      const fs = require('fs').promises;
-      const path = require('path');
-      const documentsDir = path.resolve(__dirname, '../../../documents');
-      const absolutePath = path.resolve(documentsDir, spaceName, documentPath);
-      
-      // Security check
-      if (!absolutePath.startsWith(documentsDir)) {
-        logger.warn(`Blocked attempt to access file outside documents directory: ${documentPath}`);
-        return res.status(403).json({ error: 'Access denied' });
-      }
-      
+
+      let documentsDir, absolutePath;
       try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          error: pathError.message
+        });
+      }
+
+      try {
+        const fs = require('fs').promises;
         const content = await fs.readFile(absolutePath, 'utf8');
         const stats = await fs.stat(absolutePath);
         

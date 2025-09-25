@@ -280,9 +280,7 @@ body {
   color: #6c757d;
 }
 
-.folder-item.expanded .folder-icon {
-  transform: rotate(90deg);
-}
+/* Removed transform rotation as we now handle open/closed folder icons in JavaScript */
 
 .empty-tree {
   text-align: center;

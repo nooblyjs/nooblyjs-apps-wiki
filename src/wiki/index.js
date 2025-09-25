@@ -34,8 +34,8 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   const queueProvider = options.filesDir || 'memory'
   const searchProvider = options.filesDir || 'memory'
   
-  const dataManager = new DataManager(dataDirectory);
   const filing = serviceRegistry.filing(filerProvider, { baseDir: filesDir});
+  const dataManager = new DataManager(dataDirectory, filing);
   const cache = serviceRegistry.cache(cacheProvider);
   const logger = serviceRegistry.logger(loggerProvider);
   const queue = serviceRegistry.queue(queueProvider);
@@ -72,17 +72,48 @@ async function initializeWikiData(dataManager, filing, cache, logger, queue, sea
     if (existingSpaces.length === 0 || existingDocuments.length === 0) {
       logger.info('Initializing default wiki data');
       
-      // Initialize default spaces
+      // Initialize 3 default spaces with absolute paths
       const defaultSpaces = [
         {
           id: 1,
           name: 'Personal Space',
-          description: 'This space is for you personal data',
+          description: 'Personal documents and notes',
           icon: '🏗️',
           visibility: 'private',
           documentCount: 0,
-          createdAt: '2024-01-15T10:00:00Z',
-          updatedAt: '2024-08-20T14:30:00Z',
+          path: `${process.cwd()}/documents`,
+          type: 'personal',
+          permissions: 'read-write',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          author: 'System'
+        },
+        {
+          id: 2,
+          name: 'Shared Space',
+          description: 'Shared team documents and collaboration',
+          icon: '👥',
+          visibility: 'team',
+          documentCount: 0,
+          path: `${process.cwd()}/documents-shared`,
+          type: 'shared',
+          permissions: 'read-write',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          author: 'System'
+        },
+        {
+          id: 3,
+          name: 'Read-Only Space',
+          description: 'Read-only reference documents and resources',
+          icon: '📖',
+          visibility: 'public',
+          documentCount: 0,
+          path: `${process.cwd()}/documents-readonly`,
+          type: 'readonly',
+          permissions: 'read-only',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           author: 'System'
         }
       ];
@@ -92,7 +123,24 @@ async function initializeWikiData(dataManager, filing, cache, logger, queue, sea
       // Store spaces
       await dataManager.write('spaces', defaultSpaces);
       logger.info('Stored all spaces to spaces.json');
-      
+
+      // Create directories for the 3 default spaces if they don't exist
+      for (const space of defaultSpaces) {
+        try {
+          await filing.list(space.path);
+          logger.info(`Directory already exists: ${space.path}`);
+        } catch (error) {
+          // Directory doesn't exist, create it using a dummy file approach
+          try {
+            const dummyFilePath = `${space.path}/.gitkeep`;
+            await filing.create(dummyFilePath, '# Keep this directory in git\n');
+            logger.info(`Created directory and .gitkeep for space: ${space.name} at ${space.path}`);
+          } catch (createError) {
+            logger.error(`Failed to create directory for space ${space.name}:`, createError);
+          }
+        }
+      }
+
       // Initialize default documents
       const defaultDocuments = [
       ];
