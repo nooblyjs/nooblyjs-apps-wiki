@@ -358,11 +358,11 @@ class WikiApp {
         }
 
         spacesList.innerHTML = this.data.spaces.map(space => `
-            <div class="space-item ${this.currentSpace?.id === space.id ? 'selected' : ''}" 
-                 data-space-id="${space.id}">
-                <i class="fas fa-${this.getSpaceIcon(space.name)}"></i>
-                <span class="space-name">${space.name}</span>
-            </div>
+            <a href="#" class="nav-link d-flex align-items-center py-2 px-2 rounded ${this.currentSpace?.id === space.id ? 'active bg-primary text-white' : 'text-dark'}"
+               data-space-id="${space.id}">
+                <i class="${this.getBootstrapSpaceIcon(space)} me-2"></i>
+                <span>${space.name}</span>
+            </a>
         `).join('');
 
         // Update spaces count
@@ -372,8 +372,9 @@ class WikiApp {
         }
 
         // Bind click events
-        spacesList.querySelectorAll('.space-item').forEach(item => {
-            item.addEventListener('click', () => {
+        spacesList.querySelectorAll('[data-space-id]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
                 const spaceId = parseInt(item.dataset.spaceId);
                 this.selectSpace(spaceId);
             });
@@ -1659,34 +1660,34 @@ class WikiApp {
         }
     }
 
-    getSpaceIcon(spaceName) {
-        // Map space names to appropriate Font Awesome icon names
+    getBootstrapSpaceIcon(space) {
+        // Use consistent Bootstrap icons for all spaces based on type first
+        if (space.type) {
+            const typeIconMappings = {
+                'personal': 'bi bi-person-fill',
+                'shared': 'bi bi-people-fill',
+                'readonly': 'bi bi-book-fill',
+                'team': 'bi bi-people',
+                'public': 'bi bi-globe'
+            };
+            if (typeIconMappings[space.type]) {
+                return typeIconMappings[space.type];
+            }
+        }
+
+        // Fallback: map space names to Bootstrap icons
         const iconMappings = {
-            'Architecture Documentation': 'sitemap',
-            'Business Requirements': 'briefcase',
-            'Development Guidelines': 'code',
-            'API Documentation': 'plug',
-            'Meeting Notes': 'sticky-note',
-            'My Cool Space': 'folder'
+            'Personal Space': 'bi bi-person-fill',
+            'Shared Space': 'bi bi-people-fill',
+            'Read-Only Space': 'bi bi-book-fill'
         };
 
-        // Look for keywords in space name if exact match not found
-        const name = spaceName.toLowerCase();
-        if (iconMappings[spaceName]) {
-            return iconMappings[spaceName];
-        } else if (name.includes('architecture')) {
-            return 'sitemap';
-        } else if (name.includes('business') || name.includes('requirement')) {
-            return 'briefcase';
-        } else if (name.includes('development') || name.includes('code')) {
-            return 'code';
-        } else if (name.includes('api')) {
-            return 'plug';
-        } else if (name.includes('meeting') || name.includes('notes')) {
-            return 'sticky-note';
-        } else {
-            return 'folder';
+        if (iconMappings[space.name]) {
+            return iconMappings[space.name];
         }
+
+        // Default fallback
+        return 'bi bi-folder-fill';
     }
 
     // View methods
