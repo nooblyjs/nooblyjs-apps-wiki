@@ -4030,6 +4030,9 @@ class WikiApp {
         if (!this.data.recent) {
             this.data.recent = [];
         }
+        if (!this.data.starred) {
+            this.data.starred = [];
+        }
     }
 
     async trackDocumentView(documentPath, spaceName) {
@@ -4071,7 +4074,8 @@ class WikiApp {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    recent: this.data.recent
+                    recent: this.data.recent,
+                    starred: this.data.starred
                 })
             });
 
@@ -4089,11 +4093,62 @@ class WikiApp {
             if (response.ok) {
                 const data = await response.json();
                 this.data.recent = data.recent || [];
+                this.data.starred = data.starred || [];
             }
         } catch (error) {
             console.error('Error loading activity from server:', error);
             this.data.recent = [];
+            this.data.starred = [];
         }
+    }
+
+    async toggleDocumentStar(documentPath, spaceName) {
+        try {
+            // Ensure we have activity data
+            this.ensureActivityData();
+
+            // Check if document is already starred
+            const existingIndex = this.data.starred.findIndex(item =>
+                item.path === documentPath && item.space === spaceName
+            );
+
+            if (existingIndex !== -1) {
+                // Remove from starred
+                this.data.starred.splice(existingIndex, 1);
+            } else {
+                // Add to starred at the beginning
+                const starredItem = {
+                    path: documentPath,
+                    space: spaceName,
+                    starredAt: new Date().toISOString(),
+                    title: documentPath.split('/').pop()
+                };
+
+                this.data.starred.unshift(starredItem);
+
+                // Keep only last 10 items
+                this.data.starred = this.data.starred.slice(0, 10);
+            }
+
+            // Save to server
+            await this.saveActivityToServer();
+
+            // Return whether the document is now starred
+            return this.data.starred.some(item =>
+                item.path === documentPath && item.space === spaceName
+            );
+
+        } catch (error) {
+            console.error('Error toggling document star:', error);
+            return false;
+        }
+    }
+
+    isDocumentStarred(documentPath, spaceName) {
+        if (!this.data.starred) return false;
+        return this.data.starred.some(item =>
+            item.path === documentPath && item.space === spaceName
+        );
     }
     
     getFileTypeIconClass(category) {
@@ -4287,6 +4342,11 @@ class WikiApp {
                 // If we have user activity data but no recent data, merge them
                 if (this.userActivity.recent && (!this.data.recent || this.data.recent.length === 0)) {
                     this.data.recent = this.userActivity.recent;
+                }
+
+                // If we have user activity data but no starred data, merge them
+                if (this.userActivity.starred && (!this.data.starred || this.data.starred.length === 0)) {
+                    this.data.starred = this.userActivity.starred;
                 }
             } else {
                 console.warn('Failed to load user activity, using defaults');

@@ -1666,10 +1666,10 @@ ${documentPath}\
   app.get('/applications/wiki/api/activity', async (req, res) => {
     try {
       const activity = await dataManager.read('activity');
-      res.json(activity[0] || { recent: [] });
+      res.json(activity[0] || { recent: [], starred: [] });
     } catch (error) {
       logger.error('Error reading activity data:', error);
-      res.json({ recent: [] });
+      res.json({ recent: [], starred: [] });
     }
   });
 
