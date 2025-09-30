@@ -9,8 +9,8 @@
     "path": "/workspaces/nooblyjs-apps-content/documents",
     "type": "personal",
     "permissions": "read-write",
-    "createdAt": "2025-09-30T23:32:42.207Z",
-    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "createdAt": "2025-09-30T23:51:29.173Z",
+    "updatedAt": "2025-09-30T23:51:29.173Z",
     "author": "System"
   },
   {
@@ -23,8 +23,8 @@
     "path": "/workspaces/nooblyjs-apps-content/documents-shared",
     "type": "shared",
     "permissions": "read-write",
-    "createdAt": "2025-09-30T23:32:42.207Z",
-    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "createdAt": "2025-09-30T23:51:29.173Z",
+    "updatedAt": "2025-09-30T23:51:29.173Z",
     "author": "System"
   },
   {
@@ -37,8 +37,8 @@
     "path": "/workspaces/nooblyjs-apps-content/documents-readonly",
     "type": "readonly",
     "permissions": "read-only",
-    "createdAt": "2025-09-30T23:32:42.207Z",
-    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "createdAt": "2025-09-30T23:51:29.173Z",
+    "updatedAt": "2025-09-30T23:51:29.173Z",
     "author": "System"
   }
 ]
