@@ -1434,25 +1434,39 @@ ${documentPath}\
       }
 
       logger.info(`Creating folder: ${name} in space ${spaceId}, parent: ${parentPath || 'root'}`);
-      
+      logger.info(`Raw parentPath value: "${parentPath}", type: ${typeof parentPath}`);
+
       // Find the space
       const spaces = await dataManager.read('spaces');
       const space = spaces.find(s => s.id === parseInt(spaceId));
-      
+
       if (!space) {
         return res.status(404).json({ success: false, message: 'Space not found' });
       }
-      
+
       // Create the physical folder
       const fs = require('fs').promises;
       const path = require('path');
-      const documentsDir = path.resolve(__dirname, '../../../documents');
+
+      // Use space's configured path if available, otherwise fall back to documents/spaceName
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
       const folderPath = parentPath ? `${parentPath}/${name}` : name;
-      const absolutePath = path.resolve(documentsDir, space.name, folderPath);
-      
-      // Security check
-      if (!absolutePath.startsWith(documentsDir)) {
-        logger.warn(`Blocked attempt to create folder outside documents directory: ${folderPath}`);
+      const absolutePath = path.resolve(spaceBaseDir, folderPath);
+
+      logger.info(`Space base dir: "${spaceBaseDir}"`);
+      logger.info(`Computed folderPath: "${folderPath}"`);
+      logger.info(`Final absolutePath: "${absolutePath}"`);
+
+      // Security check - ensure the path is within the space's base directory
+      if (!absolutePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to create folder outside space directory: ${folderPath}`);
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
       
@@ -1548,114 +1562,326 @@ ${documentPath}\
     }
   });
 
+  // Rename folder endpoint
+  app.put('/applications/wiki/api/folders/rename', async (req, res) => {
+    try {
+      const { spaceId, oldPath, newName } = req.body;
+
+      if (!spaceId || !oldPath || !newName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Space ID, old path, and new name are required'
+        });
+      }
+
+      logger.info(`Renaming folder: ${oldPath} to ${newName} in space ${spaceId}`);
+
+      // Find the space
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.id === parseInt(spaceId));
+
+      if (!space) {
+        return res.status(404).json({ success: false, message: 'Space not found' });
+      }
+
+      // Calculate new path
+      const parentPath = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+      const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+      // Create the physical folder paths
+      const fs = require('fs').promises;
+      const path = require('path');
+
+      // Use space's configured path if available
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
+      const oldAbsolutePath = path.resolve(spaceBaseDir, oldPath);
+      const newAbsolutePath = path.resolve(spaceBaseDir, newPath);
+
+      // Security check
+      if (!oldAbsolutePath.startsWith(spaceBaseDir) || !newAbsolutePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to rename folder outside space directory`);
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
+      try {
+        // Check if old folder exists
+        await fs.access(oldAbsolutePath);
+
+        // Check if new name already exists
+        try {
+          await fs.access(newAbsolutePath);
+          return res.status(409).json({
+            success: false,
+            message: 'A folder with that name already exists'
+          });
+        } catch (existsError) {
+          // Good, new name doesn't exist
+        }
+
+        // Rename the folder
+        await fs.rename(oldAbsolutePath, newAbsolutePath);
+
+        logger.info(`Successfully renamed folder from ${oldPath} to ${newPath}`);
+
+        res.json({
+          success: true,
+          message: 'Folder renamed successfully',
+          newPath: newPath
+        });
+      } catch (fileError) {
+        logger.error(`Failed to rename folder ${oldPath}:`, fileError);
+        if (fileError.code === 'ENOENT') {
+          res.status(404).json({
+            success: false,
+            message: 'Folder not found'
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to rename folder: ' + fileError.message
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Error renaming folder:', error);
+      res.status(500).json({ success: false, message: 'Failed to rename folder' });
+    }
+  });
+
+  // Rename document/file endpoint
+  app.put('/applications/wiki/api/documents/rename', async (req, res) => {
+    try {
+      const { spaceName, oldPath, newName } = req.body;
+
+      if (!spaceName || !oldPath || !newName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Space name, old path, and new name are required'
+        });
+      }
+
+      logger.info(`Renaming file: ${oldPath} to ${newName} in space ${spaceName}`);
+
+      // Find the space
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.name === spaceName);
+
+      if (!space) {
+        return res.status(404).json({ success: false, message: 'Space not found' });
+      }
+
+      // Calculate new path
+      const parentPath = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+      const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+      // Create the physical file paths
+      const fs = require('fs').promises;
+      const path = require('path');
+
+      // Use space's configured path if available
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
+      const oldAbsolutePath = path.resolve(spaceBaseDir, oldPath);
+      const newAbsolutePath = path.resolve(spaceBaseDir, newPath);
+
+      // Security check
+      if (!oldAbsolutePath.startsWith(spaceBaseDir) || !newAbsolutePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to rename file outside space directory`);
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
+      try {
+        // Check if old file exists
+        await fs.access(oldAbsolutePath);
+
+        // Check if new name already exists
+        try {
+          await fs.access(newAbsolutePath);
+          return res.status(409).json({
+            success: false,
+            message: 'A file with that name already exists'
+          });
+        } catch (existsError) {
+          // Good, new name doesn't exist
+        }
+
+        // Rename the file
+        await fs.rename(oldAbsolutePath, newAbsolutePath);
+
+        logger.info(`Successfully renamed file from ${oldPath} to ${newPath}`);
+
+        res.json({
+          success: true,
+          message: 'File renamed successfully',
+          newPath: newPath
+        });
+      } catch (fileError) {
+        logger.error(`Failed to rename file ${oldPath}:`, fileError);
+        if (fileError.code === 'ENOENT') {
+          res.status(404).json({
+            success: false,
+            message: 'File not found'
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to rename file: ' + fileError.message
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Error renaming file:', error);
+      res.status(500).json({ success: false, message: 'Failed to rename file' });
+    }
+  });
+
   // Delete folder endpoint
   app.delete('/applications/wiki/api/folders/:path(*)', async (req, res) => {
     try {
       const folderPath = decodeURIComponent(req.params.path);
       const { spaceId } = req.body || {};
-      
-      logger.info(`Deleting folder: ${folderPath}`);
-      
+
+      logger.info(`Deleting folder: ${folderPath} in space ${spaceId}`);
+
       if (!folderPath) {
         return res.status(400).json({ success: false, message: 'Folder path is required' });
       }
-      
+
+      if (!spaceId) {
+        return res.status(400).json({ success: false, message: 'Space ID is required' });
+      }
+
+      // Find the space
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.id === parseInt(spaceId));
+
+      if (!space) {
+        return res.status(404).json({ success: false, message: 'Space not found' });
+      }
+
       // Build the full path for the folder
-      const fullFolderPath = path.join('./wiki-files', folderPath);
-      
+      const fs = require('fs').promises;
+
+      // Use space's configured path if available
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
+      const fullFolderPath = path.resolve(spaceBaseDir, folderPath);
+
+      // Security check
+      if (!fullFolderPath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to delete folder outside space directory: ${folderPath}`);
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
       try {
         // Check if folder exists
-        const exists = await filing.exists(fullFolderPath);
-        if (!exists) {
-          return res.status(404).json({ success: false, message: 'Folder not found' });
-        }
-        
-        // Delete the folder and all its contents
-        await filing.deleteDirectory(fullFolderPath);
-        
-        // Also remove any documents from the data manager that were in this folder
-        try {
-          const documents = await dataManager.read('documents');
-          const updatedDocuments = documents.filter(doc => 
-            !doc.folderPath || !doc.folderPath.startsWith(folderPath)
-          );
-          
-          if (updatedDocuments.length !== documents.length) {
-            await dataManager.write('documents', updatedDocuments);
-          }
-        } catch (dataError) {
-          logger.warn('Error updating document metadata after folder deletion:', dataError);
-        }
-        
+        await fs.access(fullFolderPath);
+
+        // Delete the folder and all its contents recursively
+        await fs.rm(fullFolderPath, { recursive: true, force: true });
+
         logger.info(`Successfully deleted folder: ${folderPath}`);
         res.json({ success: true, message: 'Folder deleted successfully' });
-        
+
       } catch (deleteError) {
         logger.error(`Error deleting folder ${folderPath}:`, deleteError);
-        res.status(500).json({ success: false, message: 'Failed to delete folder' });
+        if (deleteError.code === 'ENOENT') {
+          res.status(404).json({ success: false, message: 'Folder not found' });
+        } else {
+          res.status(500).json({ success: false, message: 'Failed to delete folder: ' + deleteError.message });
+        }
       }
-      
+
     } catch (error) {
       logger.error('Error in delete folder endpoint:', error);
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
 
-  // Delete document endpoint  
+  // Delete document endpoint
   app.delete('/applications/wiki/api/documents/:path(*)', async (req, res) => {
     try {
       const filePath = decodeURIComponent(req.params.path);
-      const { spaceId } = req.body || {};
-      
-      logger.info(`Deleting document: ${filePath}`);
-      
+      const { spaceId, spaceName } = req.body || {};
+
+      logger.info(`Deleting document: ${filePath} in space ${spaceId}`);
+
       if (!filePath) {
         return res.status(400).json({ success: false, message: 'File path is required' });
       }
-      
+
+      // Find the space
+      const spaces = await dataManager.read('spaces');
+      let space;
+
+      if (spaceId) {
+        space = spaces.find(s => s.id === parseInt(spaceId));
+      } else if (spaceName) {
+        space = spaces.find(s => s.name === spaceName);
+      }
+
+      if (!space) {
+        return res.status(404).json({ success: false, message: 'Space not found' });
+      }
+
       // Build the full path for the file
-      const fullFilePath = path.join('./wiki-files', filePath);
-      
+      const fs = require('fs').promises;
+
+      // Use space's configured path if available
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
+      const fullFilePath = path.resolve(spaceBaseDir, filePath);
+
+      // Security check
+      if (!fullFilePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to delete file outside space directory: ${filePath}`);
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
       try {
         // Check if file exists
-        const exists = await filing.exists(fullFilePath);
-        if (!exists) {
-          return res.status(404).json({ success: false, message: 'Document not found' });
-        }
-        
+        await fs.access(fullFilePath);
+
         // Delete the file
-        await filing.remove(fullFilePath);
-        
-        // Remove document from the data manager
-        try {
-          const documents = await dataManager.read('documents');
-          const updatedDocuments = documents.filter(doc => 
-            doc.path !== filePath && doc.folderPath !== filePath
-          );
-          
-          if (updatedDocuments.length !== documents.length) {
-            await dataManager.write('documents', updatedDocuments);
-          }
-        } catch (dataError) {
-          logger.warn('Error updating document metadata after file deletion:', dataError);
-        }
-        
-        // Remove from search index
-        try {
-          const searchId = filePath.replace(/[^a-zA-Z0-9]/g, '_');
-          search.remove(searchId);
-        } catch (searchError) {
-          logger.warn('Error removing document from search index:', searchError);
-        }
-        
+        await fs.unlink(fullFilePath);
+
         logger.info(`Successfully deleted document: ${filePath}`);
         res.json({ success: true, message: 'Document deleted successfully' });
-        
+
       } catch (deleteError) {
         logger.error(`Error deleting document ${filePath}:`, deleteError);
-        res.status(500).json({ success: false, message: 'Failed to delete document' });
+        if (deleteError.code === 'ENOENT') {
+          res.status(404).json({ success: false, message: 'Document not found' });
+        } else {
+          res.status(500).json({ success: false, message: 'Failed to delete document: ' + deleteError.message });
+        }
       }
-      
+
     } catch (error) {
       logger.error('Error in delete document endpoint:', error);
       res.status(500).json({ success: false, message: 'Internal server error' });

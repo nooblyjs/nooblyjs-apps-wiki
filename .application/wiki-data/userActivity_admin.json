@@ -1,0 +1,22 @@
+{
+  "userId": "admin",
+  "starred": [],
+  "recent": [
+    {
+      "path": ".gitkeep",
+      "spaceName": "Personal Space",
+      "title": ".gitkeep",
+      "action": "viewed",
+      "visitedAt": "2025-09-30T22:43:03.098Z"
+    },
+    {
+      "path": "5.md",
+      "spaceName": "Read-Only Space",
+      "title": "5.md",
+      "action": "viewed",
+      "visitedAt": "2025-09-30T22:35:02.108Z"
+    }
+  ],
+  "createdAt": "2025-09-30T22:34:44.698Z",
+  "updatedAt": "2025-09-30T22:43:03.098Z"
+}

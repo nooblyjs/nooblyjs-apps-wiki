@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Personal Space",
+    "description": "Personal documents and notes",
+    "icon": "🏗️",
+    "visibility": "private",
+    "documentCount": 0,
+    "path": "/workspaces/nooblyjs-apps-content/documents",
+    "type": "personal",
+    "permissions": "read-write",
+    "createdAt": "2025-09-30T23:32:42.207Z",
+    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "author": "System"
+  },
+  {
+    "id": 2,
+    "name": "Shared Space",
+    "description": "Shared team documents and collaboration",
+    "icon": "👥",
+    "visibility": "team",
+    "documentCount": 0,
+    "path": "/workspaces/nooblyjs-apps-content/documents-shared",
+    "type": "shared",
+    "permissions": "read-write",
+    "createdAt": "2025-09-30T23:32:42.207Z",
+    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "author": "System"
+  },
+  {
+    "id": 3,
+    "name": "Read-Only Space",
+    "description": "Read-only reference documents and resources",
+    "icon": "📖",
+    "visibility": "public",
+    "documentCount": 0,
+    "path": "/workspaces/nooblyjs-apps-content/documents-readonly",
+    "type": "readonly",
+    "permissions": "read-only",
+    "createdAt": "2025-09-30T23:32:42.207Z",
+    "updatedAt": "2025-09-30T23:32:42.207Z",
+    "author": "System"
+  }
+]

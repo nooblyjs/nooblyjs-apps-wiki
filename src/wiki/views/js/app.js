@@ -175,6 +175,12 @@ class WikiApp {
             this.showUploadDialog(this.contextMenuTargetPath);
         });
 
+        document.getElementById('contextRename')?.addEventListener('click', () => {
+            console.log('Context menu Rename clicked, contextMenuTargetPath:', this.contextMenuTargetPath, 'contextMenuTargetType:', this.contextMenuTargetType);
+            this.hideContextMenu();
+            this.showRenameModal(this.contextMenuTargetPath, this.contextMenuTargetType);
+        });
+
         document.getElementById('contextDelete')?.addEventListener('click', () => {
             console.log('Context menu Delete clicked, contextMenuTargetPath:', this.contextMenuTargetPath, 'contextMenuTargetType:', this.contextMenuTargetType);
             this.hideContextMenu();
@@ -279,6 +285,20 @@ class WikiApp {
 
         document.getElementById('cancelCreateFile')?.addEventListener('click', () => {
             this.hideModal('createFileModal');
+        });
+
+        // Rename modal
+        document.getElementById('renameForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleRename();
+        });
+
+        document.getElementById('closeRenameModal')?.addEventListener('click', () => {
+            this.hideModal('renameModal');
+        });
+
+        document.getElementById('cancelRename')?.addEventListener('click', () => {
+            this.hideModal('renameModal');
         });
 
         // Overlay click to close modals
@@ -1261,42 +1281,52 @@ class WikiApp {
         console.log('showCreateFolderModal called with prefilledPath:', prefilledPath);
         console.log('currentSpace:', this.currentSpace);
 
+        // Auto-select first space if none is selected
+        if (!this.currentSpace && this.data.spaces.length > 0) {
+            this.selectSpace(this.data.spaces[0].id);
+        }
+
         if (!this.currentSpace) {
-            this.showNotification('Please select a space first', 'warning');
+            this.showNotification('Please create a space first', 'warning');
             return;
         }
 
-        console.log('About to show modal createFolderModal');
+        // Store the parent path for form submission
+        this.prefilledFolderPath = prefilledPath || '';
+
+        // Update the location info text
+        const locationInfo = document.getElementById('folderLocationInfo');
+        const locationText = document.getElementById('folderLocationText');
+
+        if (prefilledPath) {
+            locationInfo.style.display = 'block';
+            locationText.textContent = prefilledPath;
+        } else {
+            locationInfo.style.display = 'block';
+            locationText.textContent = 'Root';
+        }
+
+        console.log('Creating folder in path:', this.prefilledFolderPath || 'root');
+
         this.showModal('createFolderModal');
 
-        if (prefilledPath !== null) {
-            // Hide the location dropdown when pre-filled from context menu
-            const folderLocationSelect = document.getElementById('folderLocation');
-            const locationGroup = folderLocationSelect?.parentElement;
-            if (locationGroup) {
-                locationGroup.style.display = 'none';
-            }
-            // Store the path for form submission
-            this.prefilledFolderPath = prefilledPath;
-            console.log('Creating folder with prefilled path:', prefilledPath); // Debug log
-        } else {
-            // Show the location dropdown for normal creation
-            const folderLocationSelect = document.getElementById('folderLocation');
-            const locationGroup = folderLocationSelect?.parentElement;
-            if (locationGroup) {
-                locationGroup.style.display = 'block';
-            }
-            this.populateFolderLocationSelect();
-            this.prefilledFolderPath = null;
-        }
+        // Focus the folder name input
+        setTimeout(() => {
+            document.getElementById('folderName')?.focus();
+        }, 100);
     }
 
     showCreateFileModal(prefilledPath = null) {
+        // Auto-select first space if none is selected
+        if (!this.currentSpace && this.data.spaces.length > 0) {
+            this.selectSpace(this.data.spaces[0].id);
+        }
+
         if (!this.currentSpace) {
-            this.showNotification('Please select a space first', 'warning');
+            this.showNotification('Please create a space first', 'warning');
             return;
         }
-        
+
         this.showModal('createFileModal');
         
         if (prefilledPath !== null) {
@@ -1327,6 +1357,28 @@ class WikiApp {
         this.uploadTargetPath = targetPath || '';
         const fileInput = document.getElementById('fileUploadInput');
         fileInput?.click();
+    }
+
+    showRenameModal(itemPath, itemType) {
+        this.renameItemPath = itemPath;
+        this.renameItemType = itemType;
+
+        // Extract current name from path
+        const currentName = itemPath ? itemPath.split('/').pop() : '';
+
+        // Update modal title and prefill current name
+        const itemTypeText = itemType === 'folder' ? 'Folder' : 'File';
+        document.getElementById('renameItemType').textContent = itemTypeText;
+        document.getElementById('newItemName').value = currentName;
+
+        this.showModal('renameModal');
+
+        // Focus the input
+        setTimeout(() => {
+            const input = document.getElementById('newItemName');
+            input?.focus();
+            input?.select();
+        }, 100);
     }
 
     async handleFileUpload(files, targetPath = '') {
@@ -1600,20 +1652,32 @@ class WikiApp {
     async handleCreateFolder() {
         const form = document.getElementById('createFolderForm');
         const formData = new FormData(form);
-        
+
         try {
-            // Use prefilled path if available, otherwise use form selection
-            const parentPath = this.prefilledFolderPath !== null ? 
-                this.prefilledFolderPath : 
-                (formData.get('folderLocation') || '');
-                
+            // Validate folder name
+            const folderName = formData.get('folderName').trim();
+            if (!folderName) {
+                this.showNotification('Folder name cannot be empty', 'error');
+                return;
+            }
+
+            // Check for invalid characters
+            const invalidChars = /[<>:"|?*\\/]/;
+            if (invalidChars.test(folderName)) {
+                this.showNotification('Folder name cannot contain: < > : " | ? * \\ /', 'error');
+                return;
+            }
+
+            // Use the prefilled path that was set when modal was opened
+            const parentPath = this.prefilledFolderPath || '';
+
             console.log('Creating folder with parentPath:', parentPath, 'prefilledFolderPath:', this.prefilledFolderPath); // Debug log
-                
+
             const response = await fetch('/applications/wiki/api/folders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: formData.get('folderName'),
+                    name: folderName,
                     spaceId: this.currentSpace.id,
                     parentPath: parentPath
                 })
@@ -1625,13 +1689,8 @@ class WikiApp {
                 this.hideModal('createFolderModal');
                 form.reset();
 
-                // Get the parent folder path for selective update
-                const parentPath = this.prefilledFolderPath !== null ?
-                    this.prefilledFolderPath :
-                    (formData.get('folderLocation') || '');
-
-                // Update only the affected tree node
-                await this.updateTreeNode(parentPath);
+                // Update the tree to show the new folder
+                await this.loadFileTree();
                 this.showNotification('Folder created successfully!', 'success');
             } else {
                 throw new Error(result.message || 'Failed to create folder');
@@ -1642,13 +1701,87 @@ class WikiApp {
         }
     }
 
+    async handleRename() {
+        const form = document.getElementById('renameForm');
+        const formData = new FormData(form);
+
+        try {
+            // Validate new name
+            const newName = formData.get('newItemName').trim();
+            if (!newName) {
+                this.showNotification('Name cannot be empty', 'error');
+                return;
+            }
+
+            // Check for invalid characters
+            const invalidChars = /[<>:"|?*\\/]/;
+            if (invalidChars.test(newName)) {
+                this.showNotification('Name cannot contain: < > : " | ? * \\ /', 'error');
+                return;
+            }
+
+            const oldPath = this.renameItemPath;
+            const parentPath = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+            const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+            if (this.renameItemType === 'folder') {
+                // Rename folder via API
+                const response = await fetch(`/applications/wiki/api/folders/rename`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spaceId: this.currentSpace.id,
+                        oldPath: oldPath,
+                        newName: newName
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.hideModal('renameModal');
+                    form.reset();
+                    await this.loadFileTree();
+                    this.showNotification('Folder renamed successfully!', 'success');
+                } else {
+                    throw new Error(result.message || 'Failed to rename folder');
+                }
+            } else {
+                // Rename file via API
+                const response = await fetch(`/applications/wiki/api/documents/rename`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spaceName: this.currentSpace.name,
+                        oldPath: oldPath,
+                        newName: newName
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.hideModal('renameModal');
+                    form.reset();
+                    await this.loadFileTree();
+                    this.showNotification('File renamed successfully!', 'success');
+                } else {
+                    throw new Error(result.message || 'Failed to rename file');
+                }
+            }
+        } catch (error) {
+            console.error('Error renaming item:', error);
+            this.showNotification(`Failed to rename ${this.renameItemType}`, 'error');
+        }
+    }
+
     async handleCreateFile() {
         const form = document.getElementById('createFileForm');
         const formData = new FormData(form);
-        
+
         try {
             const templateContent = await this.getTemplateContent(formData.get('fileTemplate'));
-            
+
             // Use prefilled path if available, otherwise use form selection
             const folderPath = this.prefilledFilePath !== null ? 
                 this.prefilledFilePath : 

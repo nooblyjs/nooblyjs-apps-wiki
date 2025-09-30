@@ -486,12 +486,8 @@
                     <label for="folderName">Folder Name</label>
                     <input type="text" id="folderName" name="folderName" required>
                 </div>
-                <div class="form-group">
-                    <label for="folderLocation">Location</label>
-                    <select id="folderLocation" name="folderLocation">
-                        <option value="">Root</option>
-                        <!-- Dynamic options will be added here -->
-                    </select>
+                <div class="form-group" id="folderLocationInfo" style="display: none;">
+                    <small class="text-muted">Location: <span id="folderLocationText">Root</span></small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="cancelCreateFolder" class="btn btn-secondary">Cancel</button>
@@ -537,6 +533,30 @@
                 <div class="modal-actions">
                     <button type="button" id="cancelCreateFile" class="btn btn-secondary">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename <span id="renameItemType">Item</span></h2>
+                <button id="closeRenameModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="renameForm">
+                <div class="form-group">
+                    <label for="newItemName">New Name</label>
+                    <input type="text" id="newItemName" name="newItemName" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelRename" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename</button>
                 </div>
             </form>
         </div>
@@ -671,6 +691,12 @@
             <span>Upload File</span>
         </div>
         <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="contextRename">
+            <svg width="16" height="16">
+                <use href="#icon-edit"></use>
+            </svg>
+            <span>Rename</span>
+        </div>
         <div class="context-menu-item context-menu-item-danger" id="contextDelete">
             <svg width="16" height="16">
                 <use href="#icon-x"></use>

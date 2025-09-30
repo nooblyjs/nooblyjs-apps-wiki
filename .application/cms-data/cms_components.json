@@ -1,0 +1,61 @@
+[
+  {
+    "id": "hero-component",
+    "name": "Hero Section",
+    "type": "hero",
+    "category": "headers",
+    "description": "Full-width hero section with background image and call-to-action",
+    "thumbnail": "/assets/components/hero-thumb.jpg",
+    "template": "hero.ejs",
+    "settings": {
+      "backgroundImage": {
+        "type": "image",
+        "label": "Background Image",
+        "default": ""
+      },
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Your Title Here"
+      },
+      "subtitle": {
+        "type": "textarea",
+        "label": "Subtitle",
+        "default": "Your subtitle here"
+      },
+      "buttonText": {
+        "type": "text",
+        "label": "Button Text",
+        "default": "Learn More"
+      },
+      "buttonLink": {
+        "type": "text",
+        "label": "Button Link",
+        "default": "#"
+      }
+    },
+    "createdAt": "2025-09-30T22:34:14.766Z"
+  },
+  {
+    "id": "text-component",
+    "name": "Text Block",
+    "type": "text",
+    "category": "content",
+    "description": "Rich text content block with formatting options",
+    "thumbnail": "/assets/components/text-thumb.jpg",
+    "template": "text.ejs",
+    "settings": {
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Section Title"
+      },
+      "content": {
+        "type": "richtext",
+        "label": "Content",
+        "default": "Your content goes here..."
+      }
+    },
+    "createdAt": "2025-09-30T22:34:14.766Z"
+  }
+]

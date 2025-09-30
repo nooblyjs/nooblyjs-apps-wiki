@@ -1,11 +1,11 @@
 #application specific
-documents/
-.application/
-assets/
-posts/
-published-sites
-themes/
-templates/
+#documents/
+#.application/
+#assets/
+#posts/
+#published-sites
+#themes/
+#templates/
 
 #node
 node_modules/
