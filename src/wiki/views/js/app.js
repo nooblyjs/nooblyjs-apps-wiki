@@ -197,17 +197,39 @@ class WikiApp {
     showContextMenu(e, targetPath = null, targetType = 'folder') {
         e.preventDefault();
         e.stopPropagation();
-        
+
         const contextMenu = document.getElementById('fileContextMenu');
         this.contextMenuTargetPath = targetPath || ''; // Empty string for root
         this.contextMenuTargetType = targetType;
-        
+
         console.log('Context menu opened for path:', targetPath, 'type:', targetType); // Debug log
-        
-        // Position the context menu
-        contextMenu.style.left = e.pageX + 'px';
-        contextMenu.style.top = e.pageY + 'px';
+
+        // Position the context menu using clientX/clientY for viewport positioning
+        const x = e.clientX;
+        const y = e.clientY;
+
+        // Show menu first to get dimensions
         contextMenu.classList.remove('hidden');
+
+        // Get menu dimensions
+        const menuRect = contextMenu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Adjust position if menu would go off screen
+        let left = x;
+        let top = y;
+
+        if (x + menuRect.width > viewportWidth) {
+            left = viewportWidth - menuRect.width - 10;
+        }
+
+        if (y + menuRect.height > viewportHeight) {
+            top = viewportHeight - menuRect.height - 10;
+        }
+
+        contextMenu.style.left = left + 'px';
+        contextMenu.style.top = top + 'px';
     }
 
     hideContextMenu() {

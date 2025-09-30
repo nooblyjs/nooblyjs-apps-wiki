@@ -1,0 +1,12 @@
+{
+  "admin": {
+    "id": "xa9mdo5momg74x4kx",
+    "username": "admin",
+    "email": "admin@localhost",
+    "password": "5d257fcb21bb097ab72e76973516e6e538c68713db51e4efb651827a24bfe375",
+    "role": "admin",
+    "createdAt": "2025-09-30T22:34:14.769Z",
+    "lastLogin": null,
+    "isActive": true
+  }
+}

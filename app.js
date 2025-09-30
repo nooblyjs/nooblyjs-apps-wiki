@@ -17,8 +17,8 @@ const { EventEmitter } = require('events');
 // Iniitiate the Web and Api Interface
 const app = express();
 const PORT = process.env.PORT || 3002;
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
+app.use(bodyParser.json({ limit: '100mb' }));
 
 // Configure session middleware before application initialization
 app.use(session({

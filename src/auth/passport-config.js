@@ -64,30 +64,33 @@ function configurePassport(passport) {
     }
   }));
 
-  passport.use(new GoogleStrategy({
-    /*clientID: GOOGLE_CONFIG.web.client_id,
-    clientSecret: GOOGLE_CONFIG.web.client_secret,
-    callbackURL: GOOGLE_CONFIG.web.redirect_uris[0]*/
-  }, async (accessToken, refreshToken, profile, done) => {
-    try {
-      let user = await findUserByEmail(profile.emails[0].value);
-      
-      if (user) {
-        return done(null, user);
-      } else {
-        user = await createUser({
-          email: profile.emails[0].value,
-          name: profile.displayName,
-          googleId: profile.id,
-          provider: 'google',
-          avatar: profile.photos[0].value
-        });
-        return done(null, user);
+  // Only configure Google OAuth if credentials are available
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
+    }, async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await findUserByEmail(profile.emails[0].value);
+
+        if (user) {
+          return done(null, user);
+        } else {
+          user = await createUser({
+            email: profile.emails[0].value,
+            name: profile.displayName,
+            googleId: profile.id,
+            provider: 'google',
+            avatar: profile.photos[0].value
+          });
+          return done(null, user);
+        }
+      } catch (error) {
+        return done(error, null);
       }
-    } catch (error) {
-      return done(error, null);
-    }
-  }));
+    }));
+  }
 
   passport.serializeUser((user, done) => {
     done(null, user.id);
