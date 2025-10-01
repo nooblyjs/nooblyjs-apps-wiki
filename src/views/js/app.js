@@ -1267,7 +1267,7 @@ class WikiApp {
             if (titleEl) titleEl.textContent = `Welcome to ${this.currentSpace.name}`;
             if (subtitleEl) subtitleEl.textContent = this.currentSpace.description || 'Your documentation workspace dashboard';
         } else {
-            if (titleEl) titleEl.textContent = 'Welcome to Design Artifacts Wiki';
+            if (titleEl) titleEl.textContent = 'Welcome to the Wiki';
             if (subtitleEl) subtitleEl.textContent = 'Your documentation workspace dashboard';
         }
     }
@@ -2033,7 +2033,7 @@ class WikiApp {
         // Restore original titles
         const workspaceTitle = document.getElementById('workspaceTitle');
         const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        if (workspaceTitle) workspaceTitle.textContent = 'Welcome to Architecture Artifacts';
+        if (workspaceTitle) workspaceTitle.textContent = 'Welcome to the wiki';
         if (workspaceSubtitle) workspaceSubtitle.textContent = 'Your documentation workspace dashboard';
         
         // Hide template button
