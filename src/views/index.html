@@ -320,28 +320,22 @@
                 <div id="editorView" class="view hidden">
                     <div class="editor-container">
                         <div class="editor-header">
-                            <div class="editor-header-left">
-                                <input type="text" id="docTitle" placeholder="Document Title" class="doc-title-input">
-                                <span id="editingStatus" class="editing-status">Unsaved changes</span>
-                            </div>
-                            <div class="editor-actions">
-                                <button id="saveDoc" class="btn btn-primary">
-                                    <svg width="16" height="16">
-                                        <use href="#icon-file"></use>
-                                    </svg>
+                            <nav class="breadcrumb">
+                                <a href="#" id="editorBackToSpace" class="text-decoration-none">Space</a>
+                                <span class="breadcrumb-separator">/</span>
+                                <span id="editorDocTitle" class="text-muted"></span>
+                            </nav>
+                            <div class="editor-actions d-flex gap-2">
+                                <button id="saveDoc" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-check-lg me-1"></i>
                                     Save
-                                    <span class="shortcut">Ctrl+S</span>
                                 </button>
-                                <button id="previewDoc" class="btn btn-secondary">
-                                    <svg width="16" height="16">
-                                        <use href="#icon-eye"></use>
-                                    </svg>
+                                <button id="previewDoc" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-eye me-1"></i>
                                     Preview
                                 </button>
-                                <button id="closeEditor" class="btn btn-secondary">
-                                    <svg width="16" height="16">
-                                        <use href="#icon-x"></use>
-                                    </svg>
+                                <button id="closeEditor" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-x-lg me-1"></i>
                                     Close
                                 </button>
                             </div>

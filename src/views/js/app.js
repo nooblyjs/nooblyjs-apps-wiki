@@ -718,9 +718,6 @@ class WikiApp {
         if (this.currentView === 'starred') {
             this.loadStarredFiles();
         }
-
-        // Show the space view with space content
-        this.showSpaceView(space);
     }
     
     selectFolder(folderPath) {
@@ -1008,26 +1005,6 @@ class WikiApp {
         });
     }
 
-    // Space View Implementation
-    async showSpaceView(space) {
-        this.setActiveView('space');
-        this.currentView = 'space';
-        
-        // Update space header
-        const spaceNameElement = document.getElementById('currentSpaceName');
-        if (spaceNameElement) {
-            spaceNameElement.textContent = space.name;
-        }
-        
-        // Bind back to home button
-        document.getElementById('backToHome')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showHome();
-        });
-        
-        // Load space content
-        await this.loadSpaceContent(space);
-    }
 
     async loadSpaceContent(space) {
         try {
@@ -2062,18 +2039,6 @@ class WikiApp {
         }
     }
 
-    async openDocument(documentId) {
-        try {
-            const response = await fetch(`/applications/wiki/api/documents/${documentId}`);
-            const document = await response.json();
-            
-            this.currentDocument = document;
-            this.showDocumentView(document);
-        } catch (error) {
-            console.error('Error loading document:', error);
-            this.showNotification('Failed to load document', 'error');
-        }
-    }
 
     async openDocumentByPath(documentPath, spaceName) {
         try {
@@ -2161,7 +2126,6 @@ class WikiApp {
         const downloadUrl = pdfUrl + '&download=true';
         
         // Remove any existing content after header and add PDF viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -2208,7 +2172,6 @@ class WikiApp {
         const downloadUrl = imageUrl + '&download=true';
         
         // Remove any existing content after header and add image viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -2255,7 +2218,6 @@ class WikiApp {
         const numberedLines = lines.map((line, index) => `${(index + 1).toString().padStart(4, ' ')}: ${this.escapeHtml(line)}`).join('\n');
         
         // Remove any existing content after header and add text viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -2335,7 +2297,6 @@ class WikiApp {
         const lines = doc.content.split('\n').length;
         
         // Remove any existing content after header and add code viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -2389,7 +2350,6 @@ class WikiApp {
         if (!contentElement) return;
         
         // Remove any existing content after header and add markdown viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -2440,7 +2400,6 @@ class WikiApp {
         const downloadUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}&download=true`;
         
         // Remove any existing content after header and add default viewer
-        const header = contentElement.querySelector('.document-header');
         const existingContent = contentElement.querySelector('.document-content-wrapper');
         if (existingContent) existingContent.remove();
         
@@ -3019,151 +2978,7 @@ class WikiApp {
         }
     }
 
-    displayDocument(documentData, spaceName, path) {
-        // Ensure we're not in editing mode and switch to document view
-        this.setActiveView('document');
-        this.isEditing = false;
 
-        // Update breadcrumb
-        const spaceLink = document.getElementById('docBackToSpace');
-        if (spaceLink) {
-            spaceLink.textContent = spaceName;
-            spaceLink.onclick = () => this.showHome();
-        }
-
-        const titleElement = document.getElementById('currentDocTitle');
-        if (titleElement) {
-            titleElement.textContent = documentData.metadata?.fileName || path;
-        }
-
-        // Render content based on viewer type
-        const container = document.querySelector('#documentView .document-container');
-
-        if (!container) {
-            console.error('Document container not found');
-            return;
-        }
-
-        // Clear any existing content completely
-        const existingContent = container.querySelector('.document-content');
-        if (existingContent) {
-            existingContent.remove();
-        }
-
-        // Create fresh content div
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'document-content';
-
-        if (documentData.metadata?.viewer === 'markdown') {
-            // Render markdown
-            contentDiv.innerHTML = `<div class="document-content-wrapper"><div class="markdown-content">${marked.parse(documentData.content || '')}</div></div>`;
-        } else if (documentData.metadata?.viewer === 'image') {
-            // Render image
-            contentDiv.innerHTML = `<div class="document-content-wrapper"><div class="image-viewer"><img src="${documentData.url || documentData.path}" alt="${documentData.metadata?.fileName || 'Image'}" /></div></div>`;
-        } else {
-            // Render as preformatted text
-            contentDiv.innerHTML = `<div class="document-content-wrapper"><pre class="text-viewer">${this.escapeHtml(documentData.content || 'No content available')}</pre></div>`;
-        }
-
-        container.appendChild(contentDiv);
-
-        // Update edit button
-        const editBtn = document.getElementById('editDocBtn');
-        if (editBtn) {
-            editBtn.onclick = () => this.editDocument(path, spaceName, documentData);
-        }
-
-        // Store current document info
-        this.currentDocument = { path, spaceName, data: documentData };
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    editDocument(path, spaceName, documentData) {
-        // Switch to editor view and load the document content for editing
-        this.setActiveView('editor');
-        
-        // Load the document title and content
-        const titleInput = document.getElementById('docTitle');
-        const editorTextarea = document.getElementById('editorTextarea');
-        
-        if (titleInput && documentData.title) {
-            titleInput.value = documentData.title || documentData.metadata?.fileName || path;
-        }
-        
-        if (editorTextarea && documentData.content) {
-            editorTextarea.value = documentData.content;
-        }
-        
-        // Store current document info for saving
-        this.currentDocument = { 
-            path, 
-            spaceName, 
-            data: documentData,
-            isEditing: true 
-        };
-        
-        // Update save button functionality
-        const saveBtn = document.getElementById('saveDoc');
-        if (saveBtn) {
-            saveBtn.onclick = () => this.saveCurrentDocument();
-        }
-    }
-
-    async saveCurrentDocument() {
-        if (!this.currentDocument || !this.currentDocument.isEditing) {
-            this.showNotification('No document to save', 'error');
-            return;
-        }
-        
-        const titleInput = document.getElementById('docTitle');
-        const editorTextarea = document.getElementById('editorTextarea');
-        
-        const title = titleInput?.value?.trim() || this.currentDocument.data.title;
-        const content = editorTextarea?.value || '';
-        
-        try {
-            const response = await fetch('/applications/wiki/api/documents/content', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    path: this.currentDocument.path,
-                    spaceName: this.currentDocument.spaceName,
-                    content: content
-                })
-            });
-            
-            if (response.ok) {
-                this.showNotification('Document saved successfully', 'success');
-                
-                // Update the stored document data
-                this.currentDocument.data.content = content;
-                this.currentDocument.data.title = title;
-                
-                // Track the edit
-                await fetch('/applications/wiki/api/user/visit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        path: this.currentDocument.path,
-                        spaceName: this.currentDocument.spaceName,
-                        title: title,
-                        action: 'edited'
-                    })
-                });
-            } else {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to save document');
-            }
-        } catch (error) {
-            console.error('Error saving document:', error);
-            this.showNotification('Failed to save document: ' + error.message, 'error');
-        }
-    }
 
     // Placeholder methods for not-yet-implemented features
     async loadRecentFiles() {
@@ -3592,53 +3407,6 @@ class WikiApp {
         }
     }
 
-    showDocumentView(doc) {
-        // Legacy method for backward compatibility - delegate to enhanced viewer
-        if (doc.metadata) {
-            this.showEnhancedDocumentView(doc);
-            return;
-        }
-        
-        // Fallback to original implementation for documents without metadata
-        this.setActiveView('document');
-        this.currentView = 'document';
-        
-        // Update document header
-        const docTitle = document.getElementById('currentDocTitle');
-        if (docTitle) {
-            docTitle.textContent = doc.title;
-        }
-        
-        // Update breadcrumb to show space
-        const backToSpace = document.getElementById('docBackToSpace');
-        if (backToSpace) {
-            backToSpace.textContent = doc.spaceName || 'Space';
-        }
-        
-        // Render document content
-        const contentElement = document.querySelector('#documentView .document-container');
-        if (contentElement && doc.content) {
-            if (doc.content.startsWith('<img')) {
-                contentElement.innerHTML = doc.content;
-            } else if (typeof marked !== 'undefined') {
-                // Render markdown content
-                contentElement.innerHTML = marked.parse(doc.content);
-                
-                // Apply syntax highlighting if Prism is available
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAllUnder(contentElement);
-                }
-            } else {
-                // Fallback: display as preformatted text
-                contentElement.innerHTML = `<pre>${this.escapeHtml(doc.content)}</pre>`;
-            }
-        } else {
-            contentElement.innerHTML = '<div class="error-message">Failed to load document content</div>';
-        }
-        
-        // Bind document action events
-        this.bindDocumentViewEvents();
-    }
     
     bindDocumentViewEvents() {
         // Edit document button
@@ -3690,24 +3458,34 @@ class WikiApp {
         this.setActiveView('editor');
         this.currentView = 'editor';
         this.isEditing = true;
-        
-        // Update editor header
-        const titleInput = document.getElementById('docTitle');
-        if (titleInput) {
-            titleInput.value = doc.title;
+
+        // Update editor breadcrumb
+        const spaceLink = document.getElementById('editorBackToSpace');
+        const titleElement = document.getElementById('editorDocTitle');
+
+        if (spaceLink) {
+            spaceLink.textContent = doc.spaceName || 'Space';
+            spaceLink.onclick = (e) => {
+                e.preventDefault();
+                this.showHome();
+            };
         }
-        
+
+        if (titleElement) {
+            titleElement.textContent = doc.title || doc.metadata?.fileName || 'Untitled';
+        }
+
         const textarea = document.getElementById('editorTextarea');
         if (textarea) {
             textarea.value = doc.content || '';
             // Auto-resize textarea
             this.autoResizeTextarea(textarea);
         }
-        
+
         // Show markdown editor pane, hide preview initially
         document.getElementById('markdownEditor')?.classList.remove('hidden');
         document.getElementById('previewPane')?.classList.add('hidden');
-        
+
         // Bind editor events
         this.bindEditorEvents(doc);
     }
@@ -3717,13 +3495,23 @@ class WikiApp {
         this.setActiveView('editor');
         this.currentView = 'editor';
         this.isEditing = true;
-        
-        // Update editor header
-        const titleInput = document.getElementById('docTitle');
-        if (titleInput) {
-            titleInput.value = doc.title;
+
+        // Update editor breadcrumb
+        const spaceLink = document.getElementById('editorBackToSpace');
+        const titleElement = document.getElementById('editorDocTitle');
+
+        if (spaceLink) {
+            spaceLink.textContent = doc.spaceName || 'Space';
+            spaceLink.onclick = (e) => {
+                e.preventDefault();
+                this.showHome();
+            };
         }
-        
+
+        if (titleElement) {
+            titleElement.textContent = doc.title || doc.metadata?.fileName || 'Untitled';
+        }
+
         const textarea = document.getElementById('editorTextarea');
         if (textarea) {
             textarea.value = doc.content || '';
@@ -3734,17 +3522,17 @@ class WikiApp {
             // Auto-resize textarea
             this.autoResizeTextarea(textarea);
         }
-        
+
         // Show editor pane, hide preview for non-markdown files
         document.getElementById('markdownEditor')?.classList.remove('hidden');
         document.getElementById('previewPane')?.classList.add('hidden');
-        
+
         // Hide preview button for non-markdown files
         const previewBtn = document.getElementById('previewDoc');
         if (previewBtn) {
             previewBtn.style.display = doc.metadata?.viewer === 'markdown' ? 'block' : 'none';
         }
-        
+
         // Bind editor events
         this.bindEditorEvents(doc);
     }
@@ -4092,14 +3880,14 @@ class WikiApp {
     }
 
     // Close editor
-    closeEditor(doc) {
+    closeEditor() {
         this.isEditing = false;
 
         // Remove event listeners
         document.removeEventListener('keydown', this.handleKeyDown);
 
         // Return to document view
-        this.showEnhancedDocumentView(this.currentDocument || doc);
+        this.showEnhancedDocumentView(this.currentDocument);
     }
     
     escapeHtml(text) {
@@ -4167,7 +3955,7 @@ class WikiApp {
         };
         
         // Check by extension
-        for (const [key, info] of Object.entries(categories)) {
+        for (const info of Object.values(categories)) {
             if (info.extensions.includes(ext)) {
                 return {
                     category: info.category,
@@ -4330,54 +4118,6 @@ class WikiApp {
         }
     }
 
-    async toggleDocumentStar(documentPath, spaceName) {
-        try {
-            // Ensure we have activity data
-            this.ensureActivityData();
-
-            // Check if document is already starred
-            const existingIndex = this.data.starred.findIndex(item =>
-                item.path === documentPath && item.space === spaceName
-            );
-
-            if (existingIndex !== -1) {
-                // Remove from starred
-                this.data.starred.splice(existingIndex, 1);
-            } else {
-                // Add to starred at the beginning
-                const starredItem = {
-                    path: documentPath,
-                    space: spaceName,
-                    starredAt: new Date().toISOString(),
-                    title: documentPath.split('/').pop()
-                };
-
-                this.data.starred.unshift(starredItem);
-
-                // Keep only last 10 items
-                this.data.starred = this.data.starred.slice(0, 10);
-            }
-
-            // Save to server
-            await this.saveActivityToServer();
-
-            // Return whether the document is now starred
-            return this.data.starred.some(item =>
-                item.path === documentPath && item.space === spaceName
-            );
-
-        } catch (error) {
-            console.error('Error toggling document star:', error);
-            return false;
-        }
-    }
-
-    isDocumentStarred(documentPath, spaceName) {
-        if (!this.data.starred) return false;
-        return this.data.starred.some(item =>
-            item.path === documentPath && item.space === spaceName
-        );
-    }
     
     getFileTypeIconClass(category) {
         const iconMap = {

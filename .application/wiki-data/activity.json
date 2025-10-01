@@ -2,13 +2,68 @@
   {
     "recent": [
       {
+        "path": "Test PDF.pdf",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:56:45.513Z",
+        "title": "Test PDF.pdf"
+      },
+      {
+        "path": "B2B Digital Commerce - Group Capabilities.pptx",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:56:39.666Z",
+        "title": "B2B Digital Commerce - Group Capabilities.pptx"
+      },
+      {
+        "path": "Beach.jpg",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:56:31.001Z",
+        "title": "Beach.jpg"
+      },
+      {
+        "path": "data.txt",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:56:25.197Z",
+        "title": "data.txt"
+      },
+      {
         "path": "1.md",
         "space": "Shared Space",
-        "lastVisited": "2025-10-01T13:25:44.628Z",
+        "lastVisited": "2025-10-01T14:56:08.826Z",
         "title": "1.md"
+      },
+      {
+        "path": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:53:10.669Z",
+        "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf"
+      },
+      {
+        "path": "Business Strategy/2024/B2B - Enterprise eCommerce 202204.pdf",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-01T14:51:04.017Z",
+        "title": "B2B - Enterprise eCommerce 202204.pdf"
+      },
+      {
+        "path": "Business Strategy/2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-01T14:50:23.931Z",
+        "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf"
+      },
+      {
+        "path": "4.md",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T14:41:15.394Z",
+        "title": "4.md"
       }
     ],
-    "starred": [],
-    "updatedAt": "2025-10-01T13:25:45.211Z"
+    "starred": [
+      {
+        "path": "1.md",
+        "spaceName": "Shared Space",
+        "title": "1.md",
+        "starredAt": "2025-10-01T14:52:47.661Z"
+      }
+    ],
+    "updatedAt": "2025-10-01T14:56:45.784Z"
   }
 ]
