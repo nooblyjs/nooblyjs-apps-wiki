@@ -9,8 +9,8 @@
     "path": "/workspaces/nooblyjs-apps-wiki/documents",
     "type": "personal",
     "permissions": "read-write",
-    "createdAt": "2025-10-01T15:15:14.620Z",
-    "updatedAt": "2025-10-01T15:15:14.620Z",
+    "createdAt": "2025-10-01T15:16:08.974Z",
+    "updatedAt": "2025-10-01T15:16:08.974Z",
     "author": "System"
   },
   {
@@ -23,8 +23,8 @@
     "path": "/workspaces/nooblyjs-apps-wiki/documents-shared",
     "type": "shared",
     "permissions": "read-write",
-    "createdAt": "2025-10-01T15:15:14.620Z",
-    "updatedAt": "2025-10-01T15:15:14.620Z",
+    "createdAt": "2025-10-01T15:16:08.974Z",
+    "updatedAt": "2025-10-01T15:16:08.974Z",
     "author": "System"
   },
   {
@@ -37,8 +37,8 @@
     "path": "/workspaces/nooblyjs-apps-wiki/documents-readonly",
     "type": "readonly",
     "permissions": "read-only",
-    "createdAt": "2025-10-01T15:15:14.620Z",
-    "updatedAt": "2025-10-01T15:15:14.620Z",
+    "createdAt": "2025-10-01T15:16:08.974Z",
+    "updatedAt": "2025-10-01T15:16:08.974Z",
     "author": "System"
   }
 ]

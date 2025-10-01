@@ -1134,7 +1134,7 @@ class WikiApp {
             // Get starred files for this specific space
             const allStarredFiles = this.data.starred || [];
             const starredFiles = allStarredFiles
-                .filter(file => file.space === space.name)
+                .filter(file => file.spaceName === space.name)
                 .slice(0, 6); // Limit to 6 items for home page
 
             if (starredFiles.length === 0) {
@@ -1159,7 +1159,7 @@ class WikiApp {
                         const fileName = this.getFileNameFromPath(file.path);
 
                         return `
-                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.space}">
+                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
                                 <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
@@ -3157,7 +3157,7 @@ class WikiApp {
                         const fileName = this.getFileNameFromPath(file.path);
                         
                         return `
-                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.space}">
+                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
                                 <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
