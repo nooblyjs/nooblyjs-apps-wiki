@@ -2912,7 +2912,11 @@ class WikiApp {
         this.hideSuggestions();
 
         try {
-            const url = `/applications/wiki/api/search?q=${encodeURIComponent(query)}&includeContent=false`;
+            // Build URL with space filter if a space is selected
+            let url = `/applications/wiki/api/search?q=${encodeURIComponent(query)}&includeContent=false`;
+            if (this.currentSpace) {
+                url += `&spaceName=${encodeURIComponent(this.currentSpace.name)}`;
+            }
             console.log('Fetching search results from:', url);
             const response = await fetch(url);
             const results = await response.json();

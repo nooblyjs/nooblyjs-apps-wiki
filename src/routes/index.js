@@ -57,8 +57,8 @@ module.exports = (options, eventEmitter, services) => {
   }
 
   // Initialize enhanced search indexer
-  const searchIndexer = new SearchIndexer(logger);
-  
+  const searchIndexer = new SearchIndexer(logger, dataManager);
+
   // Build initial index (async, non-blocking)
   setImmediate(() => {
     searchIndexer.buildIndex().catch(error => {
@@ -838,21 +838,27 @@ ${documentPath}\
     try {
       const query = req.query.q?.trim() || '';
       const fileTypes = req.query.fileTypes ? req.query.fileTypes.split(',') : [];
-      const baseTypes = req.query.baseTypes ? req.query.baseTypes.split(',') : [];
+      const spaceNames = req.query.spaceNames ? req.query.spaceNames.split(',') : [];
+      const spaceName = req.query.spaceName?.trim(); // Single space filter
       const includeContent = req.query.includeContent === 'true';
 
       if (!query) {
         return res.json([]);
       }
 
-      logger.info(`Enhanced search for: ${query}, fileTypes: ${fileTypes}, baseTypes: ${baseTypes}`);
-      
+      // Combine spaceName and spaceNames filters
+      const spaceFilter = [];
+      if (spaceName) spaceFilter.push(spaceName);
+      if (spaceNames.length > 0) spaceFilter.push(...spaceNames);
+
+      logger.info(`Enhanced search for: ${query}, fileTypes: ${fileTypes}, spaceNames: ${spaceFilter.join(', ')}`);
+
       // Use the enhanced search indexer
       let searchResults = searchIndexer.search(query, {
         maxResults: 20,
         includeContent: includeContent,
         fileTypes: fileTypes,
-        baseTypes: baseTypes
+        spaceNames: spaceFilter
       });
       
       // Fall back to original search for wiki documents if no file results

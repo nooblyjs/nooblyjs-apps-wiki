@@ -14,18 +14,21 @@ const path = require('path');
 const mime = require('mime-types');
 
 class SearchIndexer {
-    constructor(logger) {
+    constructor(logger, spacesDataManager) {
         this.logger = logger;
+        this.spacesDataManager = spacesDataManager;
         this.index = {
             files: new Map(), // filename -> file info
             content: new Map(), // file path -> indexed content tokens
             tokens: new Map(), // token -> Set of file paths
         };
-        this.documentsDir = path.resolve(__dirname, '../../../documents');
-        this.docsDir = path.resolve(__dirname, '../../../docs');
+        this.documentsDir = path.resolve(__dirname, '../..', 'documents');
+        this.documentsSharedDir = path.resolve(__dirname, '../..', 'documents-shared');
+        this.documentsReadonlyDir = path.resolve(__dirname, '../..', 'documents-readonly');
+        this.docsDir = path.resolve(__dirname, '../..', 'docs');
         this.isIndexing = false;
         this.lastIndexTime = null;
-        
+
         // File categories for different indexing strategies
         this.textFileExtensions = new Set(['.md', '.txt', '.json', '.yaml', '.yml', '.csv', '.log']);
         this.searchableFileExtensions = new Set([
@@ -47,17 +50,19 @@ class SearchIndexer {
 
         this.isIndexing = true;
         this.logger.info('Starting search index build...');
-        
+
         try {
             // Clear existing index
             this.clearIndex();
-            
-            // Index documents directory
-            await this.indexDirectory(this.documentsDir, 'documents');
-            
+
+            // Index all three space directories with their spaceName
+            await this.indexDirectory(this.documentsDir, 'Personal Space');
+            await this.indexDirectory(this.documentsSharedDir, 'Shared Space');
+            await this.indexDirectory(this.documentsReadonlyDir, 'Read-Only Space');
+
             this.lastIndexTime = new Date();
             this.logger.info(`Search index built successfully. Indexed ${this.index.files.size} files with ${this.index.tokens.size} unique tokens`);
-            
+
         } catch (error) {
             this.logger.error('Error building search index:', error);
         } finally {
@@ -77,18 +82,26 @@ class SearchIndexer {
     /**
      * Index a directory recursively
      */
-    async indexDirectory(dirPath, baseType) {
+    async indexDirectory(dirPath, spaceName) {
         try {
             const items = await fs.readdir(dirPath, { withFileTypes: true });
-            
+
             for (const item of items) {
                 const itemPath = path.join(dirPath, item.name);
-                const relativePath = path.relative(baseType === 'documents' ? this.documentsDir : this.docsDir, itemPath);
-                
+
+                // Calculate relative path from the space's base directory
+                let baseDir;
+                if (spaceName === 'Personal Space') baseDir = this.documentsDir;
+                else if (spaceName === 'Shared Space') baseDir = this.documentsSharedDir;
+                else if (spaceName === 'Read-Only Space') baseDir = this.documentsReadonlyDir;
+                else baseDir = this.docsDir;
+
+                const relativePath = path.relative(baseDir, itemPath);
+
                 if (item.isDirectory()) {
-                    await this.indexDirectory(itemPath, baseType);
+                    await this.indexDirectory(itemPath, spaceName);
                 } else if (item.isFile()) {
-                    await this.indexFile(itemPath, relativePath, baseType);
+                    await this.indexFile(itemPath, relativePath, spaceName);
                 }
             }
         } catch (error) {
@@ -99,23 +112,24 @@ class SearchIndexer {
     /**
      * Index a single file
      */
-    async indexFile(filePath, relativePath, baseType) {
+    async indexFile(filePath, relativePath, spaceName) {
         try {
             const stats = await fs.stat(filePath);
             const ext = path.extname(filePath).toLowerCase();
             const fileName = path.basename(filePath);
             const mimeType = mime.lookup(filePath) || 'application/octet-stream';
-            
+
             // Create file entry
             const fileInfo = {
                 path: filePath,
                 relativePath: relativePath,
                 name: fileName,
+                title: fileName, // Add title for frontend display
                 size: stats.size,
                 extension: ext,
                 mimeType: mimeType,
                 type: this.getFileType(ext, mimeType),
-                baseType: baseType, // 'documents' or 'docs'
+                spaceName: spaceName, // Use spaceName instead of baseType
                 modifiedTime: stats.mtime,
                 isIndexed: false,
                 tokens: new Set()
@@ -177,12 +191,12 @@ class SearchIndexer {
      */
     tokenize(text) {
         if (!text) return [];
-        
+
         return text
             .toLowerCase()
             .replace(/[^\w\s-]/g, ' ') // Replace non-word chars except hyphens
             .split(/\s+/)
-            .filter(token => token.length >= 2) // Minimum token length
+            .filter(token => token.length >= 1) // Minimum token length (allow single characters)
             .filter(token => !this.isStopWord(token));
     }
 
@@ -245,7 +259,7 @@ class SearchIndexer {
             maxResults = 20,
             includeContent = false,
             fileTypes = [],
-            baseTypes = [] // Filter by 'documents' or 'docs'
+            spaceNames = [] // Filter by space name
         } = options;
 
         if (!query || query.trim().length < 2) {
@@ -279,7 +293,7 @@ class SearchIndexer {
             .filter(result => {
                 // Apply filters
                 if (fileTypes.length > 0 && !fileTypes.includes(result.type)) return false;
-                if (baseTypes.length > 0 && !baseTypes.includes(result.baseType)) return false;
+                if (spaceNames.length > 0 && !spaceNames.includes(result.spaceName)) return false;
                 return true;
             })
             .sort((a, b) => b.score - a.score)
@@ -366,13 +380,13 @@ class SearchIndexer {
             lastIndexTime: this.lastIndexTime,
             isIndexing: this.isIndexing,
             fileTypes: {},
-            baseTypes: {}
+            spaceNames: {}
         };
 
         for (const [, fileInfo] of this.index.files) {
             if (fileInfo.isIndexed) stats.indexedFiles++;
             stats.fileTypes[fileInfo.type] = (stats.fileTypes[fileInfo.type] || 0) + 1;
-            stats.baseTypes[fileInfo.baseType] = (stats.baseTypes[fileInfo.baseType] || 0) + 1;
+            stats.spaceNames[fileInfo.spaceName] = (stats.spaceNames[fileInfo.spaceName] || 0) + 1;
         }
 
         return stats;
@@ -381,16 +395,21 @@ class SearchIndexer {
     /**
      * Incremental update - add or update a single file
      */
-    async updateFile(filePath, baseType = 'documents') {
-        const baseDir = baseType === 'documents' ? this.documentsDir : this.docsDir;
+    async updateFile(filePath, spaceName = 'Personal Space') {
+        let baseDir;
+        if (spaceName === 'Personal Space') baseDir = this.documentsDir;
+        else if (spaceName === 'Shared Space') baseDir = this.documentsSharedDir;
+        else if (spaceName === 'Read-Only Space') baseDir = this.documentsReadonlyDir;
+        else baseDir = this.docsDir;
+
         const relativePath = path.relative(baseDir, filePath);
-        
+
         // Remove old index entries for this file
         this.removeFileFromIndex(relativePath);
-        
+
         // Re-index the file
-        await this.indexFile(filePath, relativePath, baseType);
-        
+        await this.indexFile(filePath, relativePath, spaceName);
+
         this.logger.info(`Updated index for file: ${relativePath}`);
     }
 
