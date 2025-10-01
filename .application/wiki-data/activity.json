@@ -2,10 +2,24 @@
   {
     "recent": [
       {
+        "path": "Customer Value Stream/Todo.md",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-01T15:30:39.217Z",
+        "title": "Todo.md"
+      },
+      {
         "path": "1.md",
-        "space": "Read-Only Space",
-        "lastVisited": "2025-10-01T15:21:37.239Z",
-        "title": "1.md"
+        "spaceName": "Read-Only Space",
+        "title": "1.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:28:51.727Z"
+      },
+      {
+        "path": "2.md",
+        "spaceName": "Read-Only Space",
+        "title": "2.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:28:26.476Z"
       },
       {
         "path": "1.md",
@@ -55,20 +69,6 @@
         "title": "Beach.jpg",
         "action": "viewed",
         "visitedAt": "2025-10-01T14:56:31.159Z"
-      },
-      {
-        "path": "data.txt",
-        "spaceName": "Shared Space",
-        "title": "data.txt",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T14:56:25.310Z"
-      },
-      {
-        "path": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
-        "spaceName": "Shared Space",
-        "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T14:53:12.355Z"
       }
     ],
     "starred": [
@@ -85,6 +85,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-01T15:21:37.563Z"
+    "updatedAt": "2025-10-01T15:30:40.532Z"
   }
 ]

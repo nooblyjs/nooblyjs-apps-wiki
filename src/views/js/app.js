@@ -3814,19 +3814,15 @@ class WikiApp {
     
     // Save document
     async saveDocument(doc) {
-        const titleInput = document.getElementById('docTitle');
         const textarea = document.getElementById('editorTextarea');
-        
-        if (!titleInput || !textarea) return;
-        
-        const title = titleInput.value.trim();
-        const content = textarea.value;
-        
-        if (!title) {
-            this.showNotification('Document title is required', 'error');
+
+        if (!textarea) {
+            console.error('Editor textarea not found');
             return;
         }
-        
+
+        const content = textarea.value;
+
         try {
             const response = await fetch('/applications/wiki/api/documents/content', {
                 method: 'PUT',
@@ -3837,24 +3833,23 @@ class WikiApp {
                     content: content
                 })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 // Update current document
                 this.currentDocument = {
                     ...doc,
-                    title: title,
                     content: content
                 };
-                
+
                 this.showNotification('Document saved successfully!', 'success');
-                
+
                 // Mark as saved to hide unsaved changes indicator
                 if (this.markAsSaved) {
                     this.markAsSaved();
                 }
-                
+
                 // Update file tree and other views
                 await this.loadFileTree();
             } else {
