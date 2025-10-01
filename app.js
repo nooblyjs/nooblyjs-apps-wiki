@@ -72,6 +72,11 @@ app.use('/api/auth', authRoutes);
 // Launch the application manager
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve README.md from root directory
+app.get('/README.md', (req, res) => {
+  res.sendFile(path.join(__dirname, 'README.md'));
+});
+
 app.listen(PORT, () => {
   log.info(`Nooblyjs Content Server running on port ${PORT}`);
 });

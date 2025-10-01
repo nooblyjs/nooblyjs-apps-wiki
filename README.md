@@ -1,42 +1,29 @@
-# NooblyJS Content Manager
+# NooblyJS Wiki Application
 
-A comprehensive content management application built with the NooblyJS framework, providing integrated blog, wiki, and CMS capabilities for creating and managing digital content.
+A collaborative documentation and knowledge management platform built with the NooblyJS framework. Create, organize, and share documentation across multiple workspaces with powerful search and version control capabilities.
 
 ## Overview
 
-This application combines three powerful content management systems into a unified platform:
-
-- **Blog Application**: Medium.com-style blogging platform with analytics and community features
-- **Wiki Application**: Collaborative knowledge base for documentation and information sharing
-- **CMS Application**: Visual website builder with template management and publishing capabilities
+The NooblyJS Wiki Application is a flexible documentation platform that allows teams to create and maintain knowledge bases, technical documentation, and collaborative notes in organized spaces.
 
 ## Features
 
-### 🚀 Blog Platform
-- Medium-style content creation and editing
-- Category and tag management
-- Comment system with moderation
-- Author profiles and social links
-- Analytics and engagement tracking
-- SEO optimization tools
-- Content scheduling and publishing
+### 📚 Document Management
+- Create and edit documents with rich text and markdown support
+- Organize documents into customizable spaces (Personal, Shared, Read-Only)
+- Full-text search across all documents and spaces
+- Document versioning and change tracking
+- File attachments and media embedding
+- Cross-document linking and references
+- Tag-based organization and categorization
 
-### 📚 Wiki System
-- Collaborative document creation
-- Organized spaces for different topics
-- Full-text search across all documents
-- Version history and change tracking
-- Rich text editing with markdown support
-- Document linking and cross-references
+### 🏗️ Workspace Organization
+- **Personal Space**: Private documents and notes
+- **Shared Space**: Team collaboration and shared documentation
+- **Read-Only Space**: Reference materials and published resources
+- Customizable permissions per space
+- Organized folder structures with absolute path support
 
-### 🎨 CMS Builder
-- Visual drag-and-drop site builder
-- Pre-built components and templates
-- Theme management system
-- Asset optimization and management
-- Multi-site support with custom domains
-- SEO tools and meta management
-- Static site generation and publishing
 
 ## Technology Stack
 
@@ -52,8 +39,8 @@ This application combines three powerful content management systems into a unifi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-apps-contentmanager.git
-cd nooblyjs-apps-contentmanager
+git clone https://github.com/nooblyjs/nooblyjs-apps-wiki.git
+cd nooblyjs-apps-wiki
 ```
 
 2. Install dependencies:
@@ -78,33 +65,36 @@ npm run dev:web
 
 ```
 src/
-├── auth/           # Authentication system
-│   ├── components/ # User management
-│   ├── middleware/ # Auth middleware
-│   └── routes/     # Auth routes
-├── blog/           # Blog application
-│   ├── components/ # Data management, notifications, comments
-│   ├── routes/     # Blog API endpoints
-│   ├── views/      # Blog frontend
-│   └── activities/ # Background tasks
-├── wiki/           # Wiki application
-│   ├── components/ # Document management
-│   ├── routes/     # Wiki API endpoints
-│   ├── views/      # Wiki frontend
-│   └── activities/ # Document processing
-└── cms/            # CMS application
-    ├── components/ # Site builder, templates, assets
-    ├── routes/     # CMS API endpoints
-    └── views/      # CMS frontend
+├── index.js        # Wiki application factory
+├── components/     # Core functionality
+│   └── dataManager.js  # JSON data persistence
+├── routes/         # API endpoints
+│   ├── index.js    # Route registration
+│   ├── documents.js    # Document CRUD operations
+│   ├── spaces.js       # Space management
+│   └── search.js       # Search functionality
+├── views/          # Frontend views and client-side JavaScript
+│   ├── index.js    # View registration
+│   ├── main.ejs    # Main dashboard
+│   └── public/     # Static assets
+├── activities/     # Background tasks
+│   ├── documentContent.js  # Document file operations
+│   └── taskProcessor.js    # Queue task processing
+└── auth/           # Authentication system
+    ├── components/ # User management
+    ├── middleware/ # Auth middleware
+    ├── passport-config.js  # OAuth configuration
+    └── routes/     # Auth endpoints
 ```
 
 ## Configuration
 
-The application uses environment variables for configuration:
+The application uses environment variables and configuration options:
 
 - `PORT` - Server port (default: 3002)
+- `dataDirectory` - JSON data storage location (default: `./.application/wiki-data`)
+- `filesDir` - Document file storage location (default: `./.application/wiki-files`)
 - Google OAuth credentials for authentication
-- File storage paths for different modules
 
 ## NooblyJS Core Integration
 
@@ -121,10 +111,12 @@ This application leverages the NooblyJS Core service registry for:
 
 1. After installation, access the application at `http://localhost:3002`
 2. Log in using Google OAuth or create a local account
-3. Explore the three main sections:
-   - `/blog` - Create and manage blog posts
-   - `/wiki` - Build collaborative documentation
-   - `/cms` - Design and publish websites
+3. Start creating documentation:
+   - Browse existing spaces and documents
+   - Create new documents in Personal, Shared, or Read-Only spaces
+   - Use the search functionality to find content across all documents
+   - Organize with tags and cross-references
+   - Collaborate with team members in shared spaces
 
 ## Contributing
 
