@@ -3041,7 +3041,7 @@ class WikiApp {
 
             // Filter recent files to only show files from the current space
             const recentFiles = currentSpaceName
-                ? allRecentFiles.filter(file => file.space === currentSpaceName)
+                ? allRecentFiles.filter(file => file.spaceName === currentSpaceName)
                 : allRecentFiles;
 
             if (recentFiles.length === 0) {
@@ -3073,11 +3073,11 @@ class WikiApp {
                         const fileName = this.getFileNameFromPath(file.path);
                         
                         return `
-                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.space}">
+                            <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
                                 <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
-                                    <div class="item-meta">File • ${fileTypeInfo.category} • Visited ${this.formatDate(file.lastVisited)}</div>
+                                    <div class="item-meta">File • ${fileTypeInfo.category} • Visited ${this.formatDate(file.visitedAt)}</div>
                                 </div>
                             </div>
                         `;
@@ -3284,25 +3284,28 @@ class WikiApp {
                 this.createNewTemplate();
             });
         } else {
-            // Render templates with create button
+            // Render templates with matching card style
             container.innerHTML = `
-                <div class="templates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-                    ${templates.map(template => `
-                        <div class="template-card" data-template-path="${template.path}" style="border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s ease; background: var(--card);">
-                            <div class="template-icon" style="width: 48px; height: 48px; background: var(--accent-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--accent);">
-                                <svg width="24" height="24">
-                                    <use href="#icon-clipboard"></use>
-                                </svg>
+                <div class="items-grid">
+                    ${templates.map(template => {
+                        const fileTypeInfo = this.getFileTypeInfo(template.path || template.name);
+                        const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                        const iconColor = fileTypeInfo.color;
+                        const fileName = this.getFileNameFromPath(template.path || template.name);
+
+                        return `
+                            <div class="item-card template-card" data-template-path="${template.path}">
+                                <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                <div class="item-info">
+                                    <div class="item-name">${template.title || fileName}</div>
+                                    <div class="item-meta">Template • ${template.lastModified ? this.formatDate(template.lastModified) : 'Custom template'}</div>
+                                </div>
                             </div>
-                            <div class="template-info">
-                                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: var(--foreground);">${template.title || template.name}</h4>
-                                <p class="template-meta" style="margin: 0; font-size: 13px; color: var(--muted-foreground);">Custom Template • ${template.lastModified ? new Date(template.lastModified).toLocaleDateString() : ''}</p>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
-            
+
             // Bind template card clicks
             container.querySelectorAll('.template-card').forEach(card => {
                 card.addEventListener('click', () => {
@@ -3310,18 +3313,6 @@ class WikiApp {
                     this.editTemplate(templatePath);
                 });
             });
-            
-            
-            // Add hover styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .template-card:hover {
-                    border-color: var(--accent) !important;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                }
-            `;
-            container.appendChild(style);
         }
         
         // Show the template button in the header
@@ -3331,57 +3322,47 @@ class WikiApp {
     renderTemplatesFallback() {
         const container = document.getElementById('templatesContent');
         if (!container) return;
-        
+
         // Show a nice fallback with built-in templates until backend is ready
         const fallbackTemplates = [
             {
                 name: 'Basic Document',
                 description: 'Simple document template with title and sections',
                 type: 'built-in',
-                key: 'basic'
+                key: 'basic',
+                icon: 'fa-file-alt'
             },
             {
                 name: 'API Documentation',
                 description: 'Template for documenting REST APIs',
                 type: 'built-in',
-                key: 'api'
+                key: 'api',
+                icon: 'fa-code'
             },
             {
                 name: 'Meeting Notes',
                 description: 'Template for meeting minutes and action items',
                 type: 'built-in',
-                key: 'meeting'
+                key: 'meeting',
+                icon: 'fa-clipboard'
             },
             {
                 name: 'Requirements',
                 description: 'Template for requirements documentation',
                 type: 'built-in',
-                key: 'requirements'
+                key: 'requirements',
+                icon: 'fa-tasks'
             }
         ];
-        
+
         container.innerHTML = `
-            <div class="templates-info-banner" style="background: var(--accent-bg); padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-                <svg width="20" height="20" style="color: var(--accent-foreground);">
-                    <use href="#icon-clipboard"></use>
-                </svg>
-                <div>
-                    <strong>Built-in Templates Available</strong>
-                    <p style="margin: 4px 0 0 0; color: var(--muted-foreground);">Custom templates will be available when the backend API is implemented.</p>
-                </div>
-            </div>
-            <div class="templates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            <div class="items-grid">
                 ${fallbackTemplates.map(template => `
-                    <div class="template-card" data-template-key="${template.key}" style="border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s ease; background: var(--card);">
-                        <div class="template-icon" style="width: 48px; height: 48px; background: var(--accent-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--accent);">
-                            <svg width="24" height="24">
-                                <use href="#icon-clipboard"></use>
-                            </svg>
-                        </div>
-                        <div class="template-info">
-                            <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: var(--foreground);">${template.name}</h4>
-                            <p class="template-meta" style="margin: 0 0 12px 0; font-size: 14px; color: var(--muted-foreground);">${template.description}</p>
-                            <span class="template-badge" style="background: var(--accent); color: var(--accent-foreground); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">Built-in</span>
+                    <div class="item-card template-card" data-template-key="${template.key}">
+                        <i class="fas ${template.icon} item-icon" style="color: #666666; font-size: 24px;"></i>
+                        <div class="item-info">
+                            <div class="item-name">${template.name}</div>
+                            <div class="item-meta">${template.description}</div>
                         </div>
                     </div>
                 `).join('')}

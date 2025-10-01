@@ -18,7 +18,7 @@
     "express-session": "^1.17.3",
     "mime-types": "^3.0.1",
     "multer": "^2.0.0-rc.4",
-    "nooblyjs-core": "1.0.0",
+    "nooblyjs-core": "1.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",

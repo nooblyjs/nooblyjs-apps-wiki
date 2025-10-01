@@ -17,6 +17,13 @@
   "recent": [
     {
       "path": "1.md",
+      "spaceName": "Read-Only Space",
+      "title": "1.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-01T15:21:37.712Z"
+    },
+    {
+      "path": "1.md",
       "spaceName": "Shared Space",
       "title": "1.md",
       "action": "viewed",
@@ -101,5 +108,5 @@
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-01T15:13:16.810Z"
+  "updatedAt": "2025-10-01T15:21:37.712Z"
 }

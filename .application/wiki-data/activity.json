@@ -3,9 +3,16 @@
     "recent": [
       {
         "path": "1.md",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T15:13:10.297Z",
+        "space": "Read-Only Space",
+        "lastVisited": "2025-10-01T15:21:37.239Z",
         "title": "1.md"
+      },
+      {
+        "path": "1.md",
+        "spaceName": "Shared Space",
+        "title": "1.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:13:11.695Z"
       },
       {
         "path": "2023/B2B - eCommerce Strategy 202311.pdf",
@@ -57,13 +64,6 @@
         "visitedAt": "2025-10-01T14:56:25.310Z"
       },
       {
-        "path": "1.md",
-        "spaceName": "Shared Space",
-        "title": "1.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T14:56:22.051Z"
-      },
-      {
         "path": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
         "spaceName": "Shared Space",
         "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
@@ -73,18 +73,18 @@
     ],
     "starred": [
       {
+        "path": "1.md",
+        "spaceName": "Shared Space",
+        "title": "1.md",
+        "starredAt": "2025-10-01T15:13:16.810Z"
+      },
+      {
         "path": "2023/B2B - eCommerce Strategy 202311.pdf",
         "spaceName": "Personal Space",
         "title": "B2B - eCommerce Strategy 202311.pdf",
         "starredAt": "2025-10-01T15:10:47.826Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Shared Space",
-        "title": "1.md",
-        "starredAt": "2025-10-01T14:52:47.661Z"
       }
     ],
-    "updatedAt": "2025-10-01T15:13:10.670Z"
+    "updatedAt": "2025-10-01T15:21:37.563Z"
   }
 ]
