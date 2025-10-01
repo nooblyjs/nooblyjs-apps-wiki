@@ -2,61 +2,82 @@
   {
     "recent": [
       {
-        "path": "Test PDF.pdf",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:56:45.513Z",
-        "title": "Test PDF.pdf"
-      },
-      {
-        "path": "B2B Digital Commerce - Group Capabilities.pptx",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:56:39.666Z",
-        "title": "B2B Digital Commerce - Group Capabilities.pptx"
-      },
-      {
-        "path": "Beach.jpg",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:56:31.001Z",
-        "title": "Beach.jpg"
-      },
-      {
-        "path": "data.txt",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:56:25.197Z",
-        "title": "data.txt"
-      },
-      {
         "path": "1.md",
         "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:56:08.826Z",
+        "lastVisited": "2025-10-01T15:13:10.297Z",
         "title": "1.md"
       },
       {
+        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - eCommerce Strategy 202311.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:10:40.208Z"
+      },
+      {
+        "path": "Customer Value Stream/Todo.md",
+        "spaceName": "Personal Space",
+        "title": "Todo.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:00:09.560Z"
+      },
+      {
+        "path": "CBA/B2B Portfolio Business Case update.docx",
+        "spaceName": "Personal Space",
+        "title": "B2B Portfolio Business Case update.docx",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:59:59.666Z"
+      },
+      {
+        "path": "Test PDF.pdf",
+        "spaceName": "Shared Space",
+        "title": "Test PDF.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:56:45.640Z"
+      },
+      {
+        "path": "B2B Digital Commerce - Group Capabilities.pptx",
+        "spaceName": "Shared Space",
+        "title": "B2B Digital Commerce - Group Capabilities.pptx",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:56:41.353Z"
+      },
+      {
+        "path": "Beach.jpg",
+        "spaceName": "Shared Space",
+        "title": "Beach.jpg",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:56:31.159Z"
+      },
+      {
+        "path": "data.txt",
+        "spaceName": "Shared Space",
+        "title": "data.txt",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:56:25.310Z"
+      },
+      {
+        "path": "1.md",
+        "spaceName": "Shared Space",
+        "title": "1.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:56:22.051Z"
+      },
+      {
         "path": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:53:10.669Z",
-        "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf"
-      },
-      {
-        "path": "Business Strategy/2024/B2B - Enterprise eCommerce 202204.pdf",
-        "space": "Personal Space",
-        "lastVisited": "2025-10-01T14:51:04.017Z",
-        "title": "B2B - Enterprise eCommerce 202204.pdf"
-      },
-      {
-        "path": "Business Strategy/2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
-        "space": "Personal Space",
-        "lastVisited": "2025-10-01T14:50:23.931Z",
-        "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf"
-      },
-      {
-        "path": "4.md",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-01T14:41:15.394Z",
-        "title": "4.md"
+        "spaceName": "Shared Space",
+        "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T14:53:12.355Z"
       }
     ],
     "starred": [
+      {
+        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - eCommerce Strategy 202311.pdf",
+        "starredAt": "2025-10-01T15:10:47.826Z"
+      },
       {
         "path": "1.md",
         "spaceName": "Shared Space",
@@ -64,6 +85,6 @@
         "starredAt": "2025-10-01T14:52:47.661Z"
       }
     ],
-    "updatedAt": "2025-10-01T14:56:45.784Z"
+    "updatedAt": "2025-10-01T15:13:10.670Z"
   }
 ]

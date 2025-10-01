@@ -33,6 +33,7 @@ class WikiApp {
         this.bindEvents();
         this.initMarkdown();
         this.initSidebar();
+        this.initSidebarResize();
     }
 
     async checkAuth() {
@@ -311,6 +312,61 @@ class WikiApp {
         // Set initial collapsed states
         this.updateSidebarSection('shortcuts', this.sidebarState.shortcuts);
         this.updateSidebarSection('spaces', this.sidebarState.spaces);
+    }
+
+    initSidebarResize() {
+        const sidebar = document.getElementById('leftSidebar');
+        const resizeHandle = document.getElementById('sidebarResizeHandle');
+
+        if (!sidebar || !resizeHandle) return;
+
+        // Load saved width from localStorage
+        const savedWidth = localStorage.getItem('sidebarWidth');
+        if (savedWidth) {
+            sidebar.style.width = savedWidth + 'px';
+        }
+
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        const startResize = (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+            resizeHandle.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        };
+
+        const resize = (e) => {
+            if (!isResizing) return;
+
+            const width = startWidth + (e.clientX - startX);
+            const minWidth = 200;
+            const maxWidth = 600;
+
+            if (width >= minWidth && width <= maxWidth) {
+                sidebar.style.width = width + 'px';
+            }
+        };
+
+        const stopResize = () => {
+            if (!isResizing) return;
+
+            isResizing = false;
+            resizeHandle.classList.remove('resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+
+            // Save to localStorage
+            const currentWidth = parseInt(getComputedStyle(sidebar).width, 10);
+            localStorage.setItem('sidebarWidth', currentWidth);
+        };
+
+        resizeHandle.addEventListener('mousedown', startResize);
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResize);
     }
 
     initMarkdown() {
@@ -2132,15 +2188,8 @@ class WikiApp {
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'document-content-wrapper pdf-viewer';
         contentWrapper.innerHTML = `
-            <div class="pdf-info-bar">
-                <div class="file-info">
-                    <i class="fas fa-file-pdf" style="color: #dc3545;"></i>
-                    <span class="file-name">${doc.metadata.fileName}</span>
-                    <span class="file-size">${this.formatFileSize(doc.metadata.size)}</span>
-                </div>
-            </div>
             <div class="pdf-container">
-                <iframe src="${pdfUrl}" width="100%" height="calc(100vh - 160px)" style="border: none; border-radius: 8px;"></iframe>
+                <iframe src="${pdfUrl}" width="100%" height="1000px" style="border: none; border-radius: 8px;"></iframe>
             </div>
         `;
         
@@ -3057,16 +3106,26 @@ class WikiApp {
 
     loadStarredFiles() {
         const container = document.getElementById('starredFilesContent');
-        if (!container) return;
+        if (!container) {
+            console.log('starredFilesContent container not found');
+            return;
+        }
 
         try {
             // Use activity data for starred files, filtered by current space
             const allStarredFiles = this.data.starred || [];
             const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
 
+            console.log('Loading starred files:', {
+                allStarredFiles,
+                currentSpaceName,
+                dataStarred: this.data.starred,
+                userActivityStarred: this.userActivity?.starred
+            });
+
             // Filter starred files to only show files from the current space
             const starredFiles = currentSpaceName
-                ? allStarredFiles.filter(file => file.space === currentSpaceName)
+                ? allStarredFiles.filter(file => file.spaceName === currentSpaceName)
                 : allStarredFiles;
 
             if (starredFiles.length === 0) {
@@ -4307,13 +4366,13 @@ class WikiApp {
                 this.userActivity = await response.json();
                 console.log('User activity loaded:', this.userActivity);
 
-                // If we have user activity data but no recent data, merge them
-                if (this.userActivity.recent && (!this.data.recent || this.data.recent.length === 0)) {
+                // Always sync userActivity with data to keep them in sync
+                if (this.userActivity.recent) {
                     this.data.recent = this.userActivity.recent;
                 }
 
-                // If we have user activity data but no starred data, merge them
-                if (this.userActivity.starred && (!this.data.starred || this.data.starred.length === 0)) {
+                // Always sync starred data
+                if (this.userActivity.starred) {
                     this.data.starred = this.userActivity.starred;
                 }
             } else {
@@ -4382,18 +4441,19 @@ class WikiApp {
             }
 
             const result = await response.json();
-            
+
             if (result.success) {
                 this.userActivity.starred = result.starred;
+                this.data.starred = result.starred; // Sync with data.starred
                 this.updateStarButtonUI(documentData);
                 this.showNotification(
-                    isStarred ? 'Document unstarred' : 'Document starred', 
+                    isStarred ? 'Document unstarred' : 'Document starred',
                     'success'
                 );
-                
-                // Update home page if visible
-                if (this.currentView === 'home') {
-                    this.updateHomePageContent();
+
+                // Reload starred files if on starred view
+                if (this.currentView === 'starred' || this.currentView === 'home') {
+                    this.loadStarredFiles();
                 }
             } else {
                 throw new Error(result.error || 'Failed to update star status');
