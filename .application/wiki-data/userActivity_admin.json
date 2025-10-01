@@ -16,6 +16,13 @@
   ],
   "recent": [
     {
+      "path": "1.md",
+      "spaceName": "Read-Only Space",
+      "title": "1.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-01T19:07:41.739Z"
+    },
+    {
       "path": "2023/B2B - eCommerce Strategy 202311.pdf",
       "spaceName": "Personal Space",
       "title": "B2B - eCommerce Strategy 202311.pdf",
@@ -35,13 +42,6 @@
       "title": "Todo.md",
       "action": "viewed",
       "visitedAt": "2025-10-01T15:30:49.514Z"
-    },
-    {
-      "path": "1.md",
-      "spaceName": "Read-Only Space",
-      "title": "1.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T15:28:51.727Z"
     },
     {
       "path": "2.md",
@@ -122,5 +122,5 @@
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-01T15:54:48.851Z"
+  "updatedAt": "2025-10-01T19:07:41.739Z"
 }

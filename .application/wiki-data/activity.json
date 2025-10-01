@@ -2,10 +2,24 @@
   {
     "recent": [
       {
+        "path": "1.md",
+        "space": "Read-Only Space",
+        "lastVisited": "2025-10-01T19:07:41.614Z",
+        "title": "1.md"
+      },
+      {
         "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "space": "Personal Space",
-        "lastVisited": "2025-10-01T15:37:55.133Z",
-        "title": "B2B - eCommerce Strategy 202311.pdf"
+        "spaceName": "Personal Space",
+        "title": "B2B - eCommerce Strategy 202311.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:54:48.851Z"
+      },
+      {
+        "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:54:37.826Z"
       },
       {
         "path": "Customer Value Stream/Todo.md",
@@ -36,13 +50,6 @@
         "visitedAt": "2025-10-01T15:13:11.695Z"
       },
       {
-        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - eCommerce Strategy 202311.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T15:10:40.208Z"
-      },
-      {
         "path": "CBA/B2B Portfolio Business Case update.docx",
         "spaceName": "Personal Space",
         "title": "B2B Portfolio Business Case update.docx",
@@ -62,13 +69,6 @@
         "title": "B2B Digital Commerce - Group Capabilities.pptx",
         "action": "viewed",
         "visitedAt": "2025-10-01T14:56:41.353Z"
-      },
-      {
-        "path": "Beach.jpg",
-        "spaceName": "Shared Space",
-        "title": "Beach.jpg",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T14:56:31.159Z"
       }
     ],
     "starred": [
@@ -85,6 +85,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-01T15:37:55.465Z"
+    "updatedAt": "2025-10-01T19:07:41.735Z"
   }
 ]
