@@ -2,10 +2,17 @@
   {
     "recent": [
       {
-        "path": "Customer Value Stream/Todo.md",
+        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
         "space": "Personal Space",
-        "lastVisited": "2025-10-01T15:30:39.217Z",
-        "title": "Todo.md"
+        "lastVisited": "2025-10-01T15:35:49.154Z",
+        "title": "B2B - eCommerce Strategy 202311.pdf"
+      },
+      {
+        "path": "Customer Value Stream/Todo.md",
+        "spaceName": "Personal Space",
+        "title": "Todo.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T15:30:49.514Z"
       },
       {
         "path": "1.md",
@@ -34,13 +41,6 @@
         "title": "B2B - eCommerce Strategy 202311.pdf",
         "action": "viewed",
         "visitedAt": "2025-10-01T15:10:40.208Z"
-      },
-      {
-        "path": "Customer Value Stream/Todo.md",
-        "spaceName": "Personal Space",
-        "title": "Todo.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T15:00:09.560Z"
       },
       {
         "path": "CBA/B2B Portfolio Business Case update.docx",
@@ -85,6 +85,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-01T15:30:40.532Z"
+    "updatedAt": "2025-10-01T15:35:49.456Z"
   }
 ]

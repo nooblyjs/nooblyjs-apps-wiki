@@ -2672,8 +2672,16 @@ class WikiApp {
     initSearchFunctionality() {
         const searchInput = document.getElementById('globalSearch');
         const suggestionsContainer = document.getElementById('searchSuggestions');
-        
-        if (!searchInput || !suggestionsContainer) return;
+
+        if (!searchInput || !suggestionsContainer) {
+            console.error('Search initialization failed - missing elements:', {
+                searchInput: !!searchInput,
+                suggestionsContainer: !!suggestionsContainer
+            });
+            return;
+        }
+
+        console.log('Search functionality initialized successfully');
         
         // Initialize search state variables
         this.searchTimeout = null;
@@ -2721,12 +2729,18 @@ class WikiApp {
                     
                 case 'Enter':
                     e.preventDefault();
+                    console.log('Enter pressed in search', {
+                        isShowingSuggestions: this.isShowingSuggestions,
+                        currentIndex: this.currentSuggestionIndex,
+                        query: searchInput.value
+                    });
                     if (this.isShowingSuggestions && this.currentSuggestionIndex >= 0 && suggestionItems[this.currentSuggestionIndex]) {
                         // Select the highlighted suggestion
                         const suggestionData = suggestionItems[this.currentSuggestionIndex].dataset;
                         this.selectSuggestion(suggestionData);
                     } else {
                         // Perform full search
+                        console.log('Calling performSearch()');
                         this.performSearch();
                     }
                     break;
@@ -2888,14 +2902,22 @@ class WikiApp {
     async performSearch() {
         const searchInput = document.getElementById('globalSearch');
         const query = searchInput.value.trim();
-        if (!query) return;
+        console.log('performSearch called with query:', query);
+
+        if (!query) {
+            console.log('Empty query, returning');
+            return;
+        }
 
         this.hideSuggestions();
 
         try {
-            const response = await fetch(`/applications/wiki/api/search?q=${encodeURIComponent(query)}&includeContent=false`);
+            const url = `/applications/wiki/api/search?q=${encodeURIComponent(query)}&includeContent=false`;
+            console.log('Fetching search results from:', url);
+            const response = await fetch(url);
             const results = await response.json();
-            
+            console.log('Search results received:', results);
+
             this.showSearchResults(query, results);
         } catch (error) {
             console.error('Search error:', error);
