@@ -3,8 +3,8 @@
     "recent": [
       {
         "path": "1.md",
-        "space": "Read-Only Space",
-        "lastVisited": "2025-10-01T19:07:41.614Z",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-01T19:49:16.900Z",
         "title": "1.md"
       },
       {
@@ -12,7 +12,14 @@
         "spaceName": "Personal Space",
         "title": "B2B - eCommerce Strategy 202311.pdf",
         "action": "viewed",
-        "visitedAt": "2025-10-01T15:54:48.851Z"
+        "visitedAt": "2025-10-01T19:46:32.482Z"
+      },
+      {
+        "path": "1.md",
+        "spaceName": "Read-Only Space",
+        "title": "1.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-01T19:28:28.753Z"
       },
       {
         "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
@@ -27,13 +34,6 @@
         "title": "Todo.md",
         "action": "viewed",
         "visitedAt": "2025-10-01T15:30:49.514Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Read-Only Space",
-        "title": "1.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T15:28:51.727Z"
       },
       {
         "path": "2.md",
@@ -85,6 +85,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-01T19:07:41.735Z"
+    "updatedAt": "2025-10-01T19:49:17.140Z"
   }
 ]

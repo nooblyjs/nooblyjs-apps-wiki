@@ -1,8 +1,25 @@
+/**
+ * @fileoverview The spaces controller
+ * Handles the all the client side javascript for spaces management
+ *
+ * @author NooblyJS Team
+ * @version 2.0.0
+ * @since 2025-08-26
+ */
+
+import { navigationController } from "./navigationcontroller.js";
+import { documentController } from "./documentcontroller.js";
+
 export const spacesController = {
+
     init(app) {
         this.app = app;
     },
 
+    /**
+     * Render the spaces
+     * @returns 
+     */
     renderSpacesList() {
         const spacesList = document.getElementById('spacesList');
         if (!spacesList) return;
@@ -41,13 +58,18 @@ export const spacesController = {
         }
     },
 
+    /**
+     * Select a space and render its details
+     * @param {} spaceId 
+     * @returns 
+     */
     async selectSpace(spaceId) {
         const space = this.app.data.spaces.find(s => s.id === spaceId);
         if (!space) return;
 
         this.app.currentSpace = space;
         this.renderSpacesList(); // Re-render to show selection
-        await this.app.loadFileTree();
+        await navigationController.loadFileTree();
         this.updateWorkspaceHeader();
 
         // Refresh recent files for the new space
@@ -61,6 +83,9 @@ export const spacesController = {
         }
     },
     
+    /**
+     * Ensure the workspace echos the selected space
+     */
     updateWorkspaceHeader() {
         const titleEl = document.getElementById('workspaceTitle');
         const subtitleEl = document.getElementById('workspaceSubtitle');
@@ -74,10 +99,16 @@ export const spacesController = {
         }
     },
 
+    /**
+     * Display the Create workspace modal should the user want to create one
+     */
     showCreateSpaceModal() {
         this.app.showModal('createSpaceModal');
     },
 
+    /**
+     * From the modal create the requestd space
+     */
     async handleCreateSpace() {
         const form = document.getElementById('createSpaceForm');
         const formData = new FormData(form);
@@ -109,6 +140,11 @@ export const spacesController = {
         }
     },
 
+    /**
+     * Ensure the space has the most relevant icon
+     * @param {} space 
+     * @returns 
+     */
     getBootstrapSpaceIcon(space) {
         // Use consistent Bootstrap icons for all spaces based on type first
         if (space.type) {
@@ -139,6 +175,10 @@ export const spacesController = {
         return 'bi bi-folder-fill';
     },
 
+    /**
+     * Once the space is selected load its data
+     * @param {} space 
+     */
     async loadSpaceContent(space) {
         try {
             // Load recent files for this space
@@ -155,6 +195,11 @@ export const spacesController = {
         }
     },
 
+    /**
+     * Once the space has been selected load the relevant view and data
+     * @param {} space 
+     * @returns 
+     */
     async loadSpaceRecentFiles(space) {
         const container = document.getElementById('spaceRecentFiles');
         if (!container) return;
@@ -198,11 +243,16 @@ export const spacesController = {
             card.addEventListener('click', () => {
                 const documentPath = card.dataset.documentPath;
                 const spaceName = card.dataset.spaceName;
-                this.app.openDocumentByPath(documentPath, spaceName);
+                documentController.openDocumentByPath(documentPath, spaceName);
             });
         });
     },
 
+    /**
+     * Load the spaces starred files
+     * @param {} space 
+     * @returns 
+     */
     loadSpaceStarredFiles(space) {
         const container = document.getElementById('spaceStarredFiles');
         if (!container) return;
@@ -253,7 +303,7 @@ export const spacesController = {
                 card.addEventListener('click', () => {
                     const documentPath = card.dataset.documentPath;
                     const spaceName = card.dataset.spaceName;
-                    this.app.openDocumentByPath(documentPath, spaceName);
+                    documentController.openDocumentByPath(documentPath, spaceName);
                 });
             });
 
@@ -267,6 +317,11 @@ export const spacesController = {
         }
     },
 
+    /**
+     * Not sure what this is 
+     * @param {*} space 
+     * @returns 
+     */
     async loadSpaceRootItems(space) {
         const container = document.getElementById('spaceRootItems');
         if (!container) return;
@@ -346,7 +401,7 @@ export const spacesController = {
                 card.addEventListener('click', () => {
                     const documentPath = card.dataset.documentPath;
                     const spaceName = card.dataset.spaceName;
-                    this.app.openDocumentByPath(documentPath, spaceName);
+                    documentController.openDocumentByPath(documentPath, spaceName);
                 });
             });
             
