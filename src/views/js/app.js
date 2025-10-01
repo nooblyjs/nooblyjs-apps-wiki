@@ -2965,12 +2965,17 @@ class WikiApp {
             const path = result.path || result.relativePath || '';
             const spaceName = result.spaceName || 'Unknown Space';
             const modifiedDate = result.modifiedAt ? new Date(result.modifiedAt).toLocaleDateString() : '';
-            
+
+            // Escape HTML attributes to prevent breaking the DOM
+            const escapedPath = path.replace(/"/g, '&quot;');
+            const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
+            const escapedTitle = title.replace(/"/g, '&quot;');
+
             return `
-                <div class="search-result-item" 
-                     data-path="${path}" 
-                     data-space-name="${spaceName}"
-                     data-title="${title}">
+                <div class="search-result-item"
+                     data-path="${escapedPath}"
+                     data-space-name="${escapedSpaceName}"
+                     data-title="${escapedTitle}">
                     <div class="search-result-icon">
                         <svg width="20" height="20">
                             <use href="#${icon}"></use>
@@ -2999,8 +3004,11 @@ class WikiApp {
         
         // Add click handlers to results
         container.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                console.log('Search result clicked!');
+                console.log('Item dataset:', item.dataset);
                 const { path, spaceName, title } = item.dataset;
+                console.log('Extracted values - path:', path, 'spaceName:', spaceName, 'title:', title);
                 // Ensure we exit editor mode before loading new content
                 this.exitEditorMode();
                 this.loadDocumentContent(path, spaceName, title);
@@ -3010,43 +3018,11 @@ class WikiApp {
 
     async loadDocumentContent(path, spaceName, title) {
         try {
-            // Extract the correct space name and file path from the full path
-            // The path format is "Personal Space/Areas/file.md" where "Personal Space" is the actual space
-            let actualSpaceName = spaceName;
-            let actualPath = path;
-            
-            // If the spaceName is "documents" (the base directory), extract space from path
-            if (spaceName === 'documents' || spaceName === 'docs') {
-                const pathParts = path.split('/');
-                if (pathParts.length > 1) {
-                    actualSpaceName = pathParts[0]; // First part is the space name
-                    actualPath = pathParts.slice(1).join('/'); // Rest is the file path within the space
-                }
-            }
-            
-            console.log(`Loading document: ${actualPath} from space: ${actualSpaceName}`);
-            
-            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(actualPath)}&spaceName=${encodeURIComponent(actualSpaceName)}&enhanced=true`);
-            const data = await response.json();
-            
-            if (response.ok) {
-                // Track the visit
-                await fetch('/applications/wiki/api/user/visit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        path: actualPath,
-                        spaceName: actualSpaceName,
-                        title: title,
-                        action: 'viewed'
-                    })
-                });
-                
-                // Show document view
-                this.displayDocument(data, actualSpaceName, actualPath);
-            } else {
-                throw new Error(data.error || 'Failed to load document');
-            }
+            console.log(`Loading document: ${path} from space: ${spaceName}`);
+
+            // Use the existing openDocumentByPath method which handles everything
+            await this.openDocumentByPath(path, spaceName);
+
         } catch (error) {
             console.error('Error loading document:', error);
             this.showNotification('Failed to load document', 'error');
