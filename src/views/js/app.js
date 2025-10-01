@@ -1,3 +1,5 @@
+import { spacesController } from "./modules/spacescontroller.js";
+
 /**
  * @fileoverview Updated Wiki Application with new layout
  * Handles the new collapsible sidebar design with folders and files
@@ -7,6 +9,7 @@
  * @since 2025-08-26
  */
 class WikiApp {
+
     constructor() {
         this.currentView = 'login';
         this.currentSpace = null;
@@ -25,6 +28,7 @@ class WikiApp {
             shortcuts: true,
             spaces: true
         };
+        
         this.init();
     }
 
