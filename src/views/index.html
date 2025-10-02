@@ -550,21 +550,21 @@
                     </svg>
                 </button>
             </div>
-            <form id="createFileForm">
-                <div class="form-group">
-                    <label for="fileName">File Name</label>
-                    <input type="text" id="fileName" name="fileName" placeholder="filename.md" required>
+            <form id="createFileForm" class="p-3">
+                <div class="mb-3">
+                    <label for="fileName" class="form-label">File Name</label>
+                    <input type="text" id="fileName" name="fileName" class="form-control" placeholder="MyDocument.md" required>
                 </div>
-                <div class="form-group">
-                    <label for="fileLocation">Location</label>
-                    <select id="fileLocation" name="fileLocation">
+                <div class="mb-3">
+                    <label for="fileLocation" class="form-label">Location</label>
+                    <select id="fileLocation" name="fileLocation" class="form-select">
                         <option value="">Root</option>
                         <!-- Dynamic options will be added here -->
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="fileTemplate">Template (Optional)</label>
-                    <select id="fileTemplate" name="fileTemplate">
+                <div class="mb-3">
+                    <label for="fileTemplate" class="form-label">Template (Optional)</label>
+                    <select id="fileTemplate" name="fileTemplate" class="form-select">
                         <option value="">Blank Document</option>
                         <option value="basic">Basic Article</option>
                         <option value="api">API Documentation</option>
@@ -572,7 +572,7 @@
                         <option value="requirements">Requirements Doc</option>
                     </select>
                 </div>
-                <div class="modal-actions">
+                <div class="modal-actions d-flex justify-content-end gap-2">
                     <button type="button" id="cancelCreateFile" class="btn btn-secondary">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create File</button>
                 </div>
