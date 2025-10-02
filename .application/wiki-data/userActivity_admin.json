@@ -28,6 +28,41 @@
   ],
   "recent": [
     {
+      "path": "Progress/sprint-25.md",
+      "spaceName": "Personal Space",
+      "title": "sprint-25.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:54:35.819Z"
+    },
+    {
+      "path": ".templates/basic-document.md",
+      "spaceName": "Personal Space",
+      "title": "Document Title",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:54:05.170Z"
+    },
+    {
+      "path": ".templates/project-requirements.md",
+      "spaceName": "Personal Space",
+      "title": "Project Requirements",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:54:02.638Z"
+    },
+    {
+      "path": ".templates/meeting-notes.md",
+      "spaceName": "Personal Space",
+      "title": "Meeting Notes",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:53:59.511Z"
+    },
+    {
+      "path": ".templates/api-documentation.md",
+      "spaceName": "Personal Space",
+      "title": "API Documentation",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:53:55.831Z"
+    },
+    {
       "path": "My Folder/cooper.md",
       "spaceName": "Read-Only Space",
       "title": "cooper.md",
@@ -131,43 +166,8 @@
       "title": "Enterprise eCommerce Strategy.pptx",
       "action": "viewed",
       "visitedAt": "2025-10-02T07:07:59.331Z"
-    },
-    {
-      "path": "Dimension Data/Copy of Shoprite - DOM - High Level RFI Requirements v2 13 April 21.xlsx",
-      "spaceName": "Personal Space",
-      "title": "Copy of Shoprite - DOM - High Level RFI Requirements v2 13 April 21.xlsx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T06:43:13.903Z"
-    },
-    {
-      "path": ".templates/Article.md.md",
-      "spaceName": "Personal Space",
-      "title": "Article.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T06:42:06.375Z"
-    },
-    {
-      "path": "Beach.jpg",
-      "spaceName": "Shared Space",
-      "title": "Beach.jpg",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T06:37:48.297Z"
-    },
-    {
-      "path": "1.md",
-      "spaceName": "Shared Space",
-      "title": "1.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T19:49:26.303Z"
-    },
-    {
-      "path": "Customer Value Stream/Todo.md",
-      "spaceName": "Personal Space",
-      "title": "Todo.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T15:30:49.514Z"
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-02T08:19:28.874Z"
+  "updatedAt": "2025-10-02T08:54:35.819Z"
 }

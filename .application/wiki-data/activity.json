@@ -2,16 +2,24 @@
   {
     "recent": [
       {
+        "path": "Progress/sprint-25.md",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-02T08:54:35.698Z",
+        "title": "sprint-25.md"
+      },
+      {
         "path": "My Folder/cooper.md",
-        "space": "Read-Only Space",
-        "lastVisited": "2025-10-02T08:19:28.754Z",
-        "title": "cooper.md"
+        "spaceName": "Read-Only Space",
+        "title": "cooper.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:19:28.874Z"
       },
       {
         "path": "1.md",
-        "space": "Read-Only Space",
-        "lastVisited": "2025-10-02T08:17:55.647Z",
-        "title": "1.md"
+        "spaceName": "Read-Only Space",
+        "title": "1.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:17:55.767Z"
       },
       {
         "path": "home.md",
@@ -61,13 +69,6 @@
         "title": ".gitkeep",
         "action": "viewed",
         "visitedAt": "2025-10-02T07:37:50.097Z"
-      },
-      {
-        "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
-        "spaceName": "Personal Space",
-        "title": "shoprite-reference-architecture-mapping.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T07:08:21.417Z"
       }
     ],
     "starred": [
@@ -96,6 +97,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-02T08:19:29.305Z"
+    "updatedAt": "2025-10-02T08:54:36.035Z"
   }
 ]
