@@ -117,7 +117,7 @@ export const spacesController = {
                     name: formData.get('spaceName'),
                     description: formData.get('spaceDescription'),
                     visibility: formData.get('spaceVisibility'),
-                    permissions: formData.get('spacePermissions') || 'read-write',
+                    type: formData.get('spaceType'),
                     path: formData.get('spacePath')
                 })
             });

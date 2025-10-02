@@ -9,6 +9,65 @@
 
 'use strict';
 
+const fs = require('fs').promises;
+const path = require('path');
+
+/**
+ * Load the spaces template configuration
+ */
+async function loadSpacesTemplate() {
+  const templatePath = path.join(__dirname, '../initialisation/spaces-template.json');
+  const data = await fs.readFile(templatePath, 'utf8');
+  return JSON.parse(data);
+}
+
+/**
+ * Create folder structure and sample files for a space based on template
+ */
+async function initializeSpaceFromTemplate(spaceTemplate, basePath, filing, logger, author) {
+  const spacePath = path.join(process.cwd(), basePath);
+  const documents = [];
+
+  // Create .gitkeep in base directory
+  const gitkeepPath = path.join(spacePath, '.gitkeep');
+  await filing.create(gitkeepPath, '# Keep this directory in git\n');
+
+  let documentId = Date.now();
+
+  // Create folders and files from template
+  for (const folder of spaceTemplate.folders) {
+    const folderPath = path.join(spacePath, folder.name);
+
+    for (const file of folder.files) {
+      const filePath = path.join(folderPath, file.filename);
+      // Create file - this will also create the folder if it doesn't exist
+      await filing.create(filePath, file.content);
+
+      // Create document metadata
+      const excerpt = file.content
+        .replace(/[#*`>\[\]]/g, '')
+        .substring(0, 150)
+        .trim();
+
+      documents.push({
+        id: documentId++,
+        title: file.title,
+        spaceName: spaceTemplate.name,
+        spaceId: null, // Will be set by caller
+        tags: file.tags || [],
+        excerpt: excerpt,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: author,
+        filePath: filePath
+      });
+    }
+  }
+
+  logger.info(`Created ${documents.length} sample documents for space at ${spacePath}`);
+  return documents;
+}
+
 /**
  * Configures and registers spaces routes with the Express application.
  *
@@ -61,7 +120,7 @@ module.exports = (options, eventEmitter, services) => {
   // Create a new space
   app.post('/applications/wiki/api/spaces', async (req, res) => {
     try {
-      const { name, description, visibility, permissions, path } = req.body;
+      const { name, description, visibility, type, path } = req.body;
 
       if (!name) {
         return res.status(400).json({ success: false, message: 'Space name is required' });
@@ -71,28 +130,35 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ success: false, message: 'Folder path is required' });
       }
 
+      if (!type) {
+        return res.status(400).json({ success: false, message: 'Space type is required' });
+      }
+
+      // Load space templates
+      const templatesConfig = await loadSpacesTemplate();
+      const spaceTemplate = templatesConfig.spaces.find(t => t.type === type);
+
+      if (!spaceTemplate) {
+        return res.status(400).json({ success: false, message: `Invalid space type: ${type}` });
+      }
+
       // Get next space ID
       const spaces = await dataManager.read('spaces');
       let nextId = spaces.length > 0 ? Math.max(...spaces.map(s => s.id)) + 1 : 1;
 
-      // Determine space type based on permissions
-      let spaceType = 'personal';
-      if (permissions === 'read-only') {
-        spaceType = 'readonly';
-      } else if (visibility === 'team') {
-        spaceType = 'shared';
-      }
-
       const fullPath = `${process.cwd()}/${path}`;
+
+      // Determine permissions based on type
+      const permissions = spaceTemplate.permissions;
 
       const newSpace = {
         id: nextId,
         name,
-        description: description || '',
-        icon: '📁',
-        visibility: visibility || 'private',
-        permissions: permissions || 'read-write',
-        type: spaceType,
+        description: description || spaceTemplate.description,
+        icon: spaceTemplate.icon,
+        visibility: visibility || spaceTemplate.visibility,
+        permissions: permissions,
+        type: type,
         path: fullPath,
         documentCount: 0,
         createdAt: new Date().toISOString(),
@@ -100,14 +166,46 @@ module.exports = (options, eventEmitter, services) => {
         author: req.user ? req.user.name : 'System'
       };
 
-      // Create the directory with .gitkeep file
+      // Create folder structure and sample files from template
       try {
-        const gitkeepPath = `${fullPath}/.gitkeep`;
-        await filing.create(gitkeepPath, '# Keep this directory in git\n');
-        logger.info(`Created directory for space: ${name} at ${fullPath}`);
+        const sampleDocuments = await initializeSpaceFromTemplate(
+          spaceTemplate,
+          path,
+          filing,
+          logger,
+          newSpace.author
+        );
+
+        // Update space ID in documents
+        sampleDocuments.forEach(doc => {
+          doc.spaceId = nextId;
+          doc.spaceName = name;
+        });
+
+        // Update document count
+        newSpace.documentCount = sampleDocuments.length;
+
+        // Add documents to database
+        const allDocuments = await dataManager.read('documents').catch(() => []);
+        allDocuments.push(...sampleDocuments);
+        await dataManager.write('documents', allDocuments);
+
+        // Index documents in search
+        for (const doc of sampleDocuments) {
+          search.add(doc.id.toString(), {
+            id: doc.id,
+            title: doc.title,
+            content: '',
+            tags: doc.tags || [],
+            excerpt: doc.excerpt,
+            spaceName: doc.spaceName
+          });
+        }
+
+        logger.info(`Created ${sampleDocuments.length} sample documents for space: ${name}`);
       } catch (createError) {
-        logger.error(`Failed to create directory for space ${name}:`, createError);
-        return res.status(500).json({ success: false, message: 'Failed to create space directory' });
+        logger.error(`Failed to create directory structure for space ${name}:`, createError);
+        return res.status(500).json({ success: false, message: 'Failed to create space structure' });
       }
 
       // Add to spaces list
@@ -118,7 +216,7 @@ module.exports = (options, eventEmitter, services) => {
       await cache.delete('wiki:spaces:list');
       await cache.delete('wiki:recent:activity');
 
-      logger.info(`Created new space: ${name} (ID: ${nextId}) at ${fullPath}`);
+      logger.info(`Created new space: ${name} (ID: ${nextId}, Type: ${type}) at ${fullPath} with ${newSpace.documentCount} documents`);
 
       res.json({ success: true, space: newSpace });
     } catch (error) {

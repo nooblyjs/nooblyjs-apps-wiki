@@ -530,11 +530,13 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="spacePermissions" class="form-label">Permissions</label>
-                    <select class="form-select" id="spacePermissions" name="spacePermissions">
-                        <option value="read-write">Read-Write</option>
-                        <option value="read-only">Read-Only</option>
+                    <label for="spaceType" class="form-label">Space Type</label>
+                    <select class="form-select" id="spaceType" name="spaceType">
+                        <option value="personal">Personal Space (Private, read-write)</option>
+                        <option value="shared">Shared Space (Team, read-write)</option>
+                        <option value="readonly">Read-Only Space (Reference materials)</option>
                     </select>
+                    <small class="form-text text-muted">Template determines folders and sample files to create</small>
                 </div>
                 <div class="mb-3">
                     <label for="spacePath" class="form-label">Folder Path</label>
