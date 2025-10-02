@@ -371,13 +371,44 @@ export const searchController = {
             </div>
         `;
 
-        // Add click handlers to results
-        container.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const { path, spaceName, title } = item.dataset;
-                // Ensure we exit editor mode before loading new content
-                documentController.exitEditorMode();
-                documentController.openDocumentByPath(path, spaceName);
+        // Add click handlers and preview to results
+        this.bindSearchResultEvents(container.querySelectorAll('.search-result-item'));
+    },
+
+    /**
+     * Bind click and preview events to search result items
+     */
+    bindSearchResultEvents(resultItems) {
+        // Import navigationController for preview
+        import('./navigationcontroller.js').then(({ navigationController }) => {
+            // Initialize preview tooltip if not already done
+            navigationController.initFilePreview();
+
+            resultItems.forEach(item => {
+                const { path, spaceName } = item.dataset;
+
+                // Click event
+                item.addEventListener('click', () => {
+                    // Ensure we exit editor mode before loading new content
+                    documentController.exitEditorMode();
+                    documentController.openDocumentByPath(path, spaceName);
+                });
+
+                // Preview on hover
+                item.addEventListener('mouseenter', () => {
+                    navigationController.previewTimeout = setTimeout(() => {
+                        navigationController.currentPreviewCard = item;
+                        navigationController.showFilePreview(item, path, spaceName);
+                    }, 500);
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    if (navigationController.previewTimeout) {
+                        clearTimeout(navigationController.previewTimeout);
+                        navigationController.previewTimeout = null;
+                    }
+                    navigationController.hideFilePreview();
+                });
             });
         });
     }

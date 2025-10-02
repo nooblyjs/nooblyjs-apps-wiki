@@ -393,12 +393,35 @@ export const templatesController = {
                 </div>
             `;
 
-            // Bind template card clicks
+            // Bind template card clicks and preview
             container.querySelectorAll('.template-card').forEach(card => {
+                const templatePath = card.dataset.templatePath;
+                const spaceName = this.app.currentSpace?.name;
+
+                // Click event
                 card.addEventListener('click', () => {
-                    const templatePath = card.dataset.templatePath;
                     this.editTemplate(templatePath);
                 });
+
+                // Preview on hover
+                if (spaceName) {
+                    navigationController.initFilePreview();
+
+                    card.addEventListener('mouseenter', () => {
+                        navigationController.previewTimeout = setTimeout(() => {
+                            navigationController.currentPreviewCard = card;
+                            navigationController.showFilePreview(card, templatePath, spaceName);
+                        }, 500);
+                    });
+
+                    card.addEventListener('mouseleave', () => {
+                        if (navigationController.previewTimeout) {
+                            clearTimeout(navigationController.previewTimeout);
+                            navigationController.previewTimeout = null;
+                        }
+                        navigationController.hideFilePreview();
+                    });
+                }
             });
         }
 

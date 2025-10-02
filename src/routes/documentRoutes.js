@@ -303,6 +303,63 @@ ${documentPath}\
     }
   });
 
+  // Generate PDF preview thumbnail
+  app.get('/applications/wiki/api/documents/pdf-preview', async (req, res) => {
+    try {
+      const { path: documentPath, spaceName, page = 1 } = req.query;
+
+      if (!documentPath || !spaceName) {
+        return res.status(400).json({ error: 'Document path and space name are required' });
+      }
+
+      logger.info(`Generating PDF preview for: ${documentPath} in space: ${spaceName}`);
+
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          error: pathError.message
+        });
+      }
+
+      // Verify it's a PDF file
+      const ext = path.extname(absolutePath).toLowerCase();
+      if (ext !== '.pdf') {
+        return res.status(400).json({ error: 'File is not a PDF' });
+      }
+
+      try {
+        const fs = require('fs').promises;
+        const { pdf } = require('pdf-to-img');
+
+        // Check if file exists
+        await fs.stat(absolutePath);
+
+        // Generate preview thumbnail (first page, scale 2 for quality)
+        const document = await pdf(absolutePath, { scale: 2 });
+        const pageBuffer = await document.getPage(parseInt(page));
+
+        // Send the image
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+        res.send(pageBuffer);
+
+        logger.info(`Successfully generated PDF preview for ${documentPath}`);
+      } catch (error) {
+        logger.error(`Failed to generate PDF preview: ${error.message}`);
+        res.status(500).json({
+          error: 'Failed to generate PDF preview',
+          message: error.message
+        });
+      }
+    } catch (error) {
+      logger.error('Error in PDF preview endpoint:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Get recent documents
   app.get('/applications/wiki/api/documents/recent', async (req, res) => {
     try {

@@ -928,15 +928,9 @@ class WikiApp {
                 </div>
             `;
             
-            // Bind click events
-            container.querySelectorAll('.file-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const documentPath = card.dataset.documentPath;
-                    const spaceName = card.dataset.spaceName;
-                    documentController.openDocumentByPath(documentPath, spaceName);
-                });
-            });
-            
+            // Bind click events and preview
+            this.bindFileCardEvents(container.querySelectorAll('.file-card'));
+
         } catch (error) {
             console.error('Error loading recent files:', error);
             container.innerHTML = `
@@ -1008,15 +1002,9 @@ class WikiApp {
                 </div>
             `;
             
-            // Bind click events
-            container.querySelectorAll('.file-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const documentPath = card.dataset.documentPath;
-                    const spaceName = card.dataset.spaceName;
-                    documentController.openDocumentByPath(documentPath, spaceName);
-                });
-            });
-            
+            // Bind click events and preview
+            this.bindFileCardEvents(container.querySelectorAll('.file-card'));
+
         } catch (error) {
             console.error('Error loading starred files:', error);
             container.innerHTML = `
@@ -1030,6 +1018,46 @@ class WikiApp {
     formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    /**
+     * Bind click and preview events to file cards
+     */
+    bindFileCardEvents(fileCards) {
+        // Initialize preview tooltip if not already done
+        navigationController.initFilePreview();
+
+        fileCards.forEach(card => {
+            // Click event to open document
+            card.addEventListener('click', () => {
+                const documentPath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+                documentController.openDocumentByPath(documentPath, spaceName);
+            });
+
+            // Preview on hover
+            card.addEventListener('mouseenter', () => {
+                const documentPath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+
+                // Add small delay before showing preview
+                navigationController.previewTimeout = setTimeout(() => {
+                    navigationController.currentPreviewCard = card;
+                    navigationController.showFilePreview(card, documentPath, spaceName);
+                }, 500); // 500ms delay
+            });
+
+            card.addEventListener('mouseleave', () => {
+                // Clear timeout if mouse leaves before preview shows
+                if (navigationController.previewTimeout) {
+                    clearTimeout(navigationController.previewTimeout);
+                    navigationController.previewTimeout = null;
+                }
+
+                // Hide preview
+                navigationController.hideFilePreview();
+            });
+        });
     }
 
     /**

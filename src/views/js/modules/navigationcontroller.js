@@ -78,12 +78,13 @@ export const navigationController = {
             if (node.type === 'folder') {
                 const hasChildren = node.children && node.children.length > 0;
                 const folderId = `folder-${node.path.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const folderName = node.name;
 
                 return `
-                    <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${folderId}" style="padding-left: ${level * 16}px">
+                    <div class="folder-item" data-folder-path="${node.path}" data-folder-id="${folderId}" style="padding-left: ${level * 16}px" title="${folderName}">
                         <i class="bi ${hasChildren ? 'bi-chevron-right' : ''} chevron-icon"></i>
                         <i class="bi bi-folder folder-icon"></i>
-                        <span>${node.name}</span>
+                        <span class="folder-item-text">${folderName}</span>
                     </div>
                     ${hasChildren ? `
                         <div class="folder-children" data-folder-children="${folderId}">
@@ -97,11 +98,12 @@ export const navigationController = {
                     const fileIcon = this.getFileIcon(node.path || node.name);
                     const documentPath = node.path || node.name || '';
                     const spaceName = node.spaceName || '';
+                    const fileName = node.title || node.name;
 
                     return `
-                        <div class="file-item" data-document-path="${documentPath}" data-space-name="${spaceName}" style="padding-left: ${(level * 16) + 16}px">
+                        <div class="file-item" data-document-path="${documentPath}" data-space-name="${spaceName}" style="padding-left: ${(level * 16) + 16}px" title="${fileName}">
                             <i class="bi ${fileIcon.icon} ${fileIcon.color}"></i>
-                            <span>${node.title || node.name}</span>
+                            <span class="file-item-text">${fileName}</span>
                         </div>
                     `;
                 }
@@ -449,11 +451,13 @@ export const navigationController = {
                                 `;
                             }).join('')}
                             ${folderContent.files.map(file => {
-                                const fileIcon = this.getFileIcon(file.path || file.name);
+                                const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
+                                const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                                const iconColor = fileTypeInfo.color;
 
                                 return `
                                 <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                    <i class="bi ${fileIcon.icon} item-icon"></i>
+                                    <i class="fas ${iconClass} item-icon" style="color: ${iconColor};"></i>
                                     <div class="item-info">
                                         <div class="item-name">${file.title || file.name}</div>
                                         <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
@@ -481,6 +485,9 @@ export const navigationController = {
     },
 
     bindFolderViewEvents() {
+        // Initialize file preview
+        this.initFilePreview();
+
         // Back to space button
         document.getElementById('backToSpace')?.addEventListener('click', (e) => {
             e.preventDefault();
@@ -517,6 +524,29 @@ export const navigationController = {
                 const spaceName = card.dataset.spaceName;
                 this.contextMenuTargetSpaceName = spaceName;
                 this.showContextMenu(e, filePath, 'file');
+            });
+
+            // Preview on hover for file cards
+            card.addEventListener('mouseenter', (e) => {
+                const documentPath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+
+                // Add small delay before showing preview
+                this.previewTimeout = setTimeout(() => {
+                    this.currentPreviewCard = card;
+                    this.showFilePreview(card, documentPath, spaceName);
+                }, 500); // 500ms delay
+            });
+
+            card.addEventListener('mouseleave', () => {
+                // Clear timeout if mouse leaves before preview shows
+                if (this.previewTimeout) {
+                    clearTimeout(this.previewTimeout);
+                    this.previewTimeout = null;
+                }
+
+                // Hide preview
+                this.hideFilePreview();
             });
         });
 
@@ -1325,5 +1355,155 @@ export const navigationController = {
     getFileNameFromPath(filePath) {
         if (!filePath) return 'Untitled';
         return filePath.split('/').pop() || filePath;
+    },
+
+    // File Preview Methods
+    initFilePreview() {
+        // Create preview tooltip element if it doesn't exist
+        if (!document.getElementById('filePreviewTooltip')) {
+            const tooltip = document.createElement('div');
+            tooltip.id = 'filePreviewTooltip';
+            tooltip.className = 'file-preview-tooltip';
+            tooltip.innerHTML = '<div class="file-preview-content"></div>';
+            document.body.appendChild(tooltip);
+        }
+
+        this.previewTimeout = null;
+        this.currentPreviewCard = null;
+    },
+
+    async showFilePreview(card, documentPath, spaceName) {
+        const tooltip = document.getElementById('filePreviewTooltip');
+        if (!tooltip) return;
+
+        const content = tooltip.querySelector('.file-preview-content');
+
+        // Show loading state
+        content.innerHTML = '<div class="file-preview-loading"><span class="spinner-border spinner-border-sm me-2"></span>Loading preview...</div>';
+
+        // Position tooltip near the card
+        this.positionPreviewTooltip(tooltip, card);
+
+        // Show tooltip
+        tooltip.classList.add('show');
+
+        try {
+            // Fetch file metadata and content preview
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(documentPath)}&spaceName=${encodeURIComponent(spaceName)}&enhanced=true`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load preview');
+            }
+
+            const data = await response.json();
+            const { content: fileContent, metadata } = data;
+
+            // Generate preview based on file type
+            const viewer = metadata?.viewer || 'default';
+            let previewHtml = '';
+
+            switch (viewer) {
+                case 'image':
+                    const imageUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(documentPath)}&spaceName=${encodeURIComponent(spaceName)}`;
+                    previewHtml = `<img src="${imageUrl}" alt="Preview" />`;
+                    break;
+
+                case 'markdown':
+                    if (typeof marked !== 'undefined') {
+                        // Show first 500 characters of rendered markdown
+                        const preview = fileContent.substring(0, 500) + (fileContent.length > 500 ? '...' : '');
+                        previewHtml = `<div class="markdown-preview">${marked.parse(preview)}</div>`;
+                    } else {
+                        // Fallback to plain text
+                        const preview = fileContent.substring(0, 300) + (fileContent.length > 300 ? '...' : '');
+                        previewHtml = `<pre>${this.escapeHtml(preview)}</pre>`;
+                    }
+                    break;
+
+                case 'text':
+                case 'code':
+                case 'web':
+                case 'data':
+                    // Show first 300 characters with line numbers
+                    const lines = fileContent.split('\n').slice(0, 10);
+                    const preview = lines.join('\n') + (fileContent.split('\n').length > 10 ? '\n...' : '');
+                    previewHtml = `<pre>${this.escapeHtml(preview)}</pre>`;
+                    break;
+
+                case 'pdf':
+                    const fileName = metadata?.fileName || documentPath.split('/').pop() || 'PDF Document';
+                    const pdfPreviewUrl = `/applications/wiki/api/documents/pdf-preview?path=${encodeURIComponent(documentPath)}&spaceName=${encodeURIComponent(spaceName)}&page=1`;
+                    previewHtml = `
+                        <div class="pdf-preview-container">
+                            <img src="${pdfPreviewUrl}" alt="PDF Preview" style="max-width: 100%; max-height: 250px; border-radius: 4px;"
+                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'text-center p-3\\'><i class=\\'fas fa-file-pdf\\' style=\\'font-size: 3rem; color: #dc3545;\\'></i><p class=\\'mt-2 mb-0\\'>PDF Preview Failed</p><small class=\\'text-muted\\'>${fileName}</small></div>';" />
+                            <p class="mt-2 mb-0 text-center"><small class="text-muted">${fileName}</small></p>
+                        </div>
+                    `;
+                    break;
+
+                default:
+                    const defaultFileName = metadata?.fileName || documentPath.split('/').pop() || 'Unknown';
+                    previewHtml = `
+                        <div class="text-center p-3">
+                            <i class="fas fa-file" style="font-size: 3rem; color: #6c757d;"></i>
+                            <p class="mt-2 mb-0">${defaultFileName}</p>
+                            <small class="text-muted">No preview available</small>
+                        </div>
+                    `;
+                    break;
+            }
+
+            content.innerHTML = previewHtml;
+
+        } catch (error) {
+            console.error('Error loading preview:', error);
+            content.innerHTML = '<div class="preview-error">Failed to load preview</div>';
+        }
+    },
+
+    positionPreviewTooltip(tooltip, card) {
+        const cardRect = card.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        // Position to the right of the card by default
+        let left = cardRect.right + 10;
+        let top = cardRect.top;
+
+        // If tooltip would go off screen to the right, show on left
+        if (left + tooltipRect.width > window.innerWidth) {
+            left = cardRect.left - tooltipRect.width - 10;
+        }
+
+        // If tooltip would go off screen at bottom, adjust top position
+        if (top + tooltipRect.height > window.innerHeight) {
+            top = window.innerHeight - tooltipRect.height - 10;
+        }
+
+        // Ensure tooltip doesn't go off top of screen
+        if (top < 10) {
+            top = 10;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    },
+
+    hideFilePreview() {
+        const tooltip = document.getElementById('filePreviewTooltip');
+        if (tooltip) {
+            tooltip.classList.remove('show');
+        }
+
+        if (this.previewTimeout) {
+            clearTimeout(this.previewTimeout);
+            this.previewTimeout = null;
+        }
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 };

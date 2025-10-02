@@ -230,14 +230,8 @@ export const spacesController = {
             `;
         }).join('');
         
-        // Bind click events
-        container.querySelectorAll('.file-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const documentPath = card.dataset.documentPath;
-                const spaceName = card.dataset.spaceName;
-                documentController.openDocumentByPath(documentPath, spaceName);
-            });
-        });
+        // Bind click events and preview
+        this.bindFileCardEvents(container.querySelectorAll('.file-card'));
     },
 
     /**
@@ -290,14 +284,8 @@ export const spacesController = {
                 </div>
             `;
 
-            // Bind click events
-            container.querySelectorAll('.file-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const documentPath = card.dataset.documentPath;
-                    const spaceName = card.dataset.spaceName;
-                    documentController.openDocumentByPath(documentPath, spaceName);
-                });
-            });
+            // Bind click events and preview
+            this.bindFileCardEvents(container.querySelectorAll('.file-card'));
 
         } catch (error) {
             console.error('Error loading starred files for space:', error);
@@ -388,15 +376,10 @@ export const spacesController = {
                     this.app.loadFolderContent(folderPath);
                 });
             });
-            
-            container.querySelectorAll('.file-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const documentPath = card.dataset.documentPath;
-                    const spaceName = card.dataset.spaceName;
-                    documentController.openDocumentByPath(documentPath, spaceName);
-                });
-            });
-            
+
+            // Bind click events and preview for files
+            this.bindFileCardEvents(container.querySelectorAll('.file-card'));
+
         } catch (error) {
             console.log('Space root items API not available, showing placeholder');
             container.innerHTML = `
@@ -414,5 +397,45 @@ export const spacesController = {
                 this.app.showCreateFileModal();
             });
         }
+    },
+
+    /**
+     * Bind click and preview events to file cards
+     */
+    bindFileCardEvents(fileCards) {
+        // Initialize preview tooltip if not already done
+        navigationController.initFilePreview();
+
+        fileCards.forEach(card => {
+            // Click event to open document
+            card.addEventListener('click', () => {
+                const documentPath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+                documentController.openDocumentByPath(documentPath, spaceName);
+            });
+
+            // Preview on hover
+            card.addEventListener('mouseenter', () => {
+                const documentPath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+
+                // Add small delay before showing preview
+                navigationController.previewTimeout = setTimeout(() => {
+                    navigationController.currentPreviewCard = card;
+                    navigationController.showFilePreview(card, documentPath, spaceName);
+                }, 500); // 500ms delay
+            });
+
+            card.addEventListener('mouseleave', () => {
+                // Clear timeout if mouse leaves before preview shows
+                if (navigationController.previewTimeout) {
+                    clearTimeout(navigationController.previewTimeout);
+                    navigationController.previewTimeout = null;
+                }
+
+                // Hide preview
+                navigationController.hideFilePreview();
+            });
+        });
     }
 };

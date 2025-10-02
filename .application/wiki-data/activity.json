@@ -2,16 +2,38 @@
   {
     "recent": [
       {
-        "path": "2023/My Cool Folder/confluence-admin-profile.png",
-        "space": "Personal Space",
-        "lastVisited": "2025-10-02T09:30:22.384Z",
-        "title": "confluence-admin-profile.png"
+        "path": "Beach.jpg",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-02T10:05:38.485Z",
+        "title": "Beach.jpg"
       },
       {
         "path": "2023/My Cool Folder/confluence-admin-analytics.png",
-        "space": "Personal Space",
-        "lastVisited": "2025-10-02T09:30:17.071Z",
-        "title": "confluence-admin-analytics.png"
+        "spaceName": "Personal Space",
+        "title": "confluence-admin-analytics.png",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T09:43:52.832Z"
+      },
+      {
+        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - eCommerce Strategy 202311.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T09:40:15.282Z"
+      },
+      {
+        "path": "2023/My Cool Folder/confluence-admin-groups.png",
+        "spaceName": "Personal Space",
+        "title": "confluence-admin-groups.png",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T09:34:16.650Z"
+      },
+      {
+        "path": "2023/My Cool Folder/confluence-admin-profile.png",
+        "spaceName": "Personal Space",
+        "title": "confluence-admin-profile.png",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T09:30:21.907Z"
       },
       {
         "path": "2023/JSON-preview.png",
@@ -19,13 +41,6 @@
         "title": "JSON-preview.png",
         "action": "viewed",
         "visitedAt": "2025-10-02T09:18:39.562Z"
-      },
-      {
-        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - eCommerce Strategy 202311.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:55:49.298Z"
       },
       {
         "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
@@ -54,23 +69,21 @@
         "title": "Project Requirements",
         "action": "viewed",
         "visitedAt": "2025-10-02T08:54:02.638Z"
-      },
-      {
-        "path": ".templates/meeting-notes.md",
-        "spaceName": "Personal Space",
-        "title": "Meeting Notes",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:53:59.511Z"
-      },
-      {
-        "path": ".templates/api-documentation.md",
-        "spaceName": "Personal Space",
-        "title": "API Documentation",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:53:55.831Z"
       }
     ],
     "starred": [
+      {
+        "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+        "spaceName": "Personal Space",
+        "title": "confluence-admin-analytics.png",
+        "starredAt": "2025-10-02T09:49:54.971Z"
+      },
+      {
+        "path": "2023/My Cool Folder/confluence-admin-groups.png",
+        "spaceName": "Personal Space",
+        "title": "confluence-admin-groups.png",
+        "starredAt": "2025-10-02T09:34:17.938Z"
+      },
       {
         "path": "1.md",
         "spaceName": "Read-Only Space",
@@ -96,6 +109,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-02T09:30:22.086Z"
+    "updatedAt": "2025-10-02T10:05:38.773Z"
   }
 ]

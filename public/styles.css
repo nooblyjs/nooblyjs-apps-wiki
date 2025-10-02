@@ -380,6 +380,16 @@ body {
 
 /* Removed transform rotation as we now handle open/closed folder icons in JavaScript */
 
+/* Text truncation for file and folder names */
+.file-item-text,
+.folder-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0; /* Important for text-overflow to work in flex containers */
+}
+
 .empty-tree {
   text-align: center;
   padding: 2rem 1rem;
@@ -487,6 +497,82 @@ body {
 .item-meta {
   font-size: 0.875rem;
   color: var(--bs-text-muted);
+}
+
+/* File Preview Tooltip */
+.file-preview-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--app-border-radius);
+  box-shadow: var(--app-shadow-lg);
+  padding: 1rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  max-width: 400px;
+  max-height: 300px;
+}
+
+.file-preview-tooltip.show {
+  opacity: 1;
+}
+
+.file-preview-content {
+  max-height: 250px;
+  overflow: hidden;
+}
+
+.file-preview-content img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 4px;
+  display: block;
+}
+
+.file-preview-content pre {
+  margin: 0;
+  padding: 0.5rem;
+  background: var(--bs-light);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  max-height: 250px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.file-preview-content .markdown-preview {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.file-preview-content .markdown-preview h1,
+.file-preview-content .markdown-preview h2,
+.file-preview-content .markdown-preview h3 {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.file-preview-content .markdown-preview p {
+  margin-bottom: 0.5rem;
+}
+
+.file-preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--bs-text-muted);
+}
+
+.preview-error {
+  color: var(--bs-danger);
+  font-size: 0.875rem;
+  padding: 0.5rem;
 }
 
 .empty-folder {

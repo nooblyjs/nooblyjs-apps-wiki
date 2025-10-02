@@ -2,6 +2,18 @@
   "userId": "admin",
   "starred": [
     {
+      "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-analytics.png",
+      "starredAt": "2025-10-02T09:49:54.971Z"
+    },
+    {
+      "path": "2023/My Cool Folder/confluence-admin-groups.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-groups.png",
+      "starredAt": "2025-10-02T09:34:17.938Z"
+    },
+    {
       "path": "1.md",
       "spaceName": "Read-Only Space",
       "title": "1.md",
@@ -28,6 +40,34 @@
   ],
   "recent": [
     {
+      "path": "Beach.jpg",
+      "spaceName": "Shared Space",
+      "title": "Beach.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T10:05:38.609Z"
+    },
+    {
+      "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-analytics.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:43:52.832Z"
+    },
+    {
+      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+      "spaceName": "Personal Space",
+      "title": "B2B - eCommerce Strategy 202311.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:40:15.282Z"
+    },
+    {
+      "path": "2023/My Cool Folder/confluence-admin-groups.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-groups.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:34:16.650Z"
+    },
+    {
       "path": "2023/My Cool Folder/confluence-admin-profile.png",
       "spaceName": "Personal Space",
       "title": "confluence-admin-profile.png",
@@ -35,25 +75,11 @@
       "visitedAt": "2025-10-02T09:30:21.907Z"
     },
     {
-      "path": "2023/My Cool Folder/confluence-admin-analytics.png",
-      "spaceName": "Personal Space",
-      "title": "confluence-admin-analytics.png",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T09:30:16.775Z"
-    },
-    {
       "path": "2023/JSON-preview.png",
       "spaceName": "Personal Space",
       "title": "JSON-preview.png",
       "action": "viewed",
       "visitedAt": "2025-10-02T09:18:39.562Z"
-    },
-    {
-      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - eCommerce Strategy 202311.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T08:55:49.298Z"
     },
     {
       "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
@@ -152,22 +178,8 @@
       "title": "shoprite-reference-architecture-mapping.png",
       "action": "viewed",
       "visitedAt": "2025-10-02T07:08:21.417Z"
-    },
-    {
-      "path": "PAC Docs/Business Case Template (2020) - 5665 eCommerce.docx",
-      "spaceName": "Personal Space",
-      "title": "Business Case Template (2020) - 5665 eCommerce.docx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:08:10.051Z"
-    },
-    {
-      "path": "PAC Docs/5665-eCommerce Cost Benefit Analysis Template_ Level 1 (2019).xlsx",
-      "spaceName": "Personal Space",
-      "title": "5665-eCommerce Cost Benefit Analysis Template_ Level 1 (2019).xlsx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:08:07.930Z"
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-02T09:30:21.907Z"
+  "updatedAt": "2025-10-02T10:05:38.609Z"
 }
