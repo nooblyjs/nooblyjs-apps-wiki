@@ -8,6 +8,7 @@
  */
 
 import { navigationController } from "./navigationcontroller.js";
+import { userController } from "./usercontroller.js";
 
 export const documentController = {
 
@@ -1018,7 +1019,7 @@ export const documentController = {
     async trackDocumentView(documentPath, spaceName) {
         try {
             // Ensure we have activity data
-            this.app.ensureActivityData();
+            userController.ensureActivityData();
 
             // Remove existing entry if it exists (to move it to the top)
             this.app.data.recent = this.app.data.recent.filter(item =>
@@ -1039,7 +1040,7 @@ export const documentController = {
             this.app.data.recent = this.app.data.recent.slice(0, 10);
 
             // Save to server
-            await this.app.saveActivityToServer();
+            await userController.saveActivityToServer();
 
         } catch (error) {
             console.error('Error tracking document view:', error);

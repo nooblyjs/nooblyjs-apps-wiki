@@ -92,7 +92,7 @@ export const navigationController = {
             } else if (node.type === 'document') {
                 // Only show root-level documents initially
                 if (isRoot || level > 0) {
-                    const fileIcon = this.app.getFileIcon(node.path || node.name);
+                    const fileIcon = this.getFileIcon(node.path || node.name);
 
                     return `
                         <div class="file-item" data-document-path="${node.path}" data-space-name="${node.spaceName}" style="padding-left: ${(level * 16) + 16}px">
@@ -294,7 +294,7 @@ export const navigationController = {
                 </div>
             `;
         } else {
-            const fileIcon = this.app.getFileIcon(node.name);
+            const fileIcon = this.getFileIcon(node.name);
             return `
                 <div class="file-item" data-document-path="${node.path}" data-space-name="${this.app.currentSpace?.name}" style="padding-left: ${(level + 1) * 20}px;">
                     <i class="bi ${fileIcon.icon} ${fileIcon.color}"></i>
@@ -440,14 +440,14 @@ export const navigationController = {
                                 `;
                             }).join('')}
                             ${folderContent.files.map(file => {
-                                const fileIcon = this.app.getFileIcon(file.path || file.name);
+                                const fileIcon = this.getFileIcon(file.path || file.name);
 
                                 return `
                                 <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
                                     <i class="bi ${fileIcon.icon} item-icon"></i>
                                     <div class="item-info">
                                         <div class="item-name">${file.title || file.name}</div>
-                                        <div class="item-meta">File • ${this.app.getFileTypeFromExtension(file.path || file.name)}</div>
+                                        <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
                                     </div>
                                 </div>
                                 `;
@@ -1033,5 +1033,202 @@ export const navigationController = {
             console.error(`Error deleting ${itemTypeDisplay}:`, error);
             this.app.showNotification(`Failed to delete ${itemTypeDisplay}`, 'error');
         }
+    },
+
+    // File utility methods
+    getFileIcon(filename) {
+        const extension = filename.split('.').pop()?.toLowerCase();
+
+        switch (extension) {
+            case 'md':
+            case 'markdown':
+                return { icon: 'bi-file-text', color: '' };
+            case 'txt':
+                return { icon: 'bi-file-text', color: '' };
+            case 'pdf':
+                return { icon: 'bi-file-pdf', color: '' };
+            case 'doc':
+            case 'docx':
+                return { icon: 'bi-file-word', color: '' };
+            case 'xls':
+            case 'xlsx':
+                return { icon: 'bi-file-excel', color: '' };
+            case 'ppt':
+            case 'pptx':
+                return { icon: 'bi-file-ppt', color: '' };
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg':
+                return { icon: 'bi-file-image', color: '' };
+            case 'js':
+            case 'ts':
+            case 'jsx':
+            case 'tsx':
+                return { icon: 'bi-file-code', color: '' };
+            case 'html':
+            case 'htm':
+                return { icon: 'bi-file-code', color: '' };
+            case 'css':
+            case 'scss':
+            case 'sass':
+                return { icon: 'bi-file-code', color: '' };
+            case 'json':
+            case 'xml':
+                return { icon: 'bi-file-code', color: '' };
+            default:
+                return { icon: 'bi-file', color: '' };
+        }
+    },
+
+    getFileTypeFromExtension(filename) {
+        const extension = filename.split('.').pop()?.toLowerCase();
+
+        switch (extension) {
+            case 'md':
+            case 'markdown':
+                return 'Markdown';
+            case 'txt':
+                return 'Text';
+            case 'pdf':
+                return 'PDF';
+            case 'doc':
+            case 'docx':
+                return 'Word Document';
+            case 'xls':
+            case 'xlsx':
+                return 'Excel';
+            case 'ppt':
+            case 'pptx':
+                return 'PowerPoint';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg':
+                return 'Image';
+            case 'js':
+            case 'ts':
+                return 'JavaScript';
+            case 'jsx':
+            case 'tsx':
+                return 'React';
+            case 'html':
+            case 'htm':
+                return 'HTML';
+            case 'css':
+            case 'scss':
+            case 'sass':
+                return 'CSS';
+            case 'json':
+                return 'JSON';
+            case 'xml':
+                return 'XML';
+            default:
+                return 'File';
+        }
+    },
+
+    getFileTypeInfo(filePath) {
+        const ext = filePath.split('.').pop()?.toLowerCase() || '';
+        const fileName = filePath.split('/').pop() || '';
+
+        // File category mappings matching backend - all icons now use consistent gray color
+        const categories = {
+            pdf: {
+                category: 'pdf',
+                viewer: 'pdf',
+                extensions: ['pdf'],
+                icon: 'file-pdf',
+                color: '#666666'
+            },
+            image: {
+                category: 'image',
+                viewer: 'image',
+                extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico'],
+                icon: 'image',
+                color: '#666666'
+            },
+            text: {
+                category: 'text',
+                viewer: 'text',
+                extensions: ['txt', 'csv', 'dat', 'log', 'ini', 'cfg', 'conf'],
+                icon: 'file-alt',
+                color: '#666666'
+            },
+            markdown: {
+                category: 'markdown',
+                viewer: 'markdown',
+                extensions: ['md', 'markdown'],
+                icon: 'file-alt',
+                color: '#666666'
+            },
+            code: {
+                category: 'code',
+                viewer: 'code',
+                extensions: ['js', 'ts', 'jsx', 'tsx', 'vue', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'r', 'm', 'mm', 'pl', 'sh', 'bash', 'ps1', 'bat', 'cmd'],
+                icon: 'file-code',
+                color: '#666666'
+            },
+            web: {
+                category: 'web',
+                viewer: 'code',
+                extensions: ['html', 'htm', 'css', 'scss', 'sass', 'less'],
+                icon: 'code',
+                color: '#666666'
+            },
+            data: {
+                category: 'data',
+                viewer: 'code',
+                extensions: ['json', 'xml', 'yaml', 'yml', 'toml', 'properties'],
+                icon: 'file-code',
+                color: '#666666'
+            }
+        };
+
+        // Check by extension
+        for (const info of Object.values(categories)) {
+            if (info.extensions.includes(ext)) {
+                return {
+                    category: info.category,
+                    viewer: info.viewer,
+                    extension: ext,
+                    fileName: fileName,
+                    icon: info.icon,
+                    color: info.color
+                };
+            }
+        }
+
+        // Default fallback
+        return {
+            category: 'other',
+            viewer: 'default',
+            extension: ext,
+            fileName: fileName,
+            icon: 'file',
+            color: '#666666'
+        };
+    },
+
+    getFileTypeIconClass(category) {
+        const iconMap = {
+            'pdf': 'fa-file-pdf',
+            'image': 'fa-image',
+            'text': 'fa-file-alt',
+            'markdown': 'fa-file-alt',
+            'code': 'fa-file-code',
+            'web': 'fa-code',
+            'data': 'fa-file-code',
+            'other': 'fa-file'
+        };
+
+        return iconMap[category] || 'fa-file';
+    },
+
+    getFileNameFromPath(filePath) {
+        if (!filePath) return 'Untitled';
+        return filePath.split('/').pop() || filePath;
     }
 };

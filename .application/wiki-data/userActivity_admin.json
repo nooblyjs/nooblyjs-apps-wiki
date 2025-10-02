@@ -2,6 +2,12 @@
   "userId": "admin",
   "starred": [
     {
+      "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
+      "spaceName": "Personal Space",
+      "title": "shoprite-reference-architecture-mapping.png",
+      "starredAt": "2025-10-02T04:14:40.727Z"
+    },
+    {
       "path": "1.md",
       "spaceName": "Shared Space",
       "title": "1.md",
@@ -16,18 +22,25 @@
   ],
   "recent": [
     {
+      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+      "spaceName": "Personal Space",
+      "title": "B2B - eCommerce Strategy 202311.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T04:32:58.366Z"
+    },
+    {
+      "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
+      "spaceName": "Personal Space",
+      "title": "shoprite-reference-architecture-mapping.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T04:14:38.420Z"
+    },
+    {
       "path": "1.md",
       "spaceName": "Shared Space",
       "title": "1.md",
       "action": "viewed",
       "visitedAt": "2025-10-01T19:49:26.303Z"
-    },
-    {
-      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - eCommerce Strategy 202311.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T19:46:32.482Z"
     },
     {
       "path": "1.md",
@@ -122,5 +135,5 @@
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-01T19:49:26.303Z"
+  "updatedAt": "2025-10-02T04:32:58.366Z"
 }
