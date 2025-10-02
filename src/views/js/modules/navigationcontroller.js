@@ -457,7 +457,7 @@ export const navigationController = {
 
                                 return `
                                 <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                    <i class="fas ${iconClass} item-icon" style="color: ${iconColor};"></i>
+                                    <i class="bi ${iconClass} item-icon" style="color: ${iconColor};"></i>
                                     <div class="item-info">
                                         <div class="item-name">${file.title || file.name}</div>
                                         <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
@@ -1339,17 +1339,17 @@ export const navigationController = {
 
     getFileTypeIconClass(category) {
         const iconMap = {
-            'pdf': 'fa-file-pdf',
-            'image': 'fa-image',
-            'text': 'fa-file-alt',
-            'markdown': 'fa-file-alt',
-            'code': 'fa-file-code',
-            'web': 'fa-code',
-            'data': 'fa-file-code',
-            'other': 'fa-file'
+            'pdf': 'bi-file-pdf',
+            'image': 'bi-file-image',
+            'text': 'bi-file-text',
+            'markdown': 'bi-markdown',
+            'code': 'bi-file-code',
+            'web': 'bi-code-slash',
+            'data': 'bi-filetype-json',
+            'other': 'bi-file-earmark'
         };
 
-        return iconMap[category] || 'fa-file';
+        return iconMap[category] || 'bi-file-earmark';
     },
 
     getFileNameFromPath(filePath) {

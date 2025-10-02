@@ -2,10 +2,38 @@
   {
     "recent": [
       {
+        "path": "/workspaces/nooblyjs-apps-wiki/documents/2023/B2B - eCommerce Strategy 202311.pdf",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-02T12:58:28.774Z",
+        "title": "B2B - eCommerce Strategy 202311.pdf"
+      },
+      {
+        "path": "/workspaces/nooblyjs-apps-wiki/documents/2024/B2B - Enterprise eCommerce 202204.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - Enterprise eCommerce 202204.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T12:52:10.102Z"
+      },
+      {
+        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+        "spaceName": "Personal Space",
+        "title": "B2B - eCommerce Strategy 202311.pdf",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T12:32:14.345Z"
+      },
+      {
+        "path": "2023/JSON-preview.png",
+        "spaceName": "Personal Space",
+        "title": "JSON-preview.png",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T12:32:07.829Z"
+      },
+      {
         "path": "Beach.jpg",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-02T10:05:38.485Z",
-        "title": "Beach.jpg"
+        "spaceName": "Shared Space",
+        "title": "Beach.jpg",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T10:05:38.609Z"
       },
       {
         "path": "2023/My Cool Folder/confluence-admin-analytics.png",
@@ -13,13 +41,6 @@
         "title": "confluence-admin-analytics.png",
         "action": "viewed",
         "visitedAt": "2025-10-02T09:43:52.832Z"
-      },
-      {
-        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - eCommerce Strategy 202311.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T09:40:15.282Z"
       },
       {
         "path": "2023/My Cool Folder/confluence-admin-groups.png",
@@ -36,13 +57,6 @@
         "visitedAt": "2025-10-02T09:30:21.907Z"
       },
       {
-        "path": "2023/JSON-preview.png",
-        "spaceName": "Personal Space",
-        "title": "JSON-preview.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T09:18:39.562Z"
-      },
-      {
         "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
         "spaceName": "Personal Space",
         "title": "robot-holding-sign-board.jpg",
@@ -55,20 +69,6 @@
         "title": "sprint-25.md",
         "action": "viewed",
         "visitedAt": "2025-10-02T08:54:35.819Z"
-      },
-      {
-        "path": ".templates/basic-document.md",
-        "spaceName": "Personal Space",
-        "title": "Document Title",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:54:05.170Z"
-      },
-      {
-        "path": ".templates/project-requirements.md",
-        "spaceName": "Personal Space",
-        "title": "Project Requirements",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:54:02.638Z"
       }
     ],
     "starred": [
@@ -109,6 +109,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-02T10:05:38.773Z"
+    "updatedAt": "2025-10-02T12:58:29.054Z"
   }
 ]

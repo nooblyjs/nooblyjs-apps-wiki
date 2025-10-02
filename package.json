@@ -1,8 +1,8 @@
 {
-  "name": "admin-dashboard",
+  "name": "nooblyjs-app-wiki",
   "version": "1.0.0",
-  "description": "Express application hosting static admin dashboard",
-  "main": "server.js",
+  "description": "Application the exposes a fully featured wiki",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev:web": "nodemon --watch src app.js",

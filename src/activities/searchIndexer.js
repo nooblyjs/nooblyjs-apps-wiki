@@ -338,35 +338,47 @@ class SearchIndexer {
         }
 
         const queryLower = query.toLowerCase();
-        const suggestions = new Set();
+        const documentSuggestions = [];
+        const tokenSuggestions = [];
 
-        // Find tokens that start with query
-        for (const [token] of this.index.tokens) {
-            if (token.startsWith(queryLower) && token !== queryLower) {
-                suggestions.add(token);
-                if (suggestions.size >= maxSuggestions * 2) break; // Get extra to filter later
-            }
-        }
-
-        // Find file names that contain query
-        for (const [, fileInfo] of this.index.files) {
+        // Find file names that contain query - prioritize these as they're actual documents
+        for (const [filePath, fileInfo] of this.index.files) {
             const fileName = fileInfo.name.toLowerCase();
-            if (fileName.includes(queryLower) && fileName !== queryLower) {
-                suggestions.add(fileInfo.name);
-                if (suggestions.size >= maxSuggestions * 2) break;
+            if (fileName.includes(queryLower)) {
+                documentSuggestions.push({
+                    title: fileInfo.name,
+                    path: fileInfo.path,
+                    spaceName: fileInfo.spaceName,
+                    type: 'document',
+                    relevance: fileName.startsWith(queryLower) ? 2 : 1
+                });
+                if (documentSuggestions.length >= maxSuggestions) break;
             }
         }
 
-        return Array.from(suggestions)
-            .slice(0, maxSuggestions)
-            .sort((a, b) => {
-                // Prioritize exact matches at start
-                const aStartsWithQuery = a.startsWith(queryLower);
-                const bStartsWithQuery = b.startsWith(queryLower);
-                if (aStartsWithQuery && !bStartsWithQuery) return -1;
-                if (!aStartsWithQuery && bStartsWithQuery) return 1;
-                return a.length - b.length; // Then by length
-            });
+        // Find tokens that start with query (only if we need more suggestions)
+        if (documentSuggestions.length < maxSuggestions) {
+            for (const [token] of this.index.tokens) {
+                if (token.startsWith(queryLower) && token !== queryLower) {
+                    tokenSuggestions.push(token);
+                    if (tokenSuggestions.length >= (maxSuggestions - documentSuggestions.length)) break;
+                }
+            }
+        }
+
+        // Sort document suggestions by relevance
+        documentSuggestions.sort((a, b) => b.relevance - a.relevance);
+
+        // Combine document objects and search term strings
+        return [
+            ...documentSuggestions.map(doc => ({
+                title: doc.title,
+                path: doc.path,
+                spaceName: doc.spaceName,
+                type: doc.type
+            })),
+            ...tokenSuggestions
+        ].slice(0, maxSuggestions);
     }
 
     /**

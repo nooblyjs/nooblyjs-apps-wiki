@@ -418,10 +418,11 @@ body {
 }
 
 .folder-main-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   color: var(--bs-secondary);
   flex-shrink: 0;
+  font-size: 32px;
 }
 
 .folder-title-info h1 {

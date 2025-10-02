@@ -487,15 +487,18 @@ class WikiApp {
             const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
             const escapedTitle = title.replace(/"/g, '&quot;');
 
+            // Get file type info for icon
+            const fileTypeInfo = navigationController.getFileTypeInfo(path);
+            const iconClass = navigationController.getFileTypeIconClass(fileTypeInfo.category);
+            const iconColor = fileTypeInfo.color;
+
             return `
                 <div class="search-result-item"
                      data-path="${escapedPath}"
                      data-space-name="${escapedSpaceName}"
                      data-title="${escapedTitle}">
                     <div class="search-result-icon">
-                        <svg width="20" height="20">
-                            <use href="#${icon}"></use>
-                        </svg>
+                        <i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 20px;"></i>
                     </div>
                     <div class="search-result-content">
                         <h3 class="search-result-title">${title}</h3>
@@ -593,15 +596,18 @@ class WikiApp {
             const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
             const escapedTitle = title.replace(/"/g, '&quot;');
 
+            // Get file type info for icon
+            const fileTypeInfo = navigationController.getFileTypeInfo(path);
+            const iconClass = navigationController.getFileTypeIconClass(fileTypeInfo.category);
+            const iconColor = fileTypeInfo.color;
+
             return `
                 <div class="search-result-item"
                      data-path="${escapedPath}"
                      data-space-name="${escapedSpaceName}"
                      data-title="${escapedTitle}">
                     <div class="search-result-icon">
-                        <svg width="20" height="20">
-                            <use href="#${icon}"></use>
-                        </svg>
+                        <i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 20px;"></i>
                     </div>
                     <div class="search-result-content">
                         <h3 class="search-result-title">${title}</h3>
@@ -905,7 +911,7 @@ class WikiApp {
                         
                         return `
                             <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                <i class="bi ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
                                     <div class="item-meta">File • ${fileTypeInfo.category} • Visited ${this.formatDate(file.visitedAt)}</div>
@@ -979,7 +985,7 @@ class WikiApp {
                         
                         return `
                             <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                <i class="bi ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
                                     <div class="item-meta">File • ${fileTypeInfo.category} • Starred ${this.formatDate(file.starredAt)}</div>

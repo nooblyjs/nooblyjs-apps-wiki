@@ -8,6 +8,7 @@
  */
 
 import { documentController } from "./documentcontroller.js";
+import { navigationController } from "./navigationcontroller.js";
 
 export const searchController = {
     app: null,
@@ -80,19 +81,8 @@ export const searchController = {
 
                 case 'Enter':
                     e.preventDefault();
-                    console.log('Enter pressed in search', {
-                        isShowingSuggestions: this.isShowingSuggestions,
-                        currentIndex: this.currentSuggestionIndex,
-                        query: searchInput.value
-                    });
-                    if (this.isShowingSuggestions && this.currentSuggestionIndex >= 0 && suggestionItems[this.currentSuggestionIndex]) {
-                        // Select the highlighted suggestion
-                        const suggestionData = suggestionItems[this.currentSuggestionIndex].dataset;
-                        this.selectSuggestion(suggestionData);
-                    } else {
-                        // Perform full search
-                        this.performSearch();
-                    }
+                    // Always perform full search when Enter is pressed
+                    this.performSearch();
                     break;
 
                 case 'Escape':
@@ -146,12 +136,13 @@ export const searchController = {
 
         const html = suggestions.map(suggestion => {
             // Handle both string and object suggestions
-            let title, icon, dataPath, dataSpaceName, dataType, subtitle;
+            let title, iconClass, iconColor, dataPath, dataSpaceName, dataType, subtitle;
 
             if (typeof suggestion === 'string') {
                 // Simple string suggestion - use it as the search term
                 title = suggestion;
-                icon = this.getSuggestionIcon('search-term');
+                iconClass = 'bi-search';
+                iconColor = '#666666';
                 dataPath = '';
                 dataSpaceName = '';
                 dataType = 'search-term';
@@ -159,11 +150,15 @@ export const searchController = {
             } else {
                 // Object suggestion with metadata
                 title = suggestion.title || suggestion.name || 'Untitled';
-                icon = this.getSuggestionIcon(suggestion.type || suggestion.baseType);
                 dataPath = suggestion.path || suggestion.relativePath || '';
                 dataSpaceName = suggestion.spaceName || suggestion.baseType || '';
                 dataType = suggestion.type || 'document';
                 subtitle = suggestion.spaceName ? `in ${suggestion.spaceName}` : '';
+
+                // Get file type icon using navigationController
+                const fileTypeInfo = navigationController.getFileTypeInfo(dataPath || title);
+                iconClass = navigationController.getFileTypeIconClass(fileTypeInfo.category);
+                iconColor = fileTypeInfo.color;
             }
 
             return `
@@ -172,9 +167,9 @@ export const searchController = {
                      data-space-name="${dataSpaceName}"
                      data-title="${title}"
                      data-type="${dataType}">
-                    <svg class="suggestion-icon" width="16" height="16">
-                        <use href="#${icon}"></use>
-                    </svg>
+                    <div class="suggestion-icon">
+                        <i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 16px;"></i>
+                    </div>
                     <div class="suggestion-text">
                         <div class="suggestion-title">${title}</div>
                         ${subtitle ? `<div class="suggestion-subtitle">${subtitle}</div>` : ''}
@@ -275,7 +270,6 @@ export const searchController = {
         const query = searchInput.value.trim();
 
         if (!query) {
-            console.log('Empty query, returning');
             return;
         }
 
@@ -293,7 +287,9 @@ export const searchController = {
             this.showSearchResults(query, results);
         } catch (error) {
             console.error('Search error:', error);
-            this.app.showNotification('Search failed', 'error');
+            if (this.app && this.app.showNotification) {
+                this.app.showNotification('Search failed', 'error');
+            }
         }
     },
 
@@ -301,7 +297,6 @@ export const searchController = {
      * Display search results in the results view
      */
     showSearchResults(query, results) {
-
         // Update search query display
         const queryElement = document.getElementById('searchQuery');
         if (queryElement) {
@@ -309,7 +304,9 @@ export const searchController = {
         }
 
         // Show search results view
-        this.app.setActiveView('search');
+        if (this.app && this.app.setActiveView) {
+            this.app.setActiveView('search');
+        }
 
         const container = document.getElementById('searchResults');
         if (!container) return;
@@ -340,15 +337,18 @@ export const searchController = {
             const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
             const escapedTitle = title.replace(/"/g, '&quot;');
 
+            // Get file type info for icon
+            const fileTypeInfo = navigationController.getFileTypeInfo(path);
+            const iconClass = navigationController.getFileTypeIconClass(fileTypeInfo.category);
+            const iconColor = fileTypeInfo.color;
+
             return `
                 <div class="search-result-item"
                      data-path="${escapedPath}"
                      data-space-name="${escapedSpaceName}"
                      data-title="${escapedTitle}">
                     <div class="search-result-icon">
-                        <svg width="20" height="20">
-                            <use href="#${icon}"></use>
-                        </svg>
+                        <i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 20px;"></i>
                     </div>
                     <div class="search-result-content">
                         <h3 class="search-result-title">${title}</h3>

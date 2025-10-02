@@ -214,14 +214,17 @@ export const templatesController = {
                 const escapedPath = path.replace(/"/g, '&quot;');
                 const escapedTitle = title.replace(/"/g, '&quot;');
 
+                // Get file type info for icon
+                const fileTypeInfo = navigationController.getFileTypeInfo(path);
+                const iconClass = navigationController.getFileTypeIconClass(fileTypeInfo.category);
+                const iconColor = fileTypeInfo.color;
+
                 return `
                     <div class="search-result-item template-item"
                          data-template-path="${escapedPath}"
                          data-title="${escapedTitle}">
                         <div class="search-result-icon">
-                            <svg width="20" height="20">
-                                <use href="#${icon}"></use>
-                            </svg>
+                            <i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 20px;"></i>
                         </div>
                         <div class="search-result-content">
                             <h3 class="search-result-title">${title}</h3>

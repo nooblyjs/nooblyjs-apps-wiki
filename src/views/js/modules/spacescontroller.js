@@ -221,7 +221,7 @@ export const spacesController = {
             
             return `
                 <div class="file-card" data-document-path="${file.path || file.title}" data-space-name="${file.spaceName}">
-                    <i class="fas ${iconClass} file-card-icon" style="color: ${iconColor};"></i>
+                    <i class="bi ${iconClass} file-card-icon" style="color: ${iconColor};"></i>
                     <div class="file-card-info">
                         <div class="file-card-name">${file.title}</div>
                         <div class="file-card-meta">Modified ${this.app.formatDate(file.modifiedAt || file.createdAt)}</div>
@@ -273,7 +273,7 @@ export const spacesController = {
 
                         return `
                             <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                <i class="fas ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
+                                <i class="bi ${iconClass} item-icon" style="color: ${iconColor}; font-size: 24px;"></i>
                                 <div class="item-info">
                                     <div class="item-name">${fileName}</div>
                                     <div class="item-meta">Starred ${this.app.formatDate(file.starredAt)}</div>
