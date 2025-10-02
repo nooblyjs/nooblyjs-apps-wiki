@@ -2,76 +2,81 @@
   {
     "recent": [
       {
-        "path": "Beach.jpg",
-        "space": "Shared Space",
-        "lastVisited": "2025-10-02T06:37:48.170Z",
-        "title": "Beach.jpg"
+        "path": "My Folder/cooper.md",
+        "space": "Read-Only Space",
+        "lastVisited": "2025-10-02T08:19:28.754Z",
+        "title": "cooper.md"
+      },
+      {
+        "path": "1.md",
+        "space": "Read-Only Space",
+        "lastVisited": "2025-10-02T08:17:55.647Z",
+        "title": "1.md"
+      },
+      {
+        "path": "home.md",
+        "spaceName": "Read-Only Space",
+        "title": "home.md",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:13:31.058Z"
       },
       {
         "path": ".gitkeep",
-        "spaceName": "Personal Space",
+        "spaceName": "Read-Only Space",
         "title": ".gitkeep",
         "action": "viewed",
-        "visitedAt": "2025-10-02T05:40:38.027Z"
+        "visitedAt": "2025-10-02T08:13:25.131Z"
+      },
+      {
+        "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
+        "spaceName": "Personal Space",
+        "title": "robot-holding-sign-board.jpg",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:04:33.286Z"
+      },
+      {
+        "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
+        "spaceName": "Personal Space",
+        "title": "robot-waving-hand-wink.jpg",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T07:52:02.472Z"
       },
       {
         "path": "2023/B2B - eCommerce Strategy 202311.pdf",
         "spaceName": "Personal Space",
         "title": "B2B - eCommerce Strategy 202311.pdf",
         "action": "viewed",
-        "visitedAt": "2025-10-02T04:32:58.366Z"
-      },
-      {
-        "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
-        "spaceName": "Personal Space",
-        "title": "shoprite-reference-architecture-mapping.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T04:14:38.420Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Shared Space",
-        "title": "1.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T19:49:26.303Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Read-Only Space",
-        "title": "1.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T19:28:28.753Z"
+        "visitedAt": "2025-10-02T07:45:26.792Z"
       },
       {
         "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
         "spaceName": "Personal Space",
         "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
         "action": "viewed",
-        "visitedAt": "2025-10-01T15:54:37.826Z"
+        "visitedAt": "2025-10-02T07:43:44.033Z"
       },
       {
-        "path": "Customer Value Stream/Todo.md",
+        "path": ".gitkeep",
         "spaceName": "Personal Space",
-        "title": "Todo.md",
+        "title": ".gitkeep",
         "action": "viewed",
-        "visitedAt": "2025-10-01T15:30:49.514Z"
+        "visitedAt": "2025-10-02T07:37:50.097Z"
       },
       {
-        "path": "2.md",
-        "spaceName": "Read-Only Space",
-        "title": "2.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-01T15:28:26.476Z"
-      },
-      {
-        "path": "CBA/B2B Portfolio Business Case update.docx",
+        "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
         "spaceName": "Personal Space",
-        "title": "B2B Portfolio Business Case update.docx",
+        "title": "shoprite-reference-architecture-mapping.png",
         "action": "viewed",
-        "visitedAt": "2025-10-01T14:59:59.666Z"
+        "visitedAt": "2025-10-02T07:08:21.417Z"
       }
     ],
     "starred": [
+      {
+        "path": "1.md",
+        "spaceName": "Read-Only Space",
+        "title": "1.md",
+        "starredAt": "2025-10-02T08:17:47.512Z"
+      },
       {
         "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
         "spaceName": "Personal Space",
@@ -91,6 +96,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-02T06:37:48.449Z"
+    "updatedAt": "2025-10-02T08:19:29.305Z"
   }
 ]

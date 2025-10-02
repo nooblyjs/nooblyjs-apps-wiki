@@ -6,6 +6,7 @@ export const navigationController = {
     fullFileTree: null,
     contextMenuTargetPath: null,
     contextMenuTargetType: null,
+    contextMenuTargetSpaceName: null,
     uploadTargetPath: null,
     prefilledFolderPath: null,
     prefilledFilePath: null,
@@ -94,9 +95,11 @@ export const navigationController = {
                 // Only show root-level documents initially
                 if (isRoot || level > 0) {
                     const fileIcon = this.getFileIcon(node.path || node.name);
+                    const documentPath = node.path || node.name || '';
+                    const spaceName = node.spaceName || '';
 
                     return `
-                        <div class="file-item" data-document-path="${node.path}" data-space-name="${node.spaceName}" style="padding-left: ${(level * 16) + 16}px">
+                        <div class="file-item" data-document-path="${documentPath}" data-space-name="${spaceName}" style="padding-left: ${(level * 16) + 16}px">
                             <i class="bi ${fileIcon.icon} ${fileIcon.color}"></i>
                             <span>${node.title || node.name}</span>
                         </div>
@@ -159,7 +162,9 @@ export const navigationController = {
             fileItem.addEventListener('contextmenu', (e) => {
                 e.stopPropagation(); // Prevent folder context menu from firing
                 const filePath = fileItem.dataset.documentPath;
-                console.log('Context menu triggered on file item, filePath:', filePath);
+                const spaceName = fileItem.dataset.spaceName;
+                // Store both path and space name for file operations
+                this.contextMenuTargetSpaceName = spaceName;
                 this.showContextMenu(e, filePath, 'file');
             });
         });
@@ -390,6 +395,9 @@ export const navigationController = {
         // Switch to a custom folder view
         this.app.setActiveView('folder');
 
+        // Store the current folder path for context menu
+        this.app.currentFolder = folderContent.path;
+
         // Update the main content to show folder overview
         const mainContent = document.getElementById('mainContent');
         if (!mainContent) return;
@@ -485,6 +493,13 @@ export const navigationController = {
                 const folderPath = card.dataset.folderPath;
                 this.loadFolderContent(folderPath);
             });
+
+            // Context menu for folders
+            card.addEventListener('contextmenu', (e) => {
+                e.stopPropagation();
+                const folderPath = card.dataset.folderPath;
+                this.showContextMenu(e, folderPath, 'folder');
+            });
         });
 
         // File cards click events
@@ -494,7 +509,30 @@ export const navigationController = {
                 const spaceName = card.dataset.spaceName;
                 documentController.openDocumentByPath(documentPath, spaceName);
             });
+
+            // Context menu for files
+            card.addEventListener('contextmenu', (e) => {
+                e.stopPropagation();
+                const filePath = card.dataset.documentPath;
+                const spaceName = card.dataset.spaceName;
+                this.contextMenuTargetSpaceName = spaceName;
+                this.showContextMenu(e, filePath, 'file');
+            });
         });
+
+        // Context menu for empty folder area (right-click on empty space)
+        const folderContent = document.querySelector('#folderView .folder-content');
+        if (folderContent) {
+            folderContent.addEventListener('contextmenu', (e) => {
+                // Only show context menu if not clicking on a card
+                if (!e.target.closest('.item-card')) {
+                    e.preventDefault();
+                    // Get the current folder path from the view
+                    const currentFolderPath = this.app.currentFolder || '';
+                    this.showContextMenu(e, currentFolderPath, 'folder');
+                }
+            });
+        }
     },
 
     // Context Menu Methods
@@ -509,31 +547,40 @@ export const navigationController = {
 
         // Context menu item clicks
         document.getElementById('contextCreateFolder')?.addEventListener('click', () => {
-            console.log('Context menu Create Folder clicked, contextMenuTargetPath:', this.contextMenuTargetPath);
+            // Save the value before hiding the menu, as hideContextMenu() resets it
+            const targetPath = this.contextMenuTargetPath;
             this.hideContextMenu();
-            this.showCreateFolderModal(this.contextMenuTargetPath);
+            this.showCreateFolderModal(targetPath);
         });
 
         document.getElementById('contextCreateFile')?.addEventListener('click', () => {
+            // Save the value before hiding the menu, as hideContextMenu() resets it
+            const targetPath = this.contextMenuTargetPath;
             this.hideContextMenu();
-            this.showCreateFileModal(this.contextMenuTargetPath);
+            this.showCreateFileModal(targetPath);
         });
 
         document.getElementById('contextUpload')?.addEventListener('click', () => {
+            // Save the value before hiding the menu, as hideContextMenu() resets it
+            const targetPath = this.contextMenuTargetPath;
             this.hideContextMenu();
-            this.showUploadDialog(this.contextMenuTargetPath);
+            this.showUploadDialog(targetPath);
         });
 
         document.getElementById('contextRename')?.addEventListener('click', () => {
-            console.log('Context menu Rename clicked, contextMenuTargetPath:', this.contextMenuTargetPath, 'contextMenuTargetType:', this.contextMenuTargetType);
+            // Save the values before hiding the menu, as hideContextMenu() resets them
+            const targetPath = this.contextMenuTargetPath;
+            const targetType = this.contextMenuTargetType;
             this.hideContextMenu();
-            this.showRenameModal(this.contextMenuTargetPath, this.contextMenuTargetType);
+            this.showRenameModal(targetPath, targetType);
         });
 
         document.getElementById('contextDelete')?.addEventListener('click', () => {
-            console.log('Context menu Delete clicked, contextMenuTargetPath:', this.contextMenuTargetPath, 'contextMenuTargetType:', this.contextMenuTargetType);
+            // Save the values before hiding the menu, as hideContextMenu() resets them
+            const targetPath = this.contextMenuTargetPath;
+            const targetType = this.contextMenuTargetType;
             this.hideContextMenu();
-            this.handleDeleteItem(this.contextMenuTargetPath, this.contextMenuTargetType);
+            this.handleDeleteItem(targetPath, targetType);
         });
 
         // File upload handling
@@ -554,10 +601,15 @@ export const navigationController = {
         e.stopPropagation();
 
         const contextMenu = document.getElementById('fileContextMenu');
-        this.contextMenuTargetPath = targetPath || ''; // Empty string for root
-        this.contextMenuTargetType = targetType;
 
-        console.log('Context menu opened for path:', targetPath, 'type:', targetType); // Debug log
+        // Only use empty string for root folders, otherwise store the actual path (even if falsy)
+        if (targetType === 'folder' && (targetPath === null || targetPath === undefined)) {
+            this.contextMenuTargetPath = ''; // Empty string for root folder
+        } else {
+            this.contextMenuTargetPath = targetPath;
+        }
+
+        this.contextMenuTargetType = targetType;
 
         // Position the context menu using clientX/clientY for viewport positioning
         const x = e.clientX;
@@ -675,6 +727,12 @@ export const navigationController = {
 
                 // Update the tree to show the new folder
                 await this.loadFileTree();
+
+                // If we're currently viewing a folder, refresh the folder view
+                if (this.app.currentView === 'folder' && this.app.currentFolder === parentPath) {
+                    await this.loadFolderContent(parentPath);
+                }
+
                 this.app.showNotification('Folder created successfully!', 'success');
             } else {
                 throw new Error(result.message || 'Failed to create folder');
@@ -760,6 +818,12 @@ export const navigationController = {
 
                 // Update only the affected tree node
                 await this.updateTreeNode(folderPath);
+
+                // If we're currently viewing a folder, refresh the folder view
+                if (this.app.currentView === 'folder' && this.app.currentFolder === folderPath) {
+                    await this.loadFolderContent(folderPath);
+                }
+
                 this.app.showNotification('File created successfully!', 'success');
 
                 // Auto-open the created file in edit mode
@@ -772,7 +836,7 @@ export const navigationController = {
                     title: formData.get('fileName').replace('.md', ''),
                     path: fullPath,
                     spaceId: this.app.currentSpace.id,
-                    content: await this.app.getTemplateContent(formData.get('fileTemplate')),
+                    content: templateContent, // Reuse the template content we already loaded
                     metadata: { category: 'markdown', viewer: 'markdown' }
                 };
 
@@ -842,6 +906,11 @@ export const navigationController = {
 
         // Update only the affected tree node
         await this.updateTreeNode(uploadPath);
+
+        // If we're currently viewing a folder, refresh the folder view
+        if (this.app.currentView === 'folder' && this.app.currentFolder === uploadPath) {
+            await this.loadFolderContent(uploadPath);
+        }
     },
 
     async readFileContent(file) {
@@ -936,6 +1005,12 @@ export const navigationController = {
                     this.app.hideModal('renameModal');
                     form.reset();
                     await this.loadFileTree();
+
+                    // If we're currently viewing a folder, refresh the folder view
+                    if (this.app.currentView === 'folder' && this.app.currentFolder === parentPath) {
+                        await this.loadFolderContent(parentPath);
+                    }
+
                     this.app.showNotification('Folder renamed successfully!', 'success');
                 } else {
                     throw new Error(result.message || 'Failed to rename folder');
@@ -958,6 +1033,12 @@ export const navigationController = {
                     this.app.hideModal('renameModal');
                     form.reset();
                     await this.loadFileTree();
+
+                    // If we're currently viewing a folder, refresh the folder view
+                    if (this.app.currentView === 'folder' && this.app.currentFolder === parentPath) {
+                        await this.loadFolderContent(parentPath);
+                    }
+
                     this.app.showNotification('File renamed successfully!', 'success');
                 } else {
                     throw new Error(result.message || 'Failed to rename file');
@@ -972,6 +1053,11 @@ export const navigationController = {
     async handleDeleteItem(itemPath, itemType) {
         if (!itemPath && itemType === 'folder') {
             this.app.showNotification('Cannot delete root folder', 'error');
+            return;
+        }
+
+        if (!itemPath || itemPath === '' || itemPath === 'undefined') {
+            this.app.showNotification('Cannot delete: path is missing', 'error');
             return;
         }
 
@@ -1001,7 +1087,9 @@ export const navigationController = {
                     })
                 });
             } else {
-                // Delete file
+                // Delete file - use the stored space name or current space
+                const spaceName = this.contextMenuTargetSpaceName || this.app.currentSpace?.name;
+
                 response = await fetch(`/applications/wiki/api/documents/${encodeURIComponent(itemPath)}`, {
                     method: 'DELETE',
                     headers: {
@@ -1009,6 +1097,7 @@ export const navigationController = {
                     },
                     body: JSON.stringify({
                         spaceId: this.app.currentSpace?.id,
+                        spaceName: spaceName,
                         path: itemPath
                     })
                 });
@@ -1022,6 +1111,18 @@ export const navigationController = {
                 // Update only the parent tree node
                 const parentPath = itemPath ? itemPath.substring(0, itemPath.lastIndexOf('/')) : '';
                 await this.updateTreeNode(parentPath);
+
+                // If we're currently viewing a folder, refresh the folder view
+                if (this.app.currentView === 'folder' && this.app.currentFolder === parentPath) {
+                    await this.loadFolderContent(parentPath);
+                } else if (this.app.currentView === 'folder' && itemType === 'folder' && itemPath === this.app.currentFolder) {
+                    // If we deleted the folder we're currently viewing, go back to parent or home
+                    if (parentPath) {
+                        await this.loadFolderContent(parentPath);
+                    } else {
+                        this.app.showHome();
+                    }
+                }
 
                 // If we're currently viewing the deleted item, go back to home
                 if (this.app.currentDocument && itemType === 'file' && this.app.currentDocument.path === itemPath) {

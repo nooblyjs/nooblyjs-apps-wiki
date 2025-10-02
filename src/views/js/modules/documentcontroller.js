@@ -20,6 +20,9 @@ export const documentController = {
      * Open a document by path and render it
      */
     async openDocumentByPath(documentPath, spaceName) {
+        // Show loading placeholder immediately
+        this.showLoadingPlaceholder(documentPath, spaceName);
+
         try {
             // Use enhanced API to get file content with metadata
             const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(documentPath)}&spaceName=${encodeURIComponent(spaceName)}&enhanced=true`);
@@ -63,6 +66,43 @@ export const documentController = {
             // Track document view for recent files (even if failed to load)
             await this.trackDocumentView(documentPath, spaceName);
         }
+    },
+
+    /**
+     * Show loading placeholder while document is being fetched
+     */
+    showLoadingPlaceholder(documentPath, spaceName) {
+        this.app.setActiveView('document');
+        this.app.currentView = 'document';
+
+        // Update header with placeholder
+        const docTitle = document.getElementById('currentDocTitle');
+        if (docTitle) {
+            docTitle.textContent = documentPath.split('/').pop();
+        }
+
+        const backToSpace = document.getElementById('docBackToSpace');
+        if (backToSpace) {
+            backToSpace.textContent = spaceName || 'Space';
+        }
+
+        const contentElement = document.querySelector('#documentView .document-container');
+        if (!contentElement) return;
+
+        // Remove any existing content
+        const existingContent = contentElement.querySelector('.document-content-wrapper');
+        if (existingContent) existingContent.remove();
+
+        // Create Bootstrap placeholder skeleton
+        const placeholderWrapper = document.createElement('div');
+        placeholderWrapper.className = 'document-content-wrapper loading-placeholder';
+        placeholderWrapper.innerHTML = `
+            <div class="placeholder-glow" style="padding: 20px;">
+                <div class="placeholder col-12" style="height: 400px; border-radius: 8px;"></div>
+            </div>
+        `;
+
+        contentElement.appendChild(placeholderWrapper);
     },
 
     /**

@@ -146,7 +146,7 @@ module.exports = (options, eventEmitter, services) => {
       const spaceId = parseInt(req.params.spaceId);
       logger.info(`Fetching templates for space ${spaceId}`);
 
-      // Find the space name
+      // Find the space
       const spaces = await dataManager.read('spaces');
       const space = spaces.find(s => s.id === spaceId);
 
@@ -154,11 +154,26 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(404).json({ error: 'Space not found' });
       }
 
-      // Look for files in the .templates folder
+      // Read-only spaces should not have templates
+      if (space.permissions === 'read-only') {
+        logger.info(`Space ${space.name} is read-only, returning empty templates`);
+        return res.json([]);
+      }
+
+      // Look for files in the .templates folder using space's configured path
       const fs = require('fs').promises;
       const path = require('path');
-      const documentsDir = path.resolve(__dirname, '../../../documents');
-      const templatesPath = path.resolve(documentsDir, space.name, '.templates');
+
+      // Use space's configured path or fallback to old structure
+      let spaceDir;
+      if (space.path) {
+        spaceDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceDir = path.resolve(documentsDir, space.name);
+      }
+
+      const templatesPath = path.resolve(spaceDir, '.templates');
 
       let templates = [];
 
@@ -199,28 +214,52 @@ module.exports = (options, eventEmitter, services) => {
         }
       } catch (error) {
         if (error.code === 'ENOENT') {
-          // .templates folder doesn't exist, create it with sample template
+          // .templates folder doesn't exist, create it with default templates
           logger.info(`Creating .templates folder for space ${space.name}`);
 
           try {
             await fs.mkdir(templatesPath, { recursive: true });
 
-            // Create sample.md template
-            const sampleContent = '# Sample Template';
-            const samplePath = path.join(templatesPath, 'sample.md');
-            await fs.writeFile(samplePath, sampleContent, 'utf8');
+            // Create default templates
+            const defaultTemplates = [
+              {
+                name: 'basic-document',
+                title: 'Basic Document',
+                content: '# Document Title\n\n## Overview\n\nDescription of the document.\n\n## Content\n\nYour content here.\n\n## Conclusion\n\nSummary and next steps.'
+              },
+              {
+                name: 'meeting-notes',
+                title: 'Meeting Notes',
+                content: '# Meeting Notes\n\n**Date:** YYYY-MM-DD\n**Attendees:** \n**Location:** \n\n## Agenda\n\n1. \n2. \n3. \n\n## Discussion\n\n### Topic 1\n\n### Topic 2\n\n## Action Items\n\n- [ ] Action item 1 - Assigned to:\n- [ ] Action item 2 - Assigned to:\n\n## Next Meeting\n\n**Date:** \n**Time:** '
+              },
+              {
+                name: 'api-documentation',
+                title: 'API Documentation',
+                content: '# API Documentation\n\n## Overview\n\nBrief description of the API.\n\n## Base URL\n\n```\nhttps://api.example.com/v1\n```\n\n## Authentication\n\nDescription of authentication method.\n\n## Endpoints\n\n### GET /endpoint\n\nDescription of endpoint.\n\n**Parameters:**\n\n| Name | Type | Required | Description |\n|------|------|----------|-------------|\n| param1 | string | Yes | Description |\n\n**Response:**\n\n```json\n{\n  "status": "success",\n  "data": {}\n}\n```\n\n## Error Codes\n\n| Code | Description |\n|------|-------------|\n| 400 | Bad Request |\n| 401 | Unauthorized |\n| 404 | Not Found |'
+              },
+              {
+                name: 'project-requirements',
+                title: 'Project Requirements',
+                content: '# Project Requirements\n\n## Project Overview\n\n**Project Name:** \n**Project Owner:** \n**Start Date:** \n**Target Completion:** \n\n## Objectives\n\n1. \n2. \n3. \n\n## Scope\n\n### In Scope\n\n- \n- \n\n### Out of Scope\n\n- \n- \n\n## Functional Requirements\n\n### FR1: Requirement Title\n\n**Description:** \n**Priority:** High/Medium/Low\n**Acceptance Criteria:**\n- \n- \n\n## Non-Functional Requirements\n\n### Performance\n\n### Security\n\n### Scalability\n\n## Constraints\n\n## Assumptions\n\n## Dependencies'
+              }
+            ];
 
-            const stats = await fs.stat(samplePath);
-            templates.push({
-              name: 'sample',
-              title: 'Sample Template',
-              path: '.templates/sample.md',
-              size: stats.size,
-              lastModified: stats.mtime.toISOString(),
-              type: 'template'
-            });
+            for (const template of defaultTemplates) {
+              const templatePath = path.join(templatesPath, `${template.name}.md`);
+              await fs.writeFile(templatePath, template.content, 'utf8');
+              const stats = await fs.stat(templatePath);
 
-            logger.info(`Created .templates folder and sample.md for space ${space.name}`);
+              templates.push({
+                name: template.name,
+                title: template.title,
+                path: `.templates/${template.name}.md`,
+                size: stats.size,
+                lastModified: stats.mtime.toISOString(),
+                type: 'template'
+              });
+            }
+
+            logger.info(`Created .templates folder with ${defaultTemplates.length} default templates for space ${space.name}`);
           } catch (createError) {
             logger.error('Error creating .templates folder:', createError);
             // Return empty array if we can't create the folder

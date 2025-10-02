@@ -2,6 +2,12 @@
   "userId": "admin",
   "starred": [
     {
+      "path": "1.md",
+      "spaceName": "Read-Only Space",
+      "title": "1.md",
+      "starredAt": "2025-10-02T08:17:47.512Z"
+    },
+    {
       "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
       "spaceName": "Personal Space",
       "title": "shoprite-reference-architecture-mapping.png",
@@ -22,32 +28,130 @@
   ],
   "recent": [
     {
-      "path": "Beach.jpg",
-      "spaceName": "Shared Space",
-      "title": "Beach.jpg",
+      "path": "My Folder/cooper.md",
+      "spaceName": "Read-Only Space",
+      "title": "cooper.md",
       "action": "viewed",
-      "visitedAt": "2025-10-02T06:37:48.297Z"
+      "visitedAt": "2025-10-02T08:19:28.874Z"
+    },
+    {
+      "path": "1.md",
+      "spaceName": "Read-Only Space",
+      "title": "1.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:17:55.767Z"
+    },
+    {
+      "path": "home.md",
+      "spaceName": "Read-Only Space",
+      "title": "home.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:13:31.058Z"
     },
     {
       "path": ".gitkeep",
-      "spaceName": "Personal Space",
+      "spaceName": "Read-Only Space",
       "title": ".gitkeep",
       "action": "viewed",
-      "visitedAt": "2025-10-02T05:40:38.027Z"
+      "visitedAt": "2025-10-02T08:13:25.131Z"
+    },
+    {
+      "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
+      "spaceName": "Personal Space",
+      "title": "robot-holding-sign-board.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:04:33.286Z"
+    },
+    {
+      "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
+      "spaceName": "Personal Space",
+      "title": "robot-waving-hand-wink.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:52:02.472Z"
     },
     {
       "path": "2023/B2B - eCommerce Strategy 202311.pdf",
       "spaceName": "Personal Space",
       "title": "B2B - eCommerce Strategy 202311.pdf",
       "action": "viewed",
-      "visitedAt": "2025-10-02T04:32:58.366Z"
+      "visitedAt": "2025-10-02T07:45:26.792Z"
+    },
+    {
+      "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+      "spaceName": "Personal Space",
+      "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:43:44.033Z"
+    },
+    {
+      "path": ".gitkeep",
+      "spaceName": "Personal Space",
+      "title": ".gitkeep",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:37:50.097Z"
     },
     {
       "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
       "spaceName": "Personal Space",
       "title": "shoprite-reference-architecture-mapping.png",
       "action": "viewed",
-      "visitedAt": "2025-10-02T04:14:38.420Z"
+      "visitedAt": "2025-10-02T07:08:21.417Z"
+    },
+    {
+      "path": "PAC Docs/Business Case Template (2020) - 5665 eCommerce.docx",
+      "spaceName": "Personal Space",
+      "title": "Business Case Template (2020) - 5665 eCommerce.docx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:08:10.051Z"
+    },
+    {
+      "path": "PAC Docs/5665-eCommerce Cost Benefit Analysis Template_ Level 1 (2019).xlsx",
+      "spaceName": "Personal Space",
+      "title": "5665-eCommerce Cost Benefit Analysis Template_ Level 1 (2019).xlsx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:08:07.930Z"
+    },
+    {
+      "path": "PAC Docs/5665-eCommerce Business Case Template (2020).docx",
+      "spaceName": "Personal Space",
+      "title": "5665-eCommerce Business Case Template (2020).docx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:08:04.773Z"
+    },
+    {
+      "path": "pptx/Enterprise eCommerce Strategy - Board Presentation.pptx",
+      "spaceName": "Personal Space",
+      "title": "Enterprise eCommerce Strategy - Board Presentation.pptx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:08:02.792Z"
+    },
+    {
+      "path": "pptx/Enterprise eCommerce Strategy.pptx",
+      "spaceName": "Personal Space",
+      "title": "Enterprise eCommerce Strategy.pptx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T07:07:59.331Z"
+    },
+    {
+      "path": "Dimension Data/Copy of Shoprite - DOM - High Level RFI Requirements v2 13 April 21.xlsx",
+      "spaceName": "Personal Space",
+      "title": "Copy of Shoprite - DOM - High Level RFI Requirements v2 13 April 21.xlsx",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T06:43:13.903Z"
+    },
+    {
+      "path": ".templates/Article.md.md",
+      "spaceName": "Personal Space",
+      "title": "Article.md",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T06:42:06.375Z"
+    },
+    {
+      "path": "Beach.jpg",
+      "spaceName": "Shared Space",
+      "title": "Beach.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T06:37:48.297Z"
     },
     {
       "path": "1.md",
@@ -57,90 +161,13 @@
       "visitedAt": "2025-10-01T19:49:26.303Z"
     },
     {
-      "path": "1.md",
-      "spaceName": "Read-Only Space",
-      "title": "1.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T19:28:28.753Z"
-    },
-    {
-      "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T15:54:37.826Z"
-    },
-    {
       "path": "Customer Value Stream/Todo.md",
       "spaceName": "Personal Space",
       "title": "Todo.md",
       "action": "viewed",
       "visitedAt": "2025-10-01T15:30:49.514Z"
-    },
-    {
-      "path": "2.md",
-      "spaceName": "Read-Only Space",
-      "title": "2.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T15:28:26.476Z"
-    },
-    {
-      "path": "CBA/B2B Portfolio Business Case update.docx",
-      "spaceName": "Personal Space",
-      "title": "B2B Portfolio Business Case update.docx",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:59:59.666Z"
-    },
-    {
-      "path": "Test PDF.pdf",
-      "spaceName": "Shared Space",
-      "title": "Test PDF.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:56:45.640Z"
-    },
-    {
-      "path": "B2B Digital Commerce - Group Capabilities.pptx",
-      "spaceName": "Shared Space",
-      "title": "B2B Digital Commerce - Group Capabilities.pptx",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:56:41.353Z"
-    },
-    {
-      "path": "data.txt",
-      "spaceName": "Shared Space",
-      "title": "data.txt",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:56:25.310Z"
-    },
-    {
-      "path": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
-      "spaceName": "Shared Space",
-      "title": "Tech predictions for 2025 and beyond - All Things Distributed.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:53:12.355Z"
-    },
-    {
-      "path": "Business Strategy/2024/B2B - Enterprise eCommerce 202204.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - Enterprise eCommerce 202204.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:51:04.325Z"
-    },
-    {
-      "path": "Business Strategy/2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:50:24.067Z"
-    },
-    {
-      "path": "4.md",
-      "spaceName": "Shared Space",
-      "title": "4.md",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:41:30.150Z"
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-02T06:37:48.297Z"
+  "updatedAt": "2025-10-02T08:19:28.874Z"
 }

@@ -660,13 +660,18 @@ class WikiApp {
         // Show all sections
         const sections = document.querySelectorAll('.content-sections section');
         sections.forEach(section => section.style.display = 'block');
-        
-        // Restore original titles
+
+        // Update titles with current space information
         const workspaceTitle = document.getElementById('workspaceTitle');
         const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        if (workspaceTitle) workspaceTitle.textContent = 'Welcome to the wiki';
-        if (workspaceSubtitle) workspaceSubtitle.textContent = 'Your documentation workspace dashboard';
-        
+        if (this.currentSpace) {
+            if (workspaceTitle) workspaceTitle.textContent = `Welcome to ${this.currentSpace.name}`;
+            if (workspaceSubtitle) workspaceSubtitle.textContent = this.currentSpace.description || 'Your documentation workspace';
+        } else {
+            if (workspaceTitle) workspaceTitle.textContent = 'Welcome to the wiki';
+            if (workspaceSubtitle) workspaceSubtitle.textContent = 'Your documentation workspace dashboard';
+        }
+
         // Hide template button
         templatesController.hideTemplateButton();
     }
@@ -863,11 +868,14 @@ class WikiApp {
             const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
 
             // Filter recent files to only show files from the current space
-            const recentFiles = currentSpaceName
+            const filteredRecentFiles = currentSpaceName
                 ? allRecentFiles.filter(file => file.spaceName === currentSpaceName)
                 : allRecentFiles;
 
-            if (recentFiles.length === 0) {
+            // Limit to 6 items for home page display
+            const recentFiles = filteredRecentFiles.slice(0, 6);
+
+            if (filteredRecentFiles.length === 0) {
                 const noFilesMessage = currentSpaceName
                     ? `No recent files in ${currentSpaceName}`
                     : 'No recent files found';
@@ -940,11 +948,14 @@ class WikiApp {
             const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
 
             // Filter starred files to only show files from the current space
-            const starredFiles = currentSpaceName
+            const filteredStarredFiles = currentSpaceName
                 ? allStarredFiles.filter(file => file.spaceName === currentSpaceName)
                 : allStarredFiles;
 
-            if (starredFiles.length === 0) {
+            // Limit to 6 items for home page display
+            const starredFiles = filteredStarredFiles.slice(0, 6);
+
+            if (filteredStarredFiles.length === 0) {
                 const noFilesMessage = currentSpaceName
                     ? `No starred files in ${currentSpaceName}`
                     : 'No starred files found';

@@ -1,1 +1,67 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "robot-waving-hand-eyes-closed",
+    "spaceId": 1,
+    "spaceName": "Personal Space",
+    "path": "My Folders/My Sub Folders/robot-waving-hand-eyes-closed.jpg",
+    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cNDaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
+    "author": "Current User",
+    "createdAt": "2025-10-02T07:51:46.386Z",
+    "modifiedAt": "2025-10-02T07:51:46.386Z",
+    "views": 0,
+    "tags": []
+  },
+  {
+    "id": 2,
+    "title": "robot-waving-hand-wink",
+    "spaceId": 1,
+    "spaceName": "Personal Space",
+    "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
+    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cLJaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
+    "author": "Current User",
+    "createdAt": "2025-10-02T07:51:46.834Z",
+    "modifiedAt": "2025-10-02T07:51:46.834Z",
+    "views": 0,
+    "tags": []
+  },
+  {
+    "id": 3,
+    "title": "ronot-waving-eyes-open",
+    "spaceId": 1,
+    "spaceName": "Personal Space",
+    "path": "My Folders/My Sub Folders/ronot-waving-eyes-open.jpg",
+    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cQmaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
+    "author": "Current User",
+    "createdAt": "2025-10-02T07:51:47.290Z",
+    "modifiedAt": "2025-10-02T07:51:47.290Z",
+    "views": 0,
+    "tags": []
+  },
+  {
+    "id": 4,
+    "title": "robot-holding-sign-board",
+    "spaceId": 1,
+    "spaceName": "Personal Space",
+    "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
+    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cZxaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
+    "author": "Current User",
+    "createdAt": "2025-10-02T07:51:47.744Z",
+    "modifiedAt": "2025-10-02T07:51:47.744Z",
+    "views": 0,
+    "tags": []
+  },
+  {
+    "id": 5,
+    "title": "Cooper",
+    "spaceId": 3,
+    "spaceName": "Read-Only Space",
+    "path": "My Folder/cooper.md",
+    "excerpt": "No content yet",
+    "author": "Current User",
+    "createdAt": "2025-10-02T08:19:18.269Z",
+    "modifiedAt": "2025-10-02T08:19:18.269Z",
+    "views": 0,
+    "tags": []
+  }
+]
