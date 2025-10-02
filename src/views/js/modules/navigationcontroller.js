@@ -1,4 +1,5 @@
 import { documentController } from "./documentcontroller.js";
+import { templatesController } from "./templatescontroller.js";
 
 export const navigationController = {
     app: null,
