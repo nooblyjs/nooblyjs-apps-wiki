@@ -37,7 +37,14 @@ module.exports = (options, eventEmitter, services) => {
     if (space.path) {
       // Use the absolute path from space configuration
       documentsDir = space.path;
-      absolutePath = path.resolve(documentsDir, documentPath);
+
+      // Check if documentPath is already absolute (legacy documents)
+      if (path.isAbsolute(documentPath)) {
+        absolutePath = documentPath;
+      } else {
+        // documentPath is relative to space directory
+        absolutePath = path.resolve(documentsDir, documentPath);
+      }
     } else {
       // Fallback to old behavior for backward compatibility
       documentsDir = path.resolve(__dirname, '../../../documents');

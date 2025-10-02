@@ -50,6 +50,9 @@ async function initializeSpace(space, basePath, filing, dataManager, author) {
         .substring(0, 150)
         .trim();
 
+      // Store relative path from space directory for consistency with API expectations
+      const relativePath = path.relative(spacePath, filePath);
+
       documents.push({
         id: documentId++,
         title: file.title,
@@ -60,7 +63,7 @@ async function initializeSpace(space, basePath, filing, dataManager, author) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         author: author,
-        filePath: filePath
+        filePath: relativePath
       });
     }
   }
@@ -93,7 +96,7 @@ async function initializeUserWiki(userId, spaceConfigs, filing, dataManager, sea
         icon: template.icon,
         visibility: template.visibility,
         documentCount: 0,
-        path: path.join(process.cwd(), customPath),
+        path: path.resolve(process.cwd(), customPath),
         type: template.type,
         permissions: template.permissions,
         createdAt: new Date().toISOString(),

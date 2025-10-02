@@ -25,7 +25,8 @@ async function loadSpacesTemplate() {
  * Create folder structure and sample files for a space based on template
  */
 async function initializeSpaceFromTemplate(spaceTemplate, basePath, filing, logger, author) {
-  const spacePath = path.join(process.cwd(), basePath);
+  // Normalize the space path to ensure consistency
+  const spacePath = path.resolve(process.cwd(), basePath);
   const documents = [];
 
   // Create .gitkeep in base directory
@@ -49,6 +50,9 @@ async function initializeSpaceFromTemplate(spaceTemplate, basePath, filing, logg
         .substring(0, 150)
         .trim();
 
+      // Store relative path from space directory for consistency
+      const relativePath = path.relative(spacePath, filePath);
+
       documents.push({
         id: documentId++,
         title: file.title,
@@ -59,7 +63,7 @@ async function initializeSpaceFromTemplate(spaceTemplate, basePath, filing, logg
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         author: author,
-        filePath: filePath
+        filePath: relativePath
       });
     }
   }
@@ -146,7 +150,8 @@ module.exports = (options, eventEmitter, services) => {
       const spaces = await dataManager.read('spaces');
       let nextId = spaces.length > 0 ? Math.max(...spaces.map(s => s.id)) + 1 : 1;
 
-      const fullPath = `${process.cwd()}/${path}`;
+      // Normalize the path to remove any ./ and ensure consistency
+      const fullPath = require('path').resolve(process.cwd(), path);
 
       // Determine permissions based on type
       const permissions = spaceTemplate.permissions;
