@@ -399,6 +399,9 @@ class WikiApp {
         // Restore full home view
         this.restoreHomeView();
 
+        // Load home.md content if it exists
+        await this.loadHomeContent();
+
         // Load recent files for the homepage
         await this.loadRecentFiles();
         this.loadStarredFiles();
@@ -406,50 +409,212 @@ class WikiApp {
     }
 
     showRecent() {
-        this.setActiveView('home');
+        this.setActiveView('search');
         this.setActiveShortcut('shortcutRecent');
         this.currentView = 'recent';
-        
-        // Update workspace title with space context
-        const workspaceTitle = document.getElementById('workspaceTitle');
-        const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        const currentSpaceName = this.currentSpace ? this.currentSpace.name : 'All Spaces';
 
-        if (workspaceTitle) workspaceTitle.textContent = `Recent Documents - ${currentSpaceName}`;
-        if (workspaceSubtitle) {
-            const subtitle = this.currentSpace
-                ? `Documents you have recently accessed in ${currentSpaceName}`
-                : 'Documents you have recently accessed';
-            workspaceSubtitle.textContent = subtitle;
+        // Update search query display
+        const queryElement = document.getElementById('searchQuery');
+        const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
+
+        if (queryElement) {
+            const spaceContext = currentSpaceName ? ` - ${currentSpaceName}` : '';
+            queryElement.textContent = `Recent Documents${spaceContext}`;
         }
-        
-        // Hide starred section and show only recent
-        this.showRecentOnlyView();
-        
+
+        // Get recent files filtered by current space, sorted by visitedAt descending
+        const allRecentFiles = this.data.recent || [];
+        const recentFiles = currentSpaceName
+            ? allRecentFiles.filter(file => file.spaceName === currentSpaceName)
+            : allRecentFiles;
+
+        const sortedRecentFiles = recentFiles.sort((a, b) => {
+            const dateA = new Date(a.visitedAt || 0);
+            const dateB = new Date(b.visitedAt || 0);
+            return dateB - dateA; // Descending order (most recent first)
+        });
+
+        const container = document.getElementById('searchResults');
+        if (!container) return;
+
+        if (sortedRecentFiles.length === 0) {
+            const noFilesMessage = currentSpaceName
+                ? `No recent documents in ${currentSpaceName}`
+                : 'No recent documents found';
+            const helpText = currentSpaceName
+                ? `Documents you access in ${currentSpaceName} will appear here`
+                : 'Documents you access will appear here';
+
+            container.innerHTML = `
+                <div class="no-content-message">
+                    <svg width="48" height="48" class="no-content-icon">
+                        <use href="#icon-history"></use>
+                    </svg>
+                    <p>${noFilesMessage}</p>
+                    <p class="text-muted">${helpText}</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render in search results style
+        const resultsHtml = sortedRecentFiles.map(file => {
+            const icon = 'icon-file';
+            const title = navigationController.getFileNameFromPath(file.path);
+            const excerpt = file.excerpt || 'Recently viewed document';
+            const path = file.path || '';
+            const spaceName = file.spaceName || 'Unknown Space';
+            const visitedDate = file.visitedAt ? new Date(file.visitedAt).toLocaleString() : '';
+
+            const escapedPath = path.replace(/"/g, '&quot;');
+            const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
+            const escapedTitle = title.replace(/"/g, '&quot;');
+
+            return `
+                <div class="search-result-item"
+                     data-path="${escapedPath}"
+                     data-space-name="${escapedSpaceName}"
+                     data-title="${escapedTitle}">
+                    <div class="search-result-icon">
+                        <svg width="20" height="20">
+                            <use href="#${icon}"></use>
+                        </svg>
+                    </div>
+                    <div class="search-result-content">
+                        <h3 class="search-result-title">${title}</h3>
+                        <p class="search-result-excerpt">${excerpt}</p>
+                        <div class="search-result-meta">
+                            <span class="search-result-space">${spaceName}</span>
+                            ${visitedDate ? `<span class="search-result-date">Visited ${visitedDate}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="search-results-header">
+                <h2>Found ${sortedRecentFiles.length} recent document${sortedRecentFiles.length === 1 ? '' : 's'}</h2>
+            </div>
+            <div class="search-results-list">
+                ${resultsHtml}
+            </div>
+        `;
+
+        // Add click handlers to results
+        container.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const { path, spaceName } = item.dataset;
+                documentController.exitEditorMode();
+                documentController.openDocumentByPath(path, spaceName);
+            });
+        });
+
         // Hide template button
         templatesController.hideTemplateButton();
     }
 
     showStarred() {
-        this.setActiveView('home');
+        this.setActiveView('search');
         this.setActiveShortcut('shortcutStarred');
         this.currentView = 'starred';
 
-        // Update workspace title with space context
-        const workspaceTitle = document.getElementById('workspaceTitle');
-        const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        const currentSpaceName = this.currentSpace ? this.currentSpace.name : 'All Spaces';
+        // Update search query display
+        const queryElement = document.getElementById('searchQuery');
+        const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
 
-        if (workspaceTitle) workspaceTitle.textContent = `Starred Documents - ${currentSpaceName}`;
-        if (workspaceSubtitle) {
-            const subtitle = this.currentSpace
-                ? `Documents you have starred in ${currentSpaceName}`
-                : 'Documents you have marked as favorites';
-            workspaceSubtitle.textContent = subtitle;
+        if (queryElement) {
+            const spaceContext = currentSpaceName ? ` - ${currentSpaceName}` : '';
+            queryElement.textContent = `Starred Documents${spaceContext}`;
         }
 
-        // Hide recent section and show only starred
-        this.showStarredOnlyView();
+        // Get starred files filtered by current space, sorted by starredAt descending
+        const allStarredFiles = this.data.starred || [];
+        const starredFiles = currentSpaceName
+            ? allStarredFiles.filter(file => file.spaceName === currentSpaceName)
+            : allStarredFiles;
+
+        const sortedStarredFiles = starredFiles.sort((a, b) => {
+            const dateA = new Date(a.starredAt || 0);
+            const dateB = new Date(b.starredAt || 0);
+            return dateB - dateA; // Descending order (most recently starred first)
+        });
+
+        const container = document.getElementById('searchResults');
+        if (!container) return;
+
+        if (sortedStarredFiles.length === 0) {
+            const noFilesMessage = currentSpaceName
+                ? `No starred documents in ${currentSpaceName}`
+                : 'No starred documents found';
+            const helpText = currentSpaceName
+                ? `Documents you star in ${currentSpaceName} will appear here`
+                : 'Star documents to see them here';
+
+            container.innerHTML = `
+                <div class="no-content-message">
+                    <svg width="48" height="48" class="no-content-icon">
+                        <use href="#icon-star"></use>
+                    </svg>
+                    <p>${noFilesMessage}</p>
+                    <p class="text-muted">${helpText}</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render in search results style
+        const resultsHtml = sortedStarredFiles.map(file => {
+            const icon = 'icon-star';
+            const title = navigationController.getFileNameFromPath(file.path);
+            const excerpt = file.excerpt || 'Starred document';
+            const path = file.path || '';
+            const spaceName = file.spaceName || 'Unknown Space';
+            const starredDate = file.starredAt ? new Date(file.starredAt).toLocaleString() : '';
+
+            const escapedPath = path.replace(/"/g, '&quot;');
+            const escapedSpaceName = spaceName.replace(/"/g, '&quot;');
+            const escapedTitle = title.replace(/"/g, '&quot;');
+
+            return `
+                <div class="search-result-item"
+                     data-path="${escapedPath}"
+                     data-space-name="${escapedSpaceName}"
+                     data-title="${escapedTitle}">
+                    <div class="search-result-icon">
+                        <svg width="20" height="20">
+                            <use href="#${icon}"></use>
+                        </svg>
+                    </div>
+                    <div class="search-result-content">
+                        <h3 class="search-result-title">${title}</h3>
+                        <p class="search-result-excerpt">${excerpt}</p>
+                        <div class="search-result-meta">
+                            <span class="search-result-space">${spaceName}</span>
+                            ${starredDate ? `<span class="search-result-date">Starred ${starredDate}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="search-results-header">
+                <h2>Found ${sortedStarredFiles.length} starred document${sortedStarredFiles.length === 1 ? '' : 's'}</h2>
+            </div>
+            <div class="search-results-list">
+                ${resultsHtml}
+            </div>
+        `;
+
+        // Add click handlers to results
+        container.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const { path, spaceName } = item.dataset;
+                documentController.exitEditorMode();
+                documentController.openDocumentByPath(path, spaceName);
+            });
+        });
 
         // Hide template button
         templatesController.hideTemplateButton();
@@ -575,12 +740,57 @@ class WikiApp {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+
+    // Load home.md content if it exists in the current space
+    async loadHomeContent() {
+        const homeContentArea = document.getElementById('homeContentArea');
+        const homeContentBody = document.getElementById('homeContentBody');
+
+        if (!homeContentArea || !homeContentBody) return;
+
+        // Hide by default
+        homeContentArea.classList.add('hidden');
+
+        // Only try to load if we have a current space
+        if (!this.currentSpace) return;
+
+        try {
+            // Try to load home.md from the root of the current space
+            const response = await fetch('/applications/wiki/api/documents/content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceName: this.currentSpace.name,
+                    path: 'home.md'
+                })
+            });
+
+            if (!response.ok) {
+                // File doesn't exist, which is fine
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.content) {
+                // Render markdown content
+                homeContentBody.innerHTML = marked.parse(data.content);
+                homeContentArea.classList.remove('hidden');
+            }
+
+        } catch (error) {
+            // Silently fail if home.md doesn't exist
+            console.log('No home.md found in space root (this is optional)');
+        }
     }
 
     // Placeholder methods for not-yet-implemented features

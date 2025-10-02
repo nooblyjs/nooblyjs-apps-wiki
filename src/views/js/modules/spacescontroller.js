@@ -70,17 +70,9 @@ export const spacesController = {
         this.app.currentSpace = space;
         this.renderSpacesList(); // Re-render to show selection
         await navigationController.loadFileTree();
-        this.updateWorkspaceHeader();
 
-        // Refresh recent files for the new space
-        if (this.app.currentView === 'recent') {
-            await this.app.loadRecentFiles();
-        }
-
-        // Refresh starred files for the new space
-        if (this.app.currentView === 'starred') {
-            this.app.loadStarredFiles();
-        }
+        // Load the space's home page
+        await this.app.showHome();
     },
     
     /**

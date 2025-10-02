@@ -82,19 +82,22 @@ export const templatesController = {
         }
     },
 
-    showTemplates() {
-        this.app.setActiveView('home');
+    async showTemplates() {
+        this.app.setActiveView('search');
         this.app.setActiveShortcut('shortcutTemplates');
         this.app.currentView = 'templates';
 
-        // Update workspace title
-        const workspaceTitle = document.getElementById('workspaceTitle');
-        const workspaceSubtitle = document.getElementById('workspaceSubtitle');
-        if (workspaceTitle) workspaceTitle.textContent = 'Document Templates';
-        if (workspaceSubtitle) workspaceSubtitle.textContent = 'Reusable templates for creating new documents';
+        // Update search query display
+        const queryElement = document.getElementById('searchQuery');
+        const currentSpaceName = this.app.currentSpace ? this.app.currentSpace.name : null;
 
-        // Hide other sections and show only templates
-        this.showTemplatesOnlyView();
+        if (queryElement) {
+            const spaceContext = currentSpaceName ? ` - ${currentSpaceName}` : '';
+            queryElement.textContent = `Templates${spaceContext}`;
+        }
+
+        // Load and display templates in search results style
+        await this.loadTemplatesSearchStyle();
     },
 
     showTemplatesOnlyView() {
@@ -147,6 +150,166 @@ export const templatesController = {
             // Show built-in templates fallback
             this.renderTemplatesFallback();
         }
+    },
+
+    async loadTemplatesSearchStyle() {
+        console.log('Loading templates in search style...');
+
+        const container = document.getElementById('searchResults');
+        if (!container) return;
+
+        const currentSpaceName = this.app.currentSpace ? this.app.currentSpace.name : null;
+
+        if (!this.app.currentSpace) {
+            container.innerHTML = `
+                <div class="no-content-message">
+                    <svg width="48" height="48" class="no-content-icon">
+                        <use href="#icon-clipboard"></use>
+                    </svg>
+                    <p>Select a space to view templates</p>
+                    <p class="text-muted">Templates are organized by space</p>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            // Try to load templates from backend API
+            const response = await fetch(`/applications/wiki/api/spaces/${this.app.currentSpace.id}/templates`);
+
+            if (!response.ok) {
+                throw new Error(`Templates API returned ${response.status}: ${response.statusText}`);
+            }
+
+            let templates = await response.json();
+
+            // Sort templates by lastModified descending (most recently used first)
+            templates = templates.sort((a, b) => {
+                const dateA = new Date(a.lastModified || 0);
+                const dateB = new Date(b.lastModified || 0);
+                return dateB - dateA;
+            });
+
+            if (templates.length === 0) {
+                container.innerHTML = `
+                    <div class="no-content-message">
+                        <svg width="48" height="48" class="no-content-icon">
+                            <use href="#icon-clipboard"></use>
+                        </svg>
+                        <p>No templates found in ${currentSpaceName}</p>
+                        <p class="text-muted">Create templates to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render in search results style
+            const resultsHtml = templates.map(template => {
+                const icon = 'icon-file';
+                const fileName = navigationController.getFileNameFromPath(template.path || template.name);
+                const title = template.title || fileName;
+                const excerpt = template.description || 'Document template';
+                const path = template.path || '';
+                const modifiedDate = template.lastModified ? new Date(template.lastModified).toLocaleString() : '';
+
+                const escapedPath = path.replace(/"/g, '&quot;');
+                const escapedTitle = title.replace(/"/g, '&quot;');
+
+                return `
+                    <div class="search-result-item template-item"
+                         data-template-path="${escapedPath}"
+                         data-title="${escapedTitle}">
+                        <div class="search-result-icon">
+                            <svg width="20" height="20">
+                                <use href="#${icon}"></use>
+                            </svg>
+                        </div>
+                        <div class="search-result-content">
+                            <h3 class="search-result-title">${title}</h3>
+                            <p class="search-result-excerpt">${excerpt}</p>
+                            <div class="search-result-meta">
+                                <span class="search-result-space">Template • ${currentSpaceName}</span>
+                                ${modifiedDate ? `<span class="search-result-date">Modified ${modifiedDate}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="search-results-header">
+                    <h2>Found ${templates.length} template${templates.length === 1 ? '' : 's'}</h2>
+                </div>
+                <div class="search-results-list">
+                    ${resultsHtml}
+                </div>
+            `;
+
+            // Add click handlers to templates
+            container.querySelectorAll('.template-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const templatePath = item.dataset.templatePath;
+                    this.editTemplate(templatePath);
+                });
+            });
+
+        } catch (error) {
+            console.log('Templates API error:', error.message);
+            // Show built-in templates fallback in search results style
+            this.renderBuiltInTemplatesSearchStyle();
+        }
+    },
+
+    renderBuiltInTemplatesSearchStyle() {
+        const container = document.getElementById('searchResults');
+        if (!container) return;
+
+        const currentSpaceName = this.app.currentSpace ? this.app.currentSpace.name : 'All Spaces';
+
+        const fallbackTemplates = [
+            { key: 'basic', name: 'Basic Document', description: 'Simple document template with title and sections' },
+            { key: 'api', name: 'API Documentation', description: 'Template for documenting REST APIs' },
+            { key: 'meeting', name: 'Meeting Notes', description: 'Template for meeting minutes and action items' },
+            { key: 'requirements', name: 'Requirements', description: 'Template for requirements documentation' }
+        ];
+
+        const resultsHtml = fallbackTemplates.map(template => {
+            return `
+                <div class="search-result-item template-item"
+                     data-template-key="${template.key}"
+                     data-title="${template.name}">
+                    <div class="search-result-icon">
+                        <svg width="20" height="20">
+                            <use href="#icon-file"></use>
+                        </svg>
+                    </div>
+                    <div class="search-result-content">
+                        <h3 class="search-result-title">${template.name}</h3>
+                        <p class="search-result-excerpt">${template.description}</p>
+                        <div class="search-result-meta">
+                            <span class="search-result-space">Built-in Template • ${currentSpaceName}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="search-results-header">
+                <h2>Found ${fallbackTemplates.length} built-in templates</h2>
+            </div>
+            <div class="search-results-list">
+                ${resultsHtml}
+            </div>
+        `;
+
+        // Add click handlers for built-in templates
+        container.querySelectorAll('.template-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const templateKey = item.dataset.templateKey;
+                this.previewBuiltInTemplate(templateKey);
+            });
+        });
     },
 
     showTemplateButton() {
