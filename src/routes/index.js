@@ -1,6 +1,6 @@
 /**
  * @fileoverview Wiki API routes for Express.js application.
- * Provides RESTful endpoints for structured wiki operations 
+ * Provides RESTful endpoints for structured wiki operations
  *
  * @author NooblyJS Core Team
  * @version 1.0.14
@@ -33,5 +33,19 @@ module.exports = (options, eventEmitter, services) => {
       timestamp: new Date().toISOString()
     });
   });
+
+  // Load and register route modules
+  const documentRoutes = require('./documentRoutes');
+  const spacesRoutes = require('./spacesRoutes');
+  const searchRoutes = require('./searchRoutes');
+  const navigationRoutes = require('./navigationRoutes');
+  const userRoutes = require('./userRoutes');
+
+  // Register all routes
+  documentRoutes(app, eventEmitter, services);
+  spacesRoutes(app, eventEmitter, services);
+  searchRoutes(app, eventEmitter, services);
+  navigationRoutes(app, eventEmitter, services);
+  userRoutes(app, eventEmitter, services);
 
 };

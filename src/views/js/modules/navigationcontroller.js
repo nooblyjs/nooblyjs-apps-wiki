@@ -719,7 +719,7 @@ export const navigationController = {
             this.prefilledFilePath = null;
         }
 
-        this.app.populateTemplateSelect();
+        templatesController.populateTemplateSelect();
     },
 
     async handleCreateFile() {
@@ -727,7 +727,7 @@ export const navigationController = {
         const formData = new FormData(form);
 
         try {
-            const templateContent = await this.app.getTemplateContent(formData.get('fileTemplate'));
+            const templateContent = await templatesController.getTemplateContent(formData.get('fileTemplate'));
 
             // Use prefilled path if available, otherwise use form selection
             const folderPath = this.prefilledFilePath !== null ?
