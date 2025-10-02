@@ -118,8 +118,20 @@ class WikiApp {
             this.handlePublish();
         });
 
-        document.getElementById('createNewMarkdownBtn')?.addEventListener('click', () => {
-            navigationController.showCreateFileModal();
+        // Header Create Dropdown Menu Items
+        document.getElementById('createFolderMenuItem')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleContextualCreateFolder();
+        });
+
+        document.getElementById('createFileMenuItem')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleContextualCreateFile();
+        });
+
+        document.getElementById('uploadFileMenuItem')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleContextualUpload();
         });
 
         // Space actions
@@ -1018,6 +1030,50 @@ class WikiApp {
     formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    /**
+     * Get the current contextual path based on the selected folder
+     * Returns the folder path if a folder is selected, otherwise returns '' (root)
+     */
+    getCurrentContextPath() {
+        // Check if we're viewing a folder in the content area
+        if (this.currentView === 'folder' && this.currentFolder) {
+            return this.currentFolder;
+        }
+
+        // Check if a folder is selected in the left navigation
+        const selectedFolder = document.querySelector('.folder-item.selected');
+        if (selectedFolder) {
+            return selectedFolder.dataset.folderPath || '';
+        }
+
+        // Default to root
+        return '';
+    }
+
+    /**
+     * Context-aware Create Folder handler
+     */
+    handleContextualCreateFolder() {
+        const contextPath = this.getCurrentContextPath();
+        navigationController.showCreateFolderModal(contextPath);
+    }
+
+    /**
+     * Context-aware Create File handler
+     */
+    handleContextualCreateFile() {
+        const contextPath = this.getCurrentContextPath();
+        navigationController.showCreateFileModal(contextPath);
+    }
+
+    /**
+     * Context-aware Upload handler
+     */
+    handleContextualUpload() {
+        const contextPath = this.getCurrentContextPath();
+        navigationController.showUploadDialog(contextPath);
     }
 
 }

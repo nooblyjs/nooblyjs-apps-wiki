@@ -28,6 +28,41 @@
   ],
   "recent": [
     {
+      "path": "2023/My Cool Folder/confluence-admin-profile.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-profile.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:30:21.907Z"
+    },
+    {
+      "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+      "spaceName": "Personal Space",
+      "title": "confluence-admin-analytics.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:30:16.775Z"
+    },
+    {
+      "path": "2023/JSON-preview.png",
+      "spaceName": "Personal Space",
+      "title": "JSON-preview.png",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T09:18:39.562Z"
+    },
+    {
+      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
+      "spaceName": "Personal Space",
+      "title": "B2B - eCommerce Strategy 202311.pdf",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:55:49.298Z"
+    },
+    {
+      "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
+      "spaceName": "Personal Space",
+      "title": "robot-holding-sign-board.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T08:55:43.088Z"
+    },
+    {
       "path": "Progress/sprint-25.md",
       "spaceName": "Personal Space",
       "title": "sprint-25.md",
@@ -91,25 +126,11 @@
       "visitedAt": "2025-10-02T08:13:25.131Z"
     },
     {
-      "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
-      "spaceName": "Personal Space",
-      "title": "robot-holding-sign-board.jpg",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T08:04:33.286Z"
-    },
-    {
       "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
       "spaceName": "Personal Space",
       "title": "robot-waving-hand-wink.jpg",
       "action": "viewed",
       "visitedAt": "2025-10-02T07:52:02.472Z"
-    },
-    {
-      "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-      "spaceName": "Personal Space",
-      "title": "B2B - eCommerce Strategy 202311.pdf",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:45:26.792Z"
     },
     {
       "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
@@ -145,29 +166,8 @@
       "title": "5665-eCommerce Cost Benefit Analysis Template_ Level 1 (2019).xlsx",
       "action": "viewed",
       "visitedAt": "2025-10-02T07:08:07.930Z"
-    },
-    {
-      "path": "PAC Docs/5665-eCommerce Business Case Template (2020).docx",
-      "spaceName": "Personal Space",
-      "title": "5665-eCommerce Business Case Template (2020).docx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:08:04.773Z"
-    },
-    {
-      "path": "pptx/Enterprise eCommerce Strategy - Board Presentation.pptx",
-      "spaceName": "Personal Space",
-      "title": "Enterprise eCommerce Strategy - Board Presentation.pptx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:08:02.792Z"
-    },
-    {
-      "path": "pptx/Enterprise eCommerce Strategy.pptx",
-      "spaceName": "Personal Space",
-      "title": "Enterprise eCommerce Strategy.pptx",
-      "action": "viewed",
-      "visitedAt": "2025-10-02T07:07:59.331Z"
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-02T08:54:35.819Z"
+  "updatedAt": "2025-10-02T09:30:21.907Z"
 }

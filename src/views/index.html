@@ -64,6 +64,25 @@
 
                 <!-- User Profile and Navigation -->
                 <div class="navbar-nav d-flex flex-row align-items-center">
+                    <!-- Create Dropdown -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="createDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Create
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="createDropdown">
+                            <li><a class="dropdown-item" href="#" id="createFolderMenuItem">
+                                <i class="bi bi-folder-plus me-2"></i>Create Folder
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="createFileMenuItem">
+                                <i class="bi bi-file-earmark-plus me-2"></i>Create File
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="uploadFileMenuItem">
+                                <i class="bi bi-upload me-2"></i>Upload File
+                            </a></li>
+                        </ul>
+                    </div>
+
                     <div id="userProfile" class="nav-item dropdown me-3" title="Click to edit profile">
                         <a class="nav-link dropdown-toggle d-flex align-items-center text-white" href="#" data-bs-toggle="dropdown">
                             <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
@@ -187,15 +206,9 @@
             <main id="mainContent" class="app-main p-4 overflow-auto">
                 <!-- Home View -->
                 <div id="homeView" class="view">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h1 id="workspaceTitle" class="h2 mb-1">Welcome to the Wiki</h1>
-                            <p id="workspaceSubtitle" class="text-muted">Your documentation workspace dashboard</p>
-                        </div>
-                        <button id="createNewMarkdownBtn" class="btn btn-primary">
-                            <i class="bi bi-plus-lg me-2"></i>
-                            Create New Markdown File
-                        </button>
+                    <div class="mb-4">
+                        <h1 id="workspaceTitle" class="h2 mb-1">Welcome to the Wiki</h1>
+                        <p id="workspaceSubtitle" class="text-muted">Your documentation workspace dashboard</p>
                     </div>
 
                     <!-- Home Content Area (for home.md) -->

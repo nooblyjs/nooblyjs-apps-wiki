@@ -2,73 +2,72 @@
   {
     "recent": [
       {
-        "path": "Progress/sprint-25.md",
+        "path": "2023/My Cool Folder/confluence-admin-profile.png",
         "space": "Personal Space",
-        "lastVisited": "2025-10-02T08:54:35.698Z",
-        "title": "sprint-25.md"
+        "lastVisited": "2025-10-02T09:30:22.384Z",
+        "title": "confluence-admin-profile.png"
       },
       {
-        "path": "My Folder/cooper.md",
-        "spaceName": "Read-Only Space",
-        "title": "cooper.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:19:28.874Z"
+        "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-02T09:30:17.071Z",
+        "title": "confluence-admin-analytics.png"
       },
       {
-        "path": "1.md",
-        "spaceName": "Read-Only Space",
-        "title": "1.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:17:55.767Z"
-      },
-      {
-        "path": "home.md",
-        "spaceName": "Read-Only Space",
-        "title": "home.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:13:31.058Z"
-      },
-      {
-        "path": ".gitkeep",
-        "spaceName": "Read-Only Space",
-        "title": ".gitkeep",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:13:25.131Z"
-      },
-      {
-        "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
+        "path": "2023/JSON-preview.png",
         "spaceName": "Personal Space",
-        "title": "robot-holding-sign-board.jpg",
+        "title": "JSON-preview.png",
         "action": "viewed",
-        "visitedAt": "2025-10-02T08:04:33.286Z"
-      },
-      {
-        "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
-        "spaceName": "Personal Space",
-        "title": "robot-waving-hand-wink.jpg",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T07:52:02.472Z"
+        "visitedAt": "2025-10-02T09:18:39.562Z"
       },
       {
         "path": "2023/B2B - eCommerce Strategy 202311.pdf",
         "spaceName": "Personal Space",
         "title": "B2B - eCommerce Strategy 202311.pdf",
         "action": "viewed",
-        "visitedAt": "2025-10-02T07:45:26.792Z"
+        "visitedAt": "2025-10-02T08:55:49.298Z"
       },
       {
-        "path": "2022/B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+        "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
         "spaceName": "Personal Space",
-        "title": "B2B - Resource - Business Strategy EE Wholesale Liquor 202209.pdf",
+        "title": "robot-holding-sign-board.jpg",
         "action": "viewed",
-        "visitedAt": "2025-10-02T07:43:44.033Z"
+        "visitedAt": "2025-10-02T08:55:43.088Z"
       },
       {
-        "path": ".gitkeep",
+        "path": "Progress/sprint-25.md",
         "spaceName": "Personal Space",
-        "title": ".gitkeep",
+        "title": "sprint-25.md",
         "action": "viewed",
-        "visitedAt": "2025-10-02T07:37:50.097Z"
+        "visitedAt": "2025-10-02T08:54:35.819Z"
+      },
+      {
+        "path": ".templates/basic-document.md",
+        "spaceName": "Personal Space",
+        "title": "Document Title",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:54:05.170Z"
+      },
+      {
+        "path": ".templates/project-requirements.md",
+        "spaceName": "Personal Space",
+        "title": "Project Requirements",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:54:02.638Z"
+      },
+      {
+        "path": ".templates/meeting-notes.md",
+        "spaceName": "Personal Space",
+        "title": "Meeting Notes",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:53:59.511Z"
+      },
+      {
+        "path": ".templates/api-documentation.md",
+        "spaceName": "Personal Space",
+        "title": "API Documentation",
+        "action": "viewed",
+        "visitedAt": "2025-10-02T08:53:55.831Z"
       }
     ],
     "starred": [
@@ -97,6 +96,6 @@
         "starredAt": "2025-10-01T15:10:47.826Z"
       }
     ],
-    "updatedAt": "2025-10-02T08:54:36.035Z"
+    "updatedAt": "2025-10-02T09:30:22.086Z"
   }
 ]

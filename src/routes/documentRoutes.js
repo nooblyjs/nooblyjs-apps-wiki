@@ -789,4 +789,109 @@ ${documentPath}\
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // File upload endpoint
+  const multer = require('multer');
+  const fs = require('fs').promises;
+
+  // Configure multer for memory storage (we'll handle file writing ourselves)
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 50 * 1024 * 1024 // 50MB limit
+    }
+  });
+
+  app.post('/applications/wiki/api/documents/upload', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file provided' });
+      }
+
+      const { spaceId, folderPath = '' } = req.body;
+
+      if (!spaceId) {
+        return res.status(400).json({ success: false, error: 'Space ID is required' });
+      }
+
+      // Get space information
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.id === parseInt(spaceId));
+
+      if (!space) {
+        return res.status(404).json({ success: false, error: 'Space not found' });
+      }
+
+      // Determine the target directory
+      let targetDir;
+      if (space.path) {
+        targetDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        targetDir = path.resolve(documentsDir, space.name);
+      }
+
+      // Add folder path if specified
+      if (folderPath) {
+        targetDir = path.resolve(targetDir, folderPath);
+      }
+
+      // Ensure directory exists
+      await fs.mkdir(targetDir, { recursive: true });
+
+      // Write the file
+      const fileName = req.file.originalname;
+      const filePath = path.resolve(targetDir, fileName);
+      await fs.writeFile(filePath, req.file.buffer);
+
+      logger.info(`File uploaded: ${fileName} to ${targetDir}`);
+
+      // Create document metadata for tracking
+      const documentPath = folderPath ? `${folderPath}/${fileName}` : fileName;
+      const documents = await dataManager.read('documents');
+
+      // Check if document already exists
+      const existingDoc = documents.find(d =>
+        d.path === documentPath && d.spaceId === parseInt(spaceId)
+      );
+
+      if (existingDoc) {
+        // Update existing document
+        existingDoc.updatedAt = new Date().toISOString();
+        existingDoc.size = req.file.size;
+      } else {
+        // Create new document entry
+        const newDocument = {
+          id: documents.length > 0 ? Math.max(...documents.map(d => d.id)) + 1 : 1,
+          title: fileName.replace(/\.[^/.]+$/, ''), // Remove extension
+          path: documentPath,
+          spaceId: parseInt(spaceId),
+          spaceName: space.name,
+          tags: [],
+          excerpt: `Uploaded file: ${fileName}`,
+          size: req.file.size,
+          mimeType: req.file.mimetype,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          author: req.user?.username || 'admin'
+        };
+
+        documents.push(newDocument);
+      }
+
+      await dataManager.write('documents', documents);
+
+      res.json({
+        success: true,
+        message: 'File uploaded successfully',
+        fileName: fileName,
+        path: documentPath,
+        size: req.file.size
+      });
+
+    } catch (error) {
+      logger.error('Error uploading file:', error);
+      res.status(500).json({ success: false, error: 'Failed to upload file' });
+    }
+  });
 };

@@ -865,32 +865,25 @@ export const navigationController = {
 
         for (const file of files) {
             try {
-                // Read file content
-                const content = await this.readFileContent(file);
+                // Create FormData for multipart upload
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('spaceId', this.app.currentSpace.id);
+                formData.append('folderPath', uploadPath);
 
-                // Generate document path
-                const fileName = file.name;
-                const documentPath = uploadPath ? `${uploadPath}/${fileName}` : fileName;
-
-                // Create document using the existing API
-                const response = await fetch('/applications/wiki/api/documents', {
+                // Upload using the proper upload endpoint
+                const response = await fetch('/applications/wiki/api/documents/upload', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: fileName.replace(/\.[^/.]+$/, ''), // Remove extension for title
-                        content: content,
-                        spaceId: this.app.currentSpace.id,
-                        path: documentPath,
-                        folderPath: uploadPath
-                    })
+                    body: formData
+                    // Don't set Content-Type header - browser will set it with boundary
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    this.app.showNotification(`File "${fileName}" uploaded successfully`, 'success');
+                    this.app.showNotification(`File "${file.name}" uploaded successfully`, 'success');
                 } else {
-                    throw new Error(result.message || 'Failed to upload file');
+                    throw new Error(result.error || 'Failed to upload file');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
