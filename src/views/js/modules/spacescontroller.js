@@ -108,7 +108,7 @@ export const spacesController = {
     async handleCreateSpace() {
         const form = document.getElementById('createSpaceForm');
         const formData = new FormData(form);
-        
+
         try {
             const response = await fetch('/applications/wiki/api/spaces', {
                 method: 'POST',
@@ -116,12 +116,14 @@ export const spacesController = {
                 body: JSON.stringify({
                     name: formData.get('spaceName'),
                     description: formData.get('spaceDescription'),
-                    visibility: formData.get('spaceVisibility')
+                    visibility: formData.get('spaceVisibility'),
+                    permissions: formData.get('spacePermissions') || 'read-write',
+                    path: formData.get('spacePath')
                 })
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 this.app.hideModal('createSpaceModal');
                 form.reset();
@@ -134,6 +136,15 @@ export const spacesController = {
             console.error('Error creating space:', error);
             this.app.showNotification('Failed to create space', 'error');
         }
+    },
+
+    /**
+     * Handle browse folder button click
+     */
+    handleBrowseFolder() {
+        // Placeholder for folder browser functionality
+        // In a real implementation, this would open a file system dialog
+        alert('Folder browser not implemented. Please type or paste the folder path manually.');
     },
 
     /**

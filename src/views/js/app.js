@@ -256,6 +256,10 @@ class WikiApp {
             this.hideModal('createSpaceModal');
         });
 
+        document.getElementById('browseSpaceFolder')?.addEventListener('click', () => {
+            spacesController.handleBrowseFolder();
+        });
+
         // Create folder modal
         document.getElementById('createFolderForm')?.addEventListener('submit', (e) => {
             e.preventDefault();

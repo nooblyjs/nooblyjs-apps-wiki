@@ -61,15 +61,29 @@ module.exports = (options, eventEmitter, services) => {
   // Create a new space
   app.post('/applications/wiki/api/spaces', async (req, res) => {
     try {
-      const { name, description, visibility } = req.body;
+      const { name, description, visibility, permissions, path } = req.body;
 
       if (!name) {
         return res.status(400).json({ success: false, message: 'Space name is required' });
       }
 
+      if (!path) {
+        return res.status(400).json({ success: false, message: 'Folder path is required' });
+      }
+
       // Get next space ID
       const spaces = await dataManager.read('spaces');
       let nextId = spaces.length > 0 ? Math.max(...spaces.map(s => s.id)) + 1 : 1;
+
+      // Determine space type based on permissions
+      let spaceType = 'personal';
+      if (permissions === 'read-only') {
+        spaceType = 'readonly';
+      } else if (visibility === 'team') {
+        spaceType = 'shared';
+      }
+
+      const fullPath = `${process.cwd()}/${path}`;
 
       const newSpace = {
         id: nextId,
@@ -77,24 +91,34 @@ module.exports = (options, eventEmitter, services) => {
         description: description || '',
         icon: '📁',
         visibility: visibility || 'private',
+        permissions: permissions || 'read-write',
+        type: spaceType,
+        path: fullPath,
         documentCount: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        author: 'Current User'
+        author: req.user ? req.user.name : 'System'
       };
+
+      // Create the directory with .gitkeep file
+      try {
+        const gitkeepPath = `${fullPath}/.gitkeep`;
+        await filing.create(gitkeepPath, '# Keep this directory in git\n');
+        logger.info(`Created directory for space: ${name} at ${fullPath}`);
+      } catch (createError) {
+        logger.error(`Failed to create directory for space ${name}:`, createError);
+        return res.status(500).json({ success: false, message: 'Failed to create space directory' });
+      }
 
       // Add to spaces list
       spaces.push(newSpace);
       await dataManager.write('spaces', spaces);
 
-      // Update next ID
-      // Next ID is calculated dynamically
-
       // Clear relevant caches
       await cache.delete('wiki:spaces:list');
       await cache.delete('wiki:recent:activity');
 
-      logger.info(`Created new space: ${name} (ID: ${nextId})`);
+      logger.info(`Created new space: ${name} (ID: ${nextId}) at ${fullPath}`);
 
       res.json({ success: true, space: newSpace });
     } catch (error) {
@@ -214,56 +238,9 @@ module.exports = (options, eventEmitter, services) => {
         }
       } catch (error) {
         if (error.code === 'ENOENT') {
-          // .templates folder doesn't exist, create it with default templates
-          logger.info(`Creating .templates folder for space ${space.name}`);
-
-          try {
-            await fs.mkdir(templatesPath, { recursive: true });
-
-            // Create default templates
-            const defaultTemplates = [
-              {
-                name: 'basic-document',
-                title: 'Basic Document',
-                content: '# Document Title\n\n## Overview\n\nDescription of the document.\n\n## Content\n\nYour content here.\n\n## Conclusion\n\nSummary and next steps.'
-              },
-              {
-                name: 'meeting-notes',
-                title: 'Meeting Notes',
-                content: '# Meeting Notes\n\n**Date:** YYYY-MM-DD\n**Attendees:** \n**Location:** \n\n## Agenda\n\n1. \n2. \n3. \n\n## Discussion\n\n### Topic 1\n\n### Topic 2\n\n## Action Items\n\n- [ ] Action item 1 - Assigned to:\n- [ ] Action item 2 - Assigned to:\n\n## Next Meeting\n\n**Date:** \n**Time:** '
-              },
-              {
-                name: 'api-documentation',
-                title: 'API Documentation',
-                content: '# API Documentation\n\n## Overview\n\nBrief description of the API.\n\n## Base URL\n\n```\nhttps://api.example.com/v1\n```\n\n## Authentication\n\nDescription of authentication method.\n\n## Endpoints\n\n### GET /endpoint\n\nDescription of endpoint.\n\n**Parameters:**\n\n| Name | Type | Required | Description |\n|------|------|----------|-------------|\n| param1 | string | Yes | Description |\n\n**Response:**\n\n```json\n{\n  "status": "success",\n  "data": {}\n}\n```\n\n## Error Codes\n\n| Code | Description |\n|------|-------------|\n| 400 | Bad Request |\n| 401 | Unauthorized |\n| 404 | Not Found |'
-              },
-              {
-                name: 'project-requirements',
-                title: 'Project Requirements',
-                content: '# Project Requirements\n\n## Project Overview\n\n**Project Name:** \n**Project Owner:** \n**Start Date:** \n**Target Completion:** \n\n## Objectives\n\n1. \n2. \n3. \n\n## Scope\n\n### In Scope\n\n- \n- \n\n### Out of Scope\n\n- \n- \n\n## Functional Requirements\n\n### FR1: Requirement Title\n\n**Description:** \n**Priority:** High/Medium/Low\n**Acceptance Criteria:**\n- \n- \n\n## Non-Functional Requirements\n\n### Performance\n\n### Security\n\n### Scalability\n\n## Constraints\n\n## Assumptions\n\n## Dependencies'
-              }
-            ];
-
-            for (const template of defaultTemplates) {
-              const templatePath = path.join(templatesPath, `${template.name}.md`);
-              await fs.writeFile(templatePath, template.content, 'utf8');
-              const stats = await fs.stat(templatePath);
-
-              templates.push({
-                name: template.name,
-                title: template.title,
-                path: `.templates/${template.name}.md`,
-                size: stats.size,
-                lastModified: stats.mtime.toISOString(),
-                type: 'template'
-              });
-            }
-
-            logger.info(`Created .templates folder with ${defaultTemplates.length} default templates for space ${space.name}`);
-          } catch (createError) {
-            logger.error('Error creating .templates folder:', createError);
-            // Return empty array if we can't create the folder
-          }
+          // .templates folder doesn't exist - this is normal for new spaces
+          // Users can create templates through the UI as needed
+          logger.info(`.templates folder does not exist for space ${space.name} - templates will be created by users`);
         } else {
           logger.error('Error checking .templates folder:', error);
         }

@@ -507,33 +507,46 @@
 
     <!-- Modals -->
     <div id="createSpaceModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create New Space</h2>
-                <button id="closeCreateSpaceModal" class="modal-close">
-                    <svg width="16" height="16">
-                        <use href="#icon-x"></use>
-                    </svg>
-                </button>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title">Create New Space</h5>
+                <button id="closeCreateSpaceModal" class="btn-close" aria-label="Close"></button>
             </div>
-            <form id="createSpaceForm">
-                <div class="form-group">
-                    <label for="spaceName">Space Name</label>
-                    <input type="text" id="spaceName" name="spaceName" required>
+            <form id="createSpaceForm" class="p-3">
+                <div class="mb-3">
+                    <label for="spaceName" class="form-label">Space Name</label>
+                    <input type="text" class="form-control" id="spaceName" name="spaceName" placeholder="My Space" required>
                 </div>
-                <div class="form-group">
-                    <label for="spaceDescription">Description</label>
-                    <textarea id="spaceDescription" name="spaceDescription" rows="3"></textarea>
+                <div class="mb-3">
+                    <label for="spaceDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="spaceDescription" name="spaceDescription" rows="2" placeholder="Brief description of this space"></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="spaceVisibility">Visibility</label>
-                    <select id="spaceVisibility" name="spaceVisibility">
+                <div class="mb-3">
+                    <label for="spaceVisibility" class="form-label">Visibility</label>
+                    <select class="form-select" id="spaceVisibility" name="spaceVisibility">
                         <option value="private">Private</option>
                         <option value="team">Team</option>
                         <option value="public">Public</option>
                     </select>
                 </div>
-                <div class="modal-actions">
+                <div class="mb-3">
+                    <label for="spacePermissions" class="form-label">Permissions</label>
+                    <select class="form-select" id="spacePermissions" name="spacePermissions">
+                        <option value="read-write">Read-Write</option>
+                        <option value="read-only">Read-Only</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="spacePath" class="form-label">Folder Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="spacePath" name="spacePath" placeholder="documents-my-space" required>
+                        <button class="btn btn-outline-secondary" type="button" id="browseSpaceFolder" title="Browse folder">
+                            <i class="bi bi-folder2-open"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Relative path from application root (e.g., documents-my-space)</small>
+                </div>
+                <div class="d-flex justify-content-end gap-2 pt-2">
                     <button type="button" id="cancelCreateSpace" class="btn btn-secondary">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Space</button>
                 </div>
