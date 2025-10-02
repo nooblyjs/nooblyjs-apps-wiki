@@ -699,6 +699,35 @@ ${documentPath}\
     }
   });
 
+  // Check if a document exists without reading it (useful for optional files like home.md)
+  app.post('/applications/wiki/api/documents/exists', async (req, res) => {
+    try {
+      const { path: documentPath, spaceName } = req.body;
+
+      if (!documentPath || !spaceName) {
+        return res.status(400).json({ error: 'Document path and space name are required' });
+      }
+
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        return res.json({ exists: false });
+      }
+
+      try {
+        const fs = require('fs').promises;
+        await fs.access(absolutePath);
+        res.json({ exists: true });
+      } catch (error) {
+        res.json({ exists: false });
+      }
+    } catch (error) {
+      logger.error('Error checking document existence:', error);
+      res.json({ exists: false });
+    }
+  });
+
   // Get document content with template support (POST version)
   app.post('/applications/wiki/api/documents/content', async (req, res) => {
     try {

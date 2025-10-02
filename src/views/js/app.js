@@ -422,8 +422,13 @@ class WikiApp {
             queryElement.textContent = `Recent Documents${spaceContext}`;
         }
 
-        // Get recent files filtered by current space, sorted by visitedAt descending
-        const allRecentFiles = this.data.recent || [];
+        // Show loading placeholder immediately
+        this.showSearchLoadingPlaceholder();
+
+        // Use setTimeout to allow UI to update before processing
+        setTimeout(() => {
+            // Get recent files filtered by current space, sorted by visitedAt descending
+            const allRecentFiles = this.data.recent || [];
         const recentFiles = currentSpaceName
             ? allRecentFiles.filter(file => file.spaceName === currentSpaceName)
             : allRecentFiles;
@@ -512,6 +517,7 @@ class WikiApp {
 
         // Hide template button
         templatesController.hideTemplateButton();
+        }, 0); // End setTimeout
     }
 
     showStarred() {
@@ -528,8 +534,13 @@ class WikiApp {
             queryElement.textContent = `Starred Documents${spaceContext}`;
         }
 
-        // Get starred files filtered by current space, sorted by starredAt descending
-        const allStarredFiles = this.data.starred || [];
+        // Show loading placeholder immediately
+        this.showSearchLoadingPlaceholder();
+
+        // Use setTimeout to allow UI to update before processing
+        setTimeout(() => {
+            // Get starred files filtered by current space, sorted by starredAt descending
+            const allStarredFiles = this.data.starred || [];
         const starredFiles = currentSpaceName
             ? allStarredFiles.filter(file => file.spaceName === currentSpaceName)
             : allStarredFiles;
@@ -618,6 +629,7 @@ class WikiApp {
 
         // Hide template button
         templatesController.hideTemplateButton();
+        }, 0); // End setTimeout
     }
 
     showRecentOnlyView() {
@@ -681,21 +693,50 @@ class WikiApp {
         }
     }
 
+    // Show loading placeholder in search results view
+    showSearchLoadingPlaceholder() {
+        const container = document.getElementById('searchResults');
+        if (!container) return;
+
+        const placeholders = Array(5).fill(0).map(() => `
+            <div class="search-result-item placeholder-glow">
+                <div class="search-result-icon">
+                    <span class="placeholder col-12" style="width: 20px; height: 20px; display: inline-block;"></span>
+                </div>
+                <div class="search-result-content" style="flex: 1;">
+                    <h3 class="search-result-title">
+                        <span class="placeholder col-6"></span>
+                    </h3>
+                    <p class="search-result-excerpt">
+                        <span class="placeholder col-12"></span>
+                        <span class="placeholder col-8"></span>
+                    </p>
+                    <div class="search-result-meta">
+                        <span class="placeholder col-3"></span>
+                        <span class="placeholder col-4"></span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="search-results-header">
+                <h2><span class="placeholder col-3"></span></h2>
+            </div>
+            <div class="search-results-list">
+                ${placeholders}
+            </div>
+        `;
+    }
+
     // Utility methods
     showModal(modalId) {
-        console.log('showModal called with modalId:', modalId);
         const modal = document.getElementById(modalId);
         const overlay = document.getElementById('overlay');
 
-        console.log('modal element:', modal);
-        console.log('overlay element:', overlay);
-
         if (modal && overlay) {
-            console.log('Removing hidden class from modal and overlay');
             modal.classList.remove('hidden');
             overlay.classList.remove('hidden');
-            console.log('Modal classes after removal:', modal.className);
-            console.log('Overlay classes after removal:', overlay.className);
         } else {
             console.error('Modal or overlay element not found!');
         }
@@ -762,8 +803,8 @@ class WikiApp {
         if (!this.currentSpace) return;
 
         try {
-            // Try to load home.md from the root of the current space
-            const response = await fetch('/applications/wiki/api/documents/content', {
+            // First check if home.md exists to avoid 404 errors in console
+            const existsResponse = await fetch('/applications/wiki/api/documents/exists', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -774,12 +815,30 @@ class WikiApp {
                 })
             });
 
-            if (!response.ok) {
-                // File doesn't exist, which is fine
+            if (!existsResponse.ok) return;
+
+            const existsData = await existsResponse.json();
+
+            // If file doesn't exist, silently return
+            if (!existsData.exists) {
                 return;
             }
 
-            const data = await response.json();
+            // File exists, now load the content
+            const contentResponse = await fetch('/applications/wiki/api/documents/content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceName: this.currentSpace.name,
+                    path: 'home.md'
+                })
+            });
+
+            if (!contentResponse.ok) return;
+
+            const data = await contentResponse.json();
 
             if (data.content) {
                 // Render markdown content
@@ -788,8 +847,8 @@ class WikiApp {
             }
 
         } catch (error) {
-            // Silently fail if home.md doesn't exist
-            console.log('No home.md found in space root (this is optional)');
+            // Silently fail - home.md is optional
+            // Don't log to avoid cluttering console
         }
     }
 
@@ -879,13 +938,6 @@ class WikiApp {
             // Use activity data for starred files, filtered by current space
             const allStarredFiles = this.data.starred || [];
             const currentSpaceName = this.currentSpace ? this.currentSpace.name : null;
-
-            console.log('Loading starred files:', {
-                allStarredFiles,
-                currentSpaceName,
-                dataStarred: this.data.starred,
-                userActivityStarred: this.userActivity?.starred
-            });
 
             // Filter starred files to only show files from the current space
             const starredFiles = currentSpaceName

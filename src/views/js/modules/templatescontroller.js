@@ -96,6 +96,9 @@ export const templatesController = {
             queryElement.textContent = `Templates${spaceContext}`;
         }
 
+        // Show loading placeholder immediately
+        this.app.showSearchLoadingPlaceholder();
+
         // Load and display templates in search results style
         await this.loadTemplatesSearchStyle();
     },
@@ -117,8 +120,6 @@ export const templatesController = {
     },
 
     async loadTemplates() {
-        console.log('Loading templates...');
-
         const container = document.getElementById('templatesContent');
         if (!container) return;
 
@@ -153,8 +154,6 @@ export const templatesController = {
     },
 
     async loadTemplatesSearchStyle() {
-        console.log('Loading templates in search style...');
-
         const container = document.getElementById('searchResults');
         if (!container) return;
 

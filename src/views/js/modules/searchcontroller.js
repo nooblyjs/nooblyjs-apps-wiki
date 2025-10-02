@@ -34,8 +34,6 @@ export const searchController = {
             return;
         }
 
-        console.log('Search functionality initialized successfully');
-
         // Initialize search state variables
         this.searchTimeout = null;
         this.currentSuggestionIndex = -1;
@@ -93,7 +91,6 @@ export const searchController = {
                         this.selectSuggestion(suggestionData);
                     } else {
                         // Perform full search
-                        console.log('Calling performSearch()');
                         this.performSearch();
                     }
                     break;
@@ -276,7 +273,6 @@ export const searchController = {
     async performSearch() {
         const searchInput = document.getElementById('globalSearch');
         const query = searchInput.value.trim();
-        console.log('performSearch called with query:', query);
 
         if (!query) {
             console.log('Empty query, returning');
@@ -291,10 +287,8 @@ export const searchController = {
             if (this.app.currentSpace) {
                 url += `&spaceName=${encodeURIComponent(this.app.currentSpace.name)}`;
             }
-            console.log('Fetching search results from:', url);
             const response = await fetch(url);
             const results = await response.json();
-            console.log('Search results received:', results);
 
             this.showSearchResults(query, results);
         } catch (error) {
@@ -307,8 +301,6 @@ export const searchController = {
      * Display search results in the results view
      */
     showSearchResults(query, results) {
-
-        console.log(results);
 
         // Update search query display
         const queryElement = document.getElementById('searchQuery');
@@ -382,10 +374,7 @@ export const searchController = {
         // Add click handlers to results
         container.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                console.log('Search result clicked!');
-                console.log('Item dataset:', item.dataset);
                 const { path, spaceName, title } = item.dataset;
-                console.log('Extracted values - path:', path, 'spaceName:', spaceName, 'title:', title);
                 // Ensure we exit editor mode before loading new content
                 documentController.exitEditorMode();
                 documentController.openDocumentByPath(path, spaceName);

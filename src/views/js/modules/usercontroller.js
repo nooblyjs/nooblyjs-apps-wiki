@@ -59,7 +59,6 @@ export const userController = {
             const response = await fetch('/applications/wiki/api/user/activity');
             if (response.ok) {
                 this.app.userActivity = await response.json();
-                console.log('User activity loaded:', this.app.userActivity);
 
                 // Always sync userActivity with data to keep them in sync
                 if (this.app.userActivity.recent) {

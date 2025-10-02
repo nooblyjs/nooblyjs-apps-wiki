@@ -22,6 +22,13 @@
   ],
   "recent": [
     {
+      "path": "Beach.jpg",
+      "spaceName": "Shared Space",
+      "title": "Beach.jpg",
+      "action": "viewed",
+      "visitedAt": "2025-10-02T06:37:48.297Z"
+    },
+    {
       "path": ".gitkeep",
       "spaceName": "Personal Space",
       "title": ".gitkeep",
@@ -99,13 +106,6 @@
       "visitedAt": "2025-10-01T14:56:41.353Z"
     },
     {
-      "path": "Beach.jpg",
-      "spaceName": "Shared Space",
-      "title": "Beach.jpg",
-      "action": "viewed",
-      "visitedAt": "2025-10-01T14:56:31.159Z"
-    },
-    {
       "path": "data.txt",
       "spaceName": "Shared Space",
       "title": "data.txt",
@@ -142,5 +142,5 @@
     }
   ],
   "createdAt": "2025-10-01T13:23:27.924Z",
-  "updatedAt": "2025-10-02T05:40:38.027Z"
+  "updatedAt": "2025-10-02T06:37:48.297Z"
 }
