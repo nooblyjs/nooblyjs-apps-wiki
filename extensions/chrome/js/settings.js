@@ -1,24 +1,49 @@
-const settingsForm = document.getElementById('settings-form');
-const apiUrlInput = document.getElementById('api-url');
-const statusDiv = document.getElementById('status');
+/**
+ * Settings management for NooblyJS Wiki Extension
+ */
 
-document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.sync.get('apiUrl', ({ apiUrl }) => {
-        if (apiUrl) {
-            apiUrlInput.value = apiUrl;
-        }
-    });
-});
+const Settings = {
+  async get(key) {
+    const result = await chrome.storage.local.get(key);
+    return result[key];
+  },
 
-settingsForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const apiUrl = apiUrlInput.value.trim();
-    if (apiUrl) {
-        chrome.storage.sync.set({ apiUrl }, () => {
-            statusDiv.textContent = 'Settings saved.';
-            setTimeout(() => {
-                statusDiv.textContent = '';
-            }, 2000);
-        });
-    }
-});
+  async set(key, value) {
+    await chrome.storage.local.set({ [key]: value });
+  },
+
+  async getAll() {
+    return await chrome.storage.local.get(null);
+  },
+
+  async clear() {
+    await chrome.storage.local.clear();
+  },
+
+  // Specific getters/setters
+  async getServerUrl() {
+    return await this.get('serverUrl') || 'http://localhost:3002';
+  },
+
+  async setServerUrl(url) {
+    await this.set('serverUrl', url);
+  },
+
+  async getSessionId() {
+    return await this.get('sessionId');
+  },
+
+  async setSessionId(sessionId) {
+    await this.set('sessionId', sessionId);
+  },
+
+  async getCurrentSpace() {
+    return await this.get('currentSpace');
+  },
+
+  async setCurrentSpace(space) {
+    await this.set('currentSpace', space);
+  }
+};
+
+window.Settings = Settings;

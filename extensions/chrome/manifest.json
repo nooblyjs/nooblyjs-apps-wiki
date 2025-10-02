@@ -1,15 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Noobly Wiki",
-  "version": "1.0",
-  "description": "A Chrome extension to browse your Noobly Wiki.",
+  "name": "NooblyJS Wiki",
+  "version": "1.0.0",
+  "description": "Read-only access to your NooblyJS Wiki documentation",
   "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "http://localhost:3002/*",
+    "http://127.0.0.1:3002/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -24,7 +23,6 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "options_page": "settings.html",
   "background": {
     "service_worker": "background.js"
   }
