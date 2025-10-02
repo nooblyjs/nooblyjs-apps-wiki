@@ -1,0 +1,81 @@
+{
+  "name": "noobly-wiki",
+  "displayName": "Noobly Wiki",
+  "description": "Browse and view your Noobly Wiki spaces and documents directly in VS Code.",
+  "version": "1.0.0",
+  "publisher": "NooblyJS",
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:nooblyWikiView"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "noobly-wiki-explorer",
+          "title": "Noobly Wiki",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "noobly-wiki-explorer": [
+        {
+          "id": "nooblyWikiView",
+          "name": "Wiki Explorer",
+          "type": "tree"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "nooblyWiki.refresh",
+        "title": "Refresh Wiki Explorer",
+        "icon": {
+          "light": "media/refresh.svg",
+          "dark": "media/refresh.svg"
+        }
+      },
+      {
+        "command": "nooblyWiki.login",
+        "title": "Noobly Wiki: Login"
+      },
+      {
+        "command": "nooblyWiki.logout",
+        "title": "Noobly Wiki: Logout"
+      },
+      {
+        "command": "nooblyWiki.openDocument",
+        "title": "Open Document"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "nooblyWiki.refresh",
+          "when": "view == nooblyWikiView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Noobly Wiki",
+      "properties": {
+        "nooblyWiki.apiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "The root URL of your Noobly Wiki application API."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

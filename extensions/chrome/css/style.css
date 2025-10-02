@@ -1,0 +1,7 @@
+body {
+    width: 400px;
+}
+
+#app-container {
+    min-height: 300px;
+}
