@@ -244,13 +244,8 @@ export const templatesController = {
                 </div>
             `;
 
-            // Add click handlers to templates
-            container.querySelectorAll('.template-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const templatePath = item.dataset.templatePath;
-                    this.editTemplate(templatePath);
-                });
-            });
+            // Add click handlers and preview to templates
+            this.bindTemplateSearchResultEvents(container.querySelectorAll('.template-item'));
 
         } catch (error) {
             console.log('Templates API error:', error.message);
@@ -555,5 +550,41 @@ export const templatesController = {
             console.error('Error loading template:', error);
             this.app.showNotification('Error loading template: ' + error.message, 'error');
         }
+    },
+
+    /**
+     * Bind click and preview events to template search result items
+     */
+    bindTemplateSearchResultEvents(templateItems) {
+        // Initialize preview tooltip if not already done
+        navigationController.initFilePreview();
+
+        templateItems.forEach(item => {
+            const templatePath = item.dataset.templatePath;
+            const spaceName = this.app.currentSpace?.name;
+
+            // Click event
+            item.addEventListener('click', () => {
+                this.editTemplate(templatePath);
+            });
+
+            // Preview on hover
+            if (spaceName) {
+                item.addEventListener('mouseenter', () => {
+                    navigationController.previewTimeout = setTimeout(() => {
+                        navigationController.currentPreviewCard = item;
+                        navigationController.showFilePreview(item, templatePath, spaceName);
+                    }, 500);
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    if (navigationController.previewTimeout) {
+                        clearTimeout(navigationController.previewTimeout);
+                        navigationController.previewTimeout = null;
+                    }
+                    navigationController.hideFilePreview();
+                });
+            }
+        });
     }
 }

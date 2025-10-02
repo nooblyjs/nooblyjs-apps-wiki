@@ -518,14 +518,8 @@ class WikiApp {
             </div>
         `;
 
-        // Add click handlers to results
-        container.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const { path, spaceName } = item.dataset;
-                documentController.exitEditorMode();
-                documentController.openDocumentByPath(path, spaceName);
-            });
-        });
+        // Add click handlers and preview to results
+        this.bindSearchResultEvents(container.querySelectorAll('.search-result-item'));
 
         // Hide template button
         templatesController.hideTemplateButton();
@@ -630,14 +624,8 @@ class WikiApp {
             </div>
         `;
 
-        // Add click handlers to results
-        container.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const { path, spaceName } = item.dataset;
-                documentController.exitEditorMode();
-                documentController.openDocumentByPath(path, spaceName);
-            });
-        });
+        // Add click handlers and preview to results
+        this.bindSearchResultEvents(container.querySelectorAll('.search-result-item'));
 
         // Hide template button
         templatesController.hideTemplateButton();
@@ -1055,6 +1043,40 @@ class WikiApp {
                 }
 
                 // Hide preview
+                navigationController.hideFilePreview();
+            });
+        });
+    }
+
+    /**
+     * Bind click and preview events to search result items
+     */
+    bindSearchResultEvents(resultItems) {
+        // Initialize preview tooltip if not already done
+        navigationController.initFilePreview();
+
+        resultItems.forEach(item => {
+            const { path, spaceName } = item.dataset;
+
+            // Click event
+            item.addEventListener('click', () => {
+                documentController.exitEditorMode();
+                documentController.openDocumentByPath(path, spaceName);
+            });
+
+            // Preview on hover
+            item.addEventListener('mouseenter', () => {
+                navigationController.previewTimeout = setTimeout(() => {
+                    navigationController.currentPreviewCard = item;
+                    navigationController.showFilePreview(item, path, spaceName);
+                }, 500);
+            });
+
+            item.addEventListener('mouseleave', () => {
+                if (navigationController.previewTimeout) {
+                    clearTimeout(navigationController.previewTimeout);
+                    navigationController.previewTimeout = null;
+                }
                 navigationController.hideFilePreview();
             });
         });
