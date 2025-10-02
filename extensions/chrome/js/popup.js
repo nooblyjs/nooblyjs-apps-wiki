@@ -117,8 +117,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const documentView = document.getElementById('document-view');
     const breadcrumb = document.getElementById('breadcrumb');
 
-    goToSettingsBtn.addEventListener('click', () => {
-        chrome.runtime.openOptionsPage();
+    const urlPrompt = document.getElementById('url-prompt');
+    const urlForm = document.getElementById('url-form');
+    const apiUrlInput = document.getElementById('api-url-input');
+
+    urlForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const apiUrl = apiUrlInput.value.trim();
+        if (apiUrl) {
+            await new Promise(resolve => chrome.storage.sync.set({ apiUrl }, resolve));
+            await apiClient.init();
+            showLoginView();
+        }
     });
 
     logoutBtn.addEventListener('click', async () => {
@@ -222,11 +232,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainView.classList.remove('d-none');
     }
 
-    function showSettingsPrompt() {
+    function showUrlPrompt() {
         initialView.classList.remove('d-none');
         mainView.classList.add('d-none');
         loginView.classList.add('d-none');
-        settingsPrompt.classList.remove('d-none');
+        urlPrompt.classList.remove('d-none');
+    }
+
+    // Initial load
+    const apiUrl = await apiClient.init();
+    if (!apiUrl) {
+        showUrlPrompt();
+    } else {
+        const { authToken } = await chrome.storage.local.get('authToken');
+        if (authToken) {
+            showMainView();
+            loadSpaces();
+        } else {
+            showLoginView();
+        }
     }
 
     async function loadSpaces() {

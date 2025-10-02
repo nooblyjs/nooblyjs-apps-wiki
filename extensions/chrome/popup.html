@@ -12,9 +12,15 @@
     <div id="app-container" class="container-fluid p-3">
         <!-- Initial view: settings prompt or login form -->
         <div id="initial-view">
-            <div id="settings-prompt" class="text-center d-none">
-                <p>API URL not set.</p>
-                <button id="go-to-settings" class="btn btn-primary">Go to Settings</button>
+            <div id="url-prompt" class="d-none">
+                <h5 class="text-center mb-3">Configure API URL</h5>
+                <form id="url-form">
+                    <div class="mb-3">
+                        <label for="api-url-input" class="form-label">API Root URL</label>
+                        <input type="url" class="form-control" id="api-url-input" placeholder="https://your-app.com" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save & Continue</button>
+                </form>
             </div>
             <div id="login-view" class="d-none">
                 <h5 class="text-center mb-3">Login to Noobly Wiki</h5>
