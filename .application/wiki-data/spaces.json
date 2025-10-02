@@ -2,43 +2,43 @@
   {
     "id": 1,
     "name": "Personal Space",
-    "description": "Personal documents and notes",
-    "icon": "🏗️",
+    "description": "Your private workspace for personal notes, ideas, and drafts",
+    "icon": "👤",
     "visibility": "private",
-    "documentCount": 0,
+    "documentCount": 4,
     "path": "/workspaces/nooblyjs-apps-wiki/documents",
     "type": "personal",
     "permissions": "read-write",
-    "createdAt": "2025-10-02T07:49:45.016Z",
-    "updatedAt": "2025-10-02T07:49:45.016Z",
-    "author": "System"
+    "createdAt": "2025-10-02T15:00:33.286Z",
+    "updatedAt": "2025-10-02T15:00:33.286Z",
+    "author": "Stephen Booysen"
   },
   {
     "id": 2,
     "name": "Shared Space",
-    "description": "Shared team documents and collaboration",
+    "description": "Collaborative workspace for team documentation and knowledge sharing",
     "icon": "👥",
     "visibility": "team",
-    "documentCount": 0,
+    "documentCount": 4,
     "path": "/workspaces/nooblyjs-apps-wiki/documents-shared",
     "type": "shared",
     "permissions": "read-write",
-    "createdAt": "2025-10-02T07:49:45.016Z",
-    "updatedAt": "2025-10-02T07:49:45.016Z",
-    "author": "System"
+    "createdAt": "2025-10-02T15:00:33.289Z",
+    "updatedAt": "2025-10-02T15:00:33.289Z",
+    "author": "Stephen Booysen"
   },
   {
     "id": 3,
     "name": "Read-Only Space",
-    "description": "Read-only reference documents and resources",
-    "icon": "📖",
+    "description": "Reference materials, policies, and official documentation",
+    "icon": "📚",
     "visibility": "public",
-    "documentCount": 0,
+    "documentCount": 4,
     "path": "/workspaces/nooblyjs-apps-wiki/documents-readonly",
     "type": "readonly",
     "permissions": "read-only",
-    "createdAt": "2025-10-02T07:49:45.016Z",
-    "updatedAt": "2025-10-02T07:49:45.016Z",
-    "author": "System"
+    "createdAt": "2025-10-02T15:00:33.291Z",
+    "updatedAt": "2025-10-02T15:00:33.291Z",
+    "author": "Stephen Booysen"
   }
 ]

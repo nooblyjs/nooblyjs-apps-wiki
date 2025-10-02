@@ -40,6 +40,7 @@ module.exports = (options, eventEmitter, services) => {
   const searchRoutes = require('./searchRoutes');
   const navigationRoutes = require('./navigationRoutes');
   const userRoutes = require('./userRoutes');
+  const wizardRoutes = require('./wizardRoutes');
 
   // Register all routes
   documentRoutes(app, eventEmitter, services);
@@ -47,5 +48,6 @@ module.exports = (options, eventEmitter, services) => {
   searchRoutes(app, eventEmitter, services);
   navigationRoutes(app, eventEmitter, services);
   userRoutes(app, eventEmitter, services);
+  wizardRoutes(app, eventEmitter, services);
 
 };

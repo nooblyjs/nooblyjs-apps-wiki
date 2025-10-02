@@ -11,9 +11,29 @@ import { navigationController } from "./navigationcontroller.js";
 import { userController } from "./usercontroller.js";
 
 export const documentController = {
+    isReadOnlyMode: false,
 
     init(app) {
         this.app = app;
+    },
+
+    /**
+     * Set read-only mode for documents
+     * @param {boolean} isReadOnly - Whether documents should be in read-only mode
+     */
+    setReadOnlyMode(isReadOnly) {
+        this.isReadOnlyMode = isReadOnly;
+        this.updateEditButtonVisibility();
+    },
+
+    /**
+     * Update edit button visibility based on read-only mode
+     */
+    updateEditButtonVisibility() {
+        const editBtn = document.getElementById('editBtn');
+        if (editBtn) {
+            editBtn.style.display = this.isReadOnlyMode ? 'none' : 'inline-block';
+        }
     },
 
     /**
@@ -131,6 +151,9 @@ export const documentController = {
                 this.showDefaultViewer(document);
                 break;
         }
+
+        // Update edit button visibility after showing document
+        this.updateEditButtonVisibility();
     },
 
     /**

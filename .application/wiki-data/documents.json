@@ -1,232 +1,182 @@
 [
   {
-    "id": 1,
-    "title": "robot-waving-hand-eyes-closed",
-    "spaceId": 1,
+    "id": 1759417233287,
+    "title": "Welcome to Your Personal Space",
     "spaceName": "Personal Space",
-    "path": "My Folders/My Sub Folders/robot-waving-hand-eyes-closed.jpg",
-    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cNDaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T07:51:46.386Z",
-    "modifiedAt": "2025-10-02T07:51:46.386Z",
-    "views": 0,
-    "tags": []
+    "spaceId": 1,
+    "tags": [
+      "welcome",
+      "getting-started"
+    ],
+    "excerpt": "Welcome to Your Personal Space\n\nThis is your private workspace where you can:\n\n- 📝 Create personal notes and documentation\n- 💡 Capture ideas and br",
+    "createdAt": "2025-10-02T15:00:33.287Z",
+    "updatedAt": "2025-10-02T15:00:33.287Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents/Getting Started/welcome.md"
   },
   {
-    "id": 2,
-    "title": "robot-waving-hand-wink",
-    "spaceId": 1,
+    "id": 1759417233288,
+    "title": "Markdown Quick Reference",
     "spaceName": "Personal Space",
-    "path": "My Folders/My Sub Folders/robot-waving-hand-wink.jpg",
-    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cLJaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T07:51:46.834Z",
-    "modifiedAt": "2025-10-02T07:51:46.834Z",
-    "views": 0,
-    "tags": []
+    "spaceId": 1,
+    "tags": [
+      "reference",
+      "markdown"
+    ],
+    "excerpt": "Markdown Quick Reference\n\nA quick guide to markdown formatting in your wiki.\n\n Headers\n\n\n H1 Header\n H2 Header\n H3 Header\n\n\n Text Formatting\n\n- Bold",
+    "createdAt": "2025-10-02T15:00:33.288Z",
+    "updatedAt": "2025-10-02T15:00:33.288Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents/Getting Started/markdown-guide.md"
   },
   {
-    "id": 3,
-    "title": "ronot-waving-eyes-open",
-    "spaceId": 1,
+    "id": 1759417233289,
+    "title": "Project Template",
     "spaceName": "Personal Space",
-    "path": "My Folders/My Sub Folders/ronot-waving-eyes-open.jpg",
-    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cQmaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T07:51:47.290Z",
-    "modifiedAt": "2025-10-02T07:51:47.290Z",
-    "views": 0,
-    "tags": []
+    "spaceId": 1,
+    "tags": [
+      "template",
+      "project"
+    ],
+    "excerpt": "Project Name\n\n Overview\n\nBrief description of the project.\n\n Goals\n\n-   Goal 1\n-   Goal 2\n-   Goal 3\n\n Timeline\n\n| Phase | Start Date | End Date | St",
+    "createdAt": "2025-10-02T15:00:33.288Z",
+    "updatedAt": "2025-10-02T15:00:33.288Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents/Projects/project-template.md"
   },
   {
-    "id": 4,
-    "title": "robot-holding-sign-board",
-    "spaceId": 1,
+    "id": 1759417233290,
+    "title": "Daily Notes Template",
     "spaceName": "Personal Space",
-    "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
-    "excerpt": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQACWAJYAAD/4cZxaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3p...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T07:51:47.744Z",
-    "modifiedAt": "2025-10-02T07:51:47.744Z",
-    "views": 0,
-    "tags": []
+    "spaceId": 1,
+    "tags": [
+      "template",
+      "notes"
+    ],
+    "excerpt": "Daily Notes - Date\n\n Tasks\n\n-   Task 1\n-   Task 2\n-   Task 3\n\n Meeting Notes\n\n Meeting 1\n- Time: \n- Attendees: \n- Notes: \n\n Ideas\n\n- \n\n Follow-up\n\n-",
+    "createdAt": "2025-10-02T15:00:33.288Z",
+    "updatedAt": "2025-10-02T15:00:33.288Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents/Notes/daily-notes-template.md"
   },
   {
-    "id": 5,
-    "title": "Cooper",
-    "spaceId": 3,
+    "id": 1759417233289,
+    "title": "Collaboration Guidelines",
+    "spaceName": "Shared Space",
+    "spaceId": 2,
+    "tags": [
+      "guidelines",
+      "team"
+    ],
+    "excerpt": "Collaboration Guidelines\n\nWelcome to the team's shared workspace!\n\n Purpose\n\nThis space is designed for:\n- 📚 Team documentation\n- 🤝 Collaborative p",
+    "createdAt": "2025-10-02T15:00:33.290Z",
+    "updatedAt": "2025-10-02T15:00:33.290Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-shared/Team Guidelines/collaboration-guidelines.md"
+  },
+  {
+    "id": 1759417233290,
+    "title": "Meeting Notes Template",
+    "spaceName": "Shared Space",
+    "spaceId": 2,
+    "tags": [
+      "template",
+      "meetings"
+    ],
+    "excerpt": "Meeting Notes - Meeting Name\n\nDate: Date\nTime: Time\nLocation: Location/Video Link\n\n Attendees\n\n- Name 1\n- Name 2\n- Name 3\n\n Agenda\n\n1. Agenda item 1",
+    "createdAt": "2025-10-02T15:00:33.290Z",
+    "updatedAt": "2025-10-02T15:00:33.290Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-shared/Team Guidelines/meeting-notes-template.md"
+  },
+  {
+    "id": 1759417233291,
+    "title": "Team Onboarding Checklist",
+    "spaceName": "Shared Space",
+    "spaceId": 2,
+    "tags": [
+      "onboarding",
+      "checklist"
+    ],
+    "excerpt": "Team Onboarding Checklist\n\nWelcome to the team! Complete these items during your first week.\n\n Day 1\n\n-   Review team collaboration guidelines\n-   Se",
+    "createdAt": "2025-10-02T15:00:33.290Z",
+    "updatedAt": "2025-10-02T15:00:33.290Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-shared/Processes/onboarding-checklist.md"
+  },
+  {
+    "id": 1759417233292,
+    "title": "Projects Overview",
+    "spaceName": "Shared Space",
+    "spaceId": 2,
+    "tags": [
+      "projects",
+      "overview"
+    ],
+    "excerpt": "Projects Overview\n\n Active Projects\n\n Project Alpha\n- Status: In Progress\n- Lead: Team Member\n- Timeline: Q1 2025\n- Description: Brief description of",
+    "createdAt": "2025-10-02T15:00:33.291Z",
+    "updatedAt": "2025-10-02T15:00:33.291Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-shared/Projects/projects-overview.md"
+  },
+  {
+    "id": 1759417233292,
+    "title": "Documentation Policy",
     "spaceName": "Read-Only Space",
-    "path": "My Folder/cooper.md",
-    "excerpt": "No content yet",
-    "author": "Current User",
-    "createdAt": "2025-10-02T08:19:18.269Z",
-    "modifiedAt": "2025-10-02T08:19:18.269Z",
-    "views": 0,
-    "tags": []
+    "spaceId": 3,
+    "tags": [
+      "policy",
+      "documentation"
+    ],
+    "excerpt": "Documentation Policy\n\nEffective Date: January 2025\nVersion: 1.0\n\n Purpose\n\nThis policy establishes standards for creating and maintaining documentati",
+    "createdAt": "2025-10-02T15:00:33.292Z",
+    "updatedAt": "2025-10-02T15:00:33.292Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-readonly/Policies/documentation-policy.md"
   },
   {
-    "id": 6,
-    "title": "Sprint 25",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "path": "Progress/sprint-25.md",
-    "excerpt": " Project Requirements\n\n Project Overview\n\nProject Name: \nProject Owner: \nStart Date: \nTarget Completion: \n\n Objectives\n\n1. \n2. \n3...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T08:54:31.588Z",
-    "modifiedAt": "2025-10-02T08:54:31.588Z",
-    "views": 0,
-    "tags": []
+    "id": 1759417233293,
+    "title": "Wiki User Guide",
+    "spaceName": "Read-Only Space",
+    "spaceId": 3,
+    "tags": [
+      "guide",
+      "reference"
+    ],
+    "excerpt": "Wiki User Guide\n\nComplete guide to using the NooblyJS Wiki Application.\n\n Table of Contents\n\n1. Getting Started(getting-started)\n2. Creating Document",
+    "createdAt": "2025-10-02T15:00:33.293Z",
+    "updatedAt": "2025-10-02T15:00:33.293Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-readonly/Reference/wiki-user-guide.md"
   },
   {
-    "id": 7,
-    "title": "JSON-preview",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "path": "2023/JSON-preview.png",
-    "excerpt": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACE4AAArwCAYAAACw2ewTAAAQAElEQVR4Aezde7BdZX038CdcXgIIxHINgSICTgaHxk6tlEAZhFalopMWKXZGBSu9CRYdW2Mpnf6B1FFg...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T09:18:35.272Z",
-    "modifiedAt": "2025-10-02T09:18:35.272Z",
-    "views": 0,
-    "tags": []
+    "id": 1759417233294,
+    "title": "Keyboard Shortcuts",
+    "spaceName": "Read-Only Space",
+    "spaceId": 3,
+    "tags": [
+      "reference",
+      "shortcuts"
+    ],
+    "excerpt": "Keyboard Shortcuts\n\nSpeed up your workflow with these keyboard shortcuts.\n\n Navigation\n\n| Shortcut | Action |\n|----------|--------|\n| Ctrl/Cmd + K |",
+    "createdAt": "2025-10-02T15:00:33.293Z",
+    "updatedAt": "2025-10-02T15:00:33.293Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-readonly/Reference/keyboard-shortcuts.md"
   },
   {
-    "id": 8,
-    "title": "confluence-admin-analytics",
-    "path": "2023/My Cool Folder/confluence-admin-analytics.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-analytics.png",
-    "size": 120601,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:02.546Z",
-    "updatedAt": "2025-10-02T09:30:02.546Z",
-    "author": "admin"
-  },
-  {
-    "id": 9,
-    "title": "confluence-admin-audit",
-    "path": "2023/My Cool Folder/confluence-admin-audit.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-audit.png",
-    "size": 145740,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:03.060Z",
-    "updatedAt": "2025-10-02T09:30:03.060Z",
-    "author": "admin"
-  },
-  {
-    "id": 10,
-    "title": "confluence-admin-billing",
-    "path": "2023/My Cool Folder/confluence-admin-billing.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-billing.png",
-    "size": 114978,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:03.354Z",
-    "updatedAt": "2025-10-02T09:30:03.354Z",
-    "author": "admin"
-  },
-  {
-    "id": 11,
-    "title": "confluence-admin-groups",
-    "path": "2023/My Cool Folder/confluence-admin-groups.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-groups.png",
-    "size": 157290,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:03.672Z",
-    "updatedAt": "2025-10-02T09:30:03.672Z",
-    "author": "admin"
-  },
-  {
-    "id": 12,
-    "title": "confluence-admin-health",
-    "path": "2023/My Cool Folder/confluence-admin-health.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-health.png",
-    "size": 133258,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:04.042Z",
-    "updatedAt": "2025-10-02T09:30:04.042Z",
-    "author": "admin"
-  },
-  {
-    "id": 13,
-    "title": "confluence-admin-portfolio",
-    "path": "2023/My Cool Folder/confluence-admin-portfolio.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-portfolio.png",
-    "size": 121202,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:04.332Z",
-    "updatedAt": "2025-10-02T09:30:04.332Z",
-    "author": "admin"
-  },
-  {
-    "id": 14,
-    "title": "confluence-admin-profile",
-    "path": "2023/My Cool Folder/confluence-admin-profile.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-profile.png",
-    "size": 121151,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:04.700Z",
-    "updatedAt": "2025-10-02T09:30:04.700Z",
-    "author": "admin"
-  },
-  {
-    "id": 15,
-    "title": "confluence-admin-teams",
-    "path": "2023/My Cool Folder/confluence-admin-teams.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-teams.png",
-    "size": 94735,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:04.967Z",
-    "updatedAt": "2025-10-02T09:30:04.967Z",
-    "author": "admin"
-  },
-  {
-    "id": 16,
-    "title": "confluence-admin-token",
-    "path": "2023/My Cool Folder/confluence-admin-token.png",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "tags": [],
-    "excerpt": "Uploaded file: confluence-admin-token.png",
-    "size": 100417,
-    "mimeType": "image/png",
-    "createdAt": "2025-10-02T09:30:05.271Z",
-    "updatedAt": "2025-10-02T09:30:05.271Z",
-    "author": "admin"
-  },
-  {
-    "id": 17,
-    "title": "Dooper",
-    "spaceId": 1,
-    "spaceName": "Personal Space",
-    "path": "2023/dooper.md",
-    "excerpt": " Meeting Notes\n\nDate: YYYY-MM-DD\nAttendees: \nLocation: \n\n Agenda\n\n1. \n2. \n3. \n\n Discussion\n\n Topic 1\n\n Topic 2\n\n Action Items...",
-    "author": "Current User",
-    "createdAt": "2025-10-02T12:47:03.111Z",
-    "modifiedAt": "2025-10-02T12:47:03.111Z",
-    "views": 0,
-    "tags": []
+    "id": 1759417233295,
+    "title": "Standard Document Templates",
+    "spaceName": "Read-Only Space",
+    "spaceId": 3,
+    "tags": [
+      "templates",
+      "reference"
+    ],
+    "excerpt": "Standard Document Templates\n\nUse these templates to maintain consistency across documentation.\n\n Available Templates\n\n 1. Project Documentation Templ",
+    "createdAt": "2025-10-02T15:00:33.294Z",
+    "updatedAt": "2025-10-02T15:00:33.294Z",
+    "author": "Stephen Booysen",
+    "filePath": "/workspaces/nooblyjs-apps-wiki/documents-readonly/Templates/standard-templates.md"
   }
 ]

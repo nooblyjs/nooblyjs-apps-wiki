@@ -73,108 +73,25 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
  */
 async function initializeWikiData(dataManager, filing, cache, logger, queue, search) {
   try {
-    logger.info('Starting wiki data initialization with JSON file storage...');
-    
+    logger.info('Starting wiki data initialization check...');
+
     // Check if we already have stored wiki data
     const existingSpaces = await dataManager.read('spaces');
     const existingDocuments = await dataManager.read('documents');
-    
-    if (existingSpaces.length === 0 || existingDocuments.length === 0) {
-      logger.info('Initializing default wiki data');
-      
-      // Initialize 3 default spaces with absolute paths
-      const defaultSpaces = [
-        {
-          id: 1,
-          name: 'Personal Space',
-          description: 'Personal documents and notes',
-          icon: '🏗️',
-          visibility: 'private',
-          documentCount: 0,
-          path: `${process.cwd()}/documents`,
-          type: 'personal',
-          permissions: 'read-write',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          author: 'System'
-        },
-        {
-          id: 2,
-          name: 'Shared Space',
-          description: 'Shared team documents and collaboration',
-          icon: '👥',
-          visibility: 'team',
-          documentCount: 0,
-          path: `${process.cwd()}/documents-shared`,
-          type: 'shared',
-          permissions: 'read-write',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          author: 'System'
-        },
-        {
-          id: 3,
-          name: 'Read-Only Space',
-          description: 'Read-only reference documents and resources',
-          icon: '📖',
-          visibility: 'public',
-          documentCount: 0,
-          path: `${process.cwd()}/documents-readonly`,
-          type: 'readonly',
-          permissions: 'read-only',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          author: 'System'
-        }
-      ];
-      
-      logger.info(`Storing ${defaultSpaces.length} spaces with JSON file storage...`);
-      
-      // Store spaces
-      await dataManager.write('spaces', defaultSpaces);
-      logger.info('Stored all spaces to spaces.json');
 
-      // Create directories for the 3 default spaces if they don't exist
-      for (const space of defaultSpaces) {
-        try {
-          await filing.list(space.path);
-          logger.info(`Directory already exists: ${space.path}`);
-        } catch (error) {
-          // Directory doesn't exist, create it using a dummy file approach
-          try {
-            const dummyFilePath = `${space.path}/.gitkeep`;
-            await filing.create(dummyFilePath, '# Keep this directory in git\n');
-            logger.info(`Created directory and .gitkeep for space: ${space.name} at ${space.path}`);
-          } catch (createError) {
-            logger.error(`Failed to create directory for space ${space.name}:`, createError);
-          }
-        }
+    if (existingSpaces.length === 0 || existingDocuments.length === 0) {
+      logger.info('No existing wiki data found. User should complete setup wizard.');
+
+      // Initialize empty data structures (wizard will populate them)
+      if (existingSpaces.length === 0) {
+        await dataManager.write('spaces', []);
+        logger.info('Initialized empty spaces.json - waiting for wizard setup');
       }
 
-      // Initialize default documents
-      const defaultDocuments = [
-      ];
-      
-      // Store documents
-      await dataManager.write('documents', defaultDocuments);
-      logger.info('Stored all documents to documents.json');
-      
-      // Initialize document content files
-      await initializeDocumentFiles({ filing, logger });
-      
-      // Index documents for search
-      defaultDocuments.forEach(doc => {
-        search.add(doc.id.toString(), {
-          id: doc.id,
-          title: doc.title,
-          content: '', // Will be filled when files are read
-          tags: doc.tags || [],
-          spaceName: doc.spaceName,
-          excerpt: doc.excerpt
-        });
-      });
-      
-      logger.info('Default wiki data initialized successfully');
+      if (existingDocuments.length === 0) {
+        await dataManager.write('documents', []);
+        logger.info('Initialized empty documents.json - waiting for wizard setup');
+      }
     } else {
       logger.info('Wiki data already exists, skipping initialization');
     }

@@ -10,17 +10,17 @@ router.post('/register', async (req, res) => {
     const { email, password, name } = req.body;
 
     if (!email || !password || !name) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email, password, and name are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email, password, and name are required'
       });
     }
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User already exists' 
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists'
       });
     }
 
@@ -29,30 +29,33 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       name,
-      provider: 'local'
+      provider: 'local',
+      initialized: false  // User needs to complete wizard
     });
 
     req.login(user, (err) => {
       if (err) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Error logging in after registration' 
+        return res.status(500).json({
+          success: false,
+          message: 'Error logging in after registration'
         });
       }
-      res.json({ 
-        success: true, 
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          name: user.name 
-        } 
+      res.json({
+        success: true,
+        needsWizard: true,  // Signal that wizard is needed
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          initialized: user.initialized
+        }
       });
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Internal server error' 
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
     });
   }
 });
@@ -60,31 +63,33 @@ router.post('/register', async (req, res) => {
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
     if (err) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Internal server error' 
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
       });
     }
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: info.message || 'Invalid credentials' 
+      return res.status(401).json({
+        success: false,
+        message: info.message || 'Invalid credentials'
       });
     }
     req.logIn(user, (err) => {
       if (err) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Error logging in' 
+        return res.status(500).json({
+          success: false,
+          message: 'Error logging in'
         });
       }
-      return res.json({ 
-        success: true, 
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          name: user.name 
-        } 
+      return res.json({
+        success: true,
+        needsWizard: !user.initialized,  // Check if wizard is needed
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          initialized: user.initialized
+        }
       });
     });
   })(req, res, next);
@@ -123,13 +128,15 @@ router.post('/logout', (req, res) => {
 
 router.get('/check', (req, res) => {
   if (req.isAuthenticated()) {
-    res.json({ 
-      authenticated: true, 
-      user: { 
-        id: req.user.id, 
-        email: req.user.email, 
-        name: req.user.name 
-      } 
+    res.json({
+      authenticated: true,
+      needsWizard: !req.user.initialized,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name,
+        initialized: req.user.initialized
+      }
     });
   } else {
     res.json({ authenticated: false });

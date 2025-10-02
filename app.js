@@ -72,6 +72,16 @@ app.use('/api/auth', authRoutes);
 // Launch the application manager
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve wizard page
+app.get('/wizard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/views/wizard.html'));
+});
+
+// Serve wizard JavaScript
+app.get('/wizard.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/views/js/wizard.js'));
+});
+
 // Serve README.md from root directory
 app.get('/README.md', (req, res) => {
   res.sendFile(path.join(__dirname, 'README.md'));

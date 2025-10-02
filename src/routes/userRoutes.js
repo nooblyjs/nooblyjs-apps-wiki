@@ -45,26 +45,27 @@ module.exports = (options, eventEmitter, services) => {
   // User profile endpoints
   app.get('/applications/wiki/api/profile', async (req, res) => {
     try {
-      // Check if user is authenticated
-      if (!req.session.wikiAuthenticated) {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      // Try to get user profile from cache first
-      const cacheKey = 'wiki:user:profile:admin';
+      // Get current user from Passport session
+      const currentUser = req.user;
+      const cacheKey = `wiki:user:profile:${currentUser.id}`;
       let userProfile = await cache.get(cacheKey);
 
       if (!userProfile) {
         // Load from dataServe or create default profile
         try {
-          userProfile = await dataManager.read('userProfile');
+          userProfile = await dataManager.read(`userProfile_${currentUser.id}`);
           if (!userProfile) {
-            // Create default user profile
+            // Create default user profile from current user
             userProfile = {
-              id: 'admin',
-              username: 'admin',
-              name: 'Admin User',
-              email: 'admin@example.com',
+              id: currentUser.id,
+              username: currentUser.email,
+              name: currentUser.name || 'User',
+              email: currentUser.email,
               role: 'administrator',
               bio: 'System administrator of the wiki platform.',
               location: '',
@@ -80,7 +81,7 @@ module.exports = (options, eventEmitter, services) => {
             };
 
             // Save default profile
-            await dataManager.write('userProfile', userProfile);
+            await dataManager.write(`userProfile_${currentUser.id}`, userProfile);
             logger.info('Created default user profile');
           }
 
@@ -91,10 +92,10 @@ module.exports = (options, eventEmitter, services) => {
           logger.error('Error loading user profile from dataServe:', error);
           // Return default profile without saving
           userProfile = {
-            id: 'admin',
-            username: 'admin',
-            name: 'Admin User',
-            email: 'admin@example.com',
+            id: currentUser.id,
+            username: currentUser.email,
+            name: currentUser.name || 'User',
+            email: currentUser.email,
             role: 'administrator',
             bio: '',
             location: '',
@@ -122,8 +123,8 @@ module.exports = (options, eventEmitter, services) => {
 
   app.put('/applications/wiki/api/profile', async (req, res) => {
     try {
-      // Check if user is authenticated
-      if (!req.session.wikiAuthenticated) {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
@@ -142,10 +143,11 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ error: 'Name and email are required' });
       }
 
-      // Get current profile
+      // Get current user and profile
+      const currentUser = req.user;
       let currentProfile;
       try {
-        currentProfile = await dataManager.read('userProfile');
+        currentProfile = await dataManager.read(`userProfile_${currentUser.id}`);
       } catch (error) {
         logger.warn('No existing user profile found, creating new one');
       }
@@ -166,20 +168,20 @@ module.exports = (options, eventEmitter, services) => {
         },
         updatedAt: new Date().toISOString(),
         // Preserve existing fields
-        id: 'admin',
-        username: 'admin',
+        id: currentUser.id,
+        username: currentUser.email,
         avatar: currentProfile?.avatar || null,
         createdAt: currentProfile?.createdAt || new Date().toISOString()
       };
 
       // Save updated profile
-      await dataManager.write('userProfile', updatedProfile);
+      await dataManager.write(`userProfile_${currentUser.id}`, updatedProfile);
 
       // Clear cache to force refresh
-      const cacheKey = 'wiki:user:profile:admin';
+      const cacheKey = `wiki:user:profile:${currentUser.id}`;
       await cache.delete(cacheKey);
 
-      logger.info(`Updated user profile for admin: ${name}`);
+      logger.info(`Updated user profile for ${currentUser.email}: ${name}`);
 
       res.json({
         success: true,
@@ -195,12 +197,12 @@ module.exports = (options, eventEmitter, services) => {
   // User activity tracking endpoints
   app.get('/applications/wiki/api/user/activity', async (req, res) => {
     try {
-      // Check if user is authenticated
-      if (!req.session.wikiAuthenticated) {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const userId = 'admin'; // For now, we'll use 'admin' as the default user
+      const userId = req.user.id;
 
       // Try to get user activity from dataServe
       let userActivity = await dataManager.read(`userActivity_${userId}`);
@@ -229,8 +231,8 @@ module.exports = (options, eventEmitter, services) => {
 
   app.post('/applications/wiki/api/user/star', async (req, res) => {
     try {
-      // Check if user is authenticated
-      if (!req.session.wikiAuthenticated) {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
@@ -240,7 +242,7 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ error: 'Path, spaceName, and title are required' });
       }
 
-      const userId = 'admin';
+      const userId = req.user.id;
 
       // Get current user activity
       let userActivity = await dataManager.read(`userActivity_${userId}`);
@@ -299,8 +301,8 @@ module.exports = (options, eventEmitter, services) => {
 
   app.post('/applications/wiki/api/user/visit', async (req, res) => {
     try {
-      // Check if user is authenticated
-      if (!req.session.wikiAuthenticated) {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
@@ -310,7 +312,7 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ error: 'Path, spaceName, and title are required' });
       }
 
-      const userId = 'admin';
+      const userId = req.user.id;
 
       // Get current user activity
       let userActivity = await dataManager.read(`userActivity_${userId}`);

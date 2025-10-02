@@ -69,6 +69,10 @@ export const spacesController = {
 
         this.app.currentSpace = space;
         this.renderSpacesList(); // Re-render to show selection
+
+        // Update UI permissions based on space type
+        this.app.updateUIPermissions();
+
         await navigationController.loadFileTree();
 
         // Load the space's home page

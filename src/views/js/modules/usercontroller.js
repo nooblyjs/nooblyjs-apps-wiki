@@ -244,9 +244,14 @@ export const userController = {
     // Authentication methods
     async checkAuth() {
         try {
-            const response = await fetch('/applications/wiki/api/auth/check');
+            const response = await fetch('/api/auth/check');
             const data = await response.json();
             if (data.authenticated) {
+                // Check if user needs to complete wizard
+                if (data.needsWizard) {
+                    window.location.href = '/wizard';
+                    return;
+                }
                 await this.app.loadInitialData();
                 this.app.showHome();
             } else {
@@ -261,6 +266,31 @@ export const userController = {
     showLogin() {
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('wikiApp').classList.add('hidden');
+        this.setupAuthToggle();
+    },
+
+    setupAuthToggle() {
+        const toggleLink = document.getElementById('toggleAuthMode');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        let isLoginMode = true;
+
+        if (toggleLink) {
+            toggleLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isLoginMode = !isLoginMode;
+
+                if (isLoginMode) {
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                    toggleLink.innerHTML = '<small>Don\'t have an account? <span class="text-primary fw-bold">Register</span></small>';
+                } else {
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+                    toggleLink.innerHTML = '<small>Already have an account? <span class="text-primary fw-bold">Login</span></small>';
+                }
+            });
+        }
     },
 
     async handleLogin() {
@@ -268,15 +298,21 @@ export const userController = {
         const password = document.getElementById('password').value;
 
         try {
-            const response = await fetch('/applications/wiki/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ email: username, password })
             });
 
             const result = await response.json();
 
             if (result.success) {
+                // Check if user needs to complete wizard
+                if (result.needsWizard) {
+                    window.location.href = '/wizard';
+                    return;
+                }
+
                 document.getElementById('loginPage').classList.add('hidden');
                 document.getElementById('wikiApp').classList.remove('hidden');
                 await this.app.loadInitialData();
@@ -292,9 +328,45 @@ export const userController = {
         }
     },
 
+    async handleRegister() {
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+
+        // Validate passwords match
+        if (password !== passwordConfirm) {
+            document.getElementById('registerError').textContent = 'Passwords do not match';
+            document.getElementById('registerError').classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Registration successful, redirect to wizard
+                window.location.href = '/wizard';
+            } else {
+                document.getElementById('registerError').textContent = result.message || 'Registration failed';
+                document.getElementById('registerError').classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            document.getElementById('registerError').textContent = 'Registration failed';
+            document.getElementById('registerError').classList.remove('hidden');
+        }
+    },
+
     async handleLogout() {
         try {
-            await fetch('/applications/wiki/logout', { method: 'POST' });
+            await fetch('/api/auth/logout', { method: 'POST' });
         } catch (error) {
             console.error('Logout error:', error);
         }

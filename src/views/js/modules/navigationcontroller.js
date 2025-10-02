@@ -12,9 +12,18 @@ export const navigationController = {
     prefilledFilePath: null,
     renameItemPath: null,
     renameItemType: null,
+    isReadOnlyMode: false,
 
     init(app) {
         this.app = app;
+    },
+
+    /**
+     * Set read-only mode for navigation
+     * @param {boolean} isReadOnly - Whether navigation should be in read-only mode
+     */
+    setReadOnlyMode(isReadOnly) {
+        this.isReadOnlyMode = isReadOnly;
     },
 
     // File Tree Methods
@@ -629,6 +638,11 @@ export const navigationController = {
     showContextMenu(e, targetPath = null, targetType = 'folder') {
         e.preventDefault();
         e.stopPropagation();
+
+        // Don't show context menu in read-only mode
+        if (this.isReadOnlyMode) {
+            return;
+        }
 
         const contextMenu = document.getElementById('fileContextMenu');
 

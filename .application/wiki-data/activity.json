@@ -2,113 +2,44 @@
   {
     "recent": [
       {
-        "path": "/workspaces/nooblyjs-apps-wiki/documents/2023/B2B - eCommerce Strategy 202311.pdf",
+        "path": "Processes/onboarding-checklist.md",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-02T15:07:12.151Z",
+        "title": "onboarding-checklist.md"
+      },
+      {
+        "path": "Policies/documentation-policy.md",
+        "space": "Read-Only Space",
+        "lastVisited": "2025-10-02T15:01:27.106Z",
+        "title": "documentation-policy.md"
+      },
+      {
+        "path": "Team Guidelines/collaboration-guidelines.md",
+        "space": "Shared Space",
+        "lastVisited": "2025-10-02T15:01:22.380Z",
+        "title": "collaboration-guidelines.md"
+      },
+      {
+        "path": "Getting Started/markdown-guide.md",
         "space": "Personal Space",
-        "lastVisited": "2025-10-02T12:58:28.774Z",
-        "title": "B2B - eCommerce Strategy 202311.pdf"
+        "lastVisited": "2025-10-02T15:01:05.629Z",
+        "title": "markdown-guide.md"
       },
       {
-        "path": "/workspaces/nooblyjs-apps-wiki/documents/2024/B2B - Enterprise eCommerce 202204.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - Enterprise eCommerce 202204.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T12:52:10.102Z"
-      },
-      {
-        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - eCommerce Strategy 202311.pdf",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T12:32:14.345Z"
-      },
-      {
-        "path": "2023/JSON-preview.png",
-        "spaceName": "Personal Space",
-        "title": "JSON-preview.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T12:32:07.829Z"
-      },
-      {
-        "path": "Beach.jpg",
-        "spaceName": "Shared Space",
-        "title": "Beach.jpg",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T10:05:38.609Z"
-      },
-      {
-        "path": "2023/My Cool Folder/confluence-admin-analytics.png",
-        "spaceName": "Personal Space",
-        "title": "confluence-admin-analytics.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T09:43:52.832Z"
-      },
-      {
-        "path": "2023/My Cool Folder/confluence-admin-groups.png",
-        "spaceName": "Personal Space",
-        "title": "confluence-admin-groups.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T09:34:16.650Z"
-      },
-      {
-        "path": "2023/My Cool Folder/confluence-admin-profile.png",
-        "spaceName": "Personal Space",
-        "title": "confluence-admin-profile.png",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T09:30:21.907Z"
-      },
-      {
-        "path": "My Folders/My Sub Folders/robot-holding-sign-board.jpg",
-        "spaceName": "Personal Space",
-        "title": "robot-holding-sign-board.jpg",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:55:43.088Z"
-      },
-      {
-        "path": "Progress/sprint-25.md",
-        "spaceName": "Personal Space",
-        "title": "sprint-25.md",
-        "action": "viewed",
-        "visitedAt": "2025-10-02T08:54:35.819Z"
+        "path": "Getting Started/welcome.md",
+        "space": "Personal Space",
+        "lastVisited": "2025-10-02T15:01:04.014Z",
+        "title": "welcome.md"
       }
     ],
     "starred": [
       {
-        "path": "2023/My Cool Folder/confluence-admin-analytics.png",
+        "path": "Getting Started/markdown-guide.md",
         "spaceName": "Personal Space",
-        "title": "confluence-admin-analytics.png",
-        "starredAt": "2025-10-02T09:49:54.971Z"
-      },
-      {
-        "path": "2023/My Cool Folder/confluence-admin-groups.png",
-        "spaceName": "Personal Space",
-        "title": "confluence-admin-groups.png",
-        "starredAt": "2025-10-02T09:34:17.938Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Read-Only Space",
-        "title": "1.md",
-        "starredAt": "2025-10-02T08:17:47.512Z"
-      },
-      {
-        "path": "Dimension Data/shoprite-reference-architecture-mapping.png",
-        "spaceName": "Personal Space",
-        "title": "shoprite-reference-architecture-mapping.png",
-        "starredAt": "2025-10-02T04:14:40.727Z"
-      },
-      {
-        "path": "1.md",
-        "spaceName": "Shared Space",
-        "title": "1.md",
-        "starredAt": "2025-10-01T15:13:16.810Z"
-      },
-      {
-        "path": "2023/B2B - eCommerce Strategy 202311.pdf",
-        "spaceName": "Personal Space",
-        "title": "B2B - eCommerce Strategy 202311.pdf",
-        "starredAt": "2025-10-01T15:10:47.826Z"
+        "title": "markdown-guide.md",
+        "starredAt": "2025-10-02T15:01:07.701Z"
       }
     ],
-    "updatedAt": "2025-10-02T12:58:29.054Z"
+    "updatedAt": "2025-10-02T15:07:12.505Z"
   }
 ]

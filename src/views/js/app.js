@@ -53,11 +53,92 @@ class WikiApp {
         this.initSidebarResize();
     }
 
+    /**
+     * Check if the current space is read-only
+     * @returns {boolean} True if current space has read-only permissions
+     */
+    isCurrentSpaceReadOnly() {
+        if (!this.currentSpace) {
+            return false;
+        }
+        const isReadOnly = this.currentSpace.permissions === 'read-only' || this.currentSpace.type === 'readonly';
+        console.log('isCurrentSpaceReadOnly check:', {
+            spaceName: this.currentSpace.name,
+            permissions: this.currentSpace.permissions,
+            type: this.currentSpace.type,
+            isReadOnly
+        });
+        return isReadOnly;
+    }
+
+    /**
+     * Update UI elements visibility based on current space permissions
+     */
+    updateUIPermissions() {
+        const isReadOnly = this.isCurrentSpaceReadOnly();
+
+        console.log('updateUIPermissions called, isReadOnly:', isReadOnly);
+
+        // Hide/show create dropdown in header
+        const createDropdown = document.getElementById('createDropdown');
+        if (createDropdown) {
+            createDropdown.parentElement.style.display = isReadOnly ? 'none' : 'block';
+        }
+
+        // Hide/show file action buttons in left sidebar
+        const uploadBtn = document.getElementById('uploadBtn');
+        const createFolderBtn = document.getElementById('createFolderBtn');
+        const createFileBtn = document.getElementById('createFileBtn');
+        const publishBtn = document.getElementById('publishBtn');
+
+        if (uploadBtn) {
+            uploadBtn.style.display = isReadOnly ? 'none' : 'inline-block';
+            console.log('uploadBtn display:', uploadBtn.style.display);
+        }
+        if (createFolderBtn) {
+            createFolderBtn.style.display = isReadOnly ? 'none' : 'inline-block';
+            console.log('createFolderBtn display:', createFolderBtn.style.display);
+        }
+        if (createFileBtn) {
+            createFileBtn.style.display = isReadOnly ? 'none' : 'inline-block';
+            console.log('createFileBtn display:', createFileBtn.style.display);
+        }
+        if (publishBtn) {
+            publishBtn.style.display = isReadOnly ? 'none' : 'inline-block';
+            console.log('publishBtn display:', publishBtn.style.display);
+        }
+
+        // Hide/show templates shortcut
+        const shortcutTemplates = document.getElementById('shortcutTemplates');
+        if (shortcutTemplates) {
+            shortcutTemplates.style.display = isReadOnly ? 'none' : 'flex';
+            console.log('shortcutTemplates display:', shortcutTemplates.style.display);
+        } else {
+            console.warn('shortcutTemplates element not found!');
+        }
+
+        // Disable context menu actions in navigation controller
+        if (navigationController && navigationController.setReadOnlyMode) {
+            navigationController.setReadOnlyMode(isReadOnly);
+        }
+
+        // Disable edit button in document controller
+        if (documentController && documentController.setReadOnlyMode) {
+            documentController.setReadOnlyMode(isReadOnly);
+        }
+    }
+
     bindEvents() {
         // Login form
         document.getElementById('loginForm')?.addEventListener('submit', (e) => {
             e.preventDefault();
             userController.handleLogin();
+        });
+
+        // Register form
+        document.getElementById('registerForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            userController.handleRegister();
         });
 
         // Logout
@@ -417,7 +498,20 @@ class WikiApp {
         // Load recent files for the homepage
         await this.loadRecentFiles();
         this.loadStarredFiles();
-        templatesController.loadTemplates();
+
+        // Only load templates if not in read-only space
+        const templatesSection = document.getElementById('templatesSection');
+        if (!this.isCurrentSpaceReadOnly()) {
+            if (templatesSection) {
+                templatesSection.style.display = 'block';
+            }
+            templatesController.loadTemplates();
+        } else {
+            // Hide templates section
+            if (templatesSection) {
+                templatesSection.style.display = 'none';
+            }
+        }
     }
 
     showRecent() {
