@@ -395,13 +395,14 @@ class WikiApp {
         this.setActiveView('home');
         this.setActiveShortcut('shortcutHome');
         this.currentView = 'home';
-        
+
         // Restore full home view
         this.restoreHomeView();
-        
+
         // Load recent files for the homepage
         await this.loadRecentFiles();
         this.loadStarredFiles();
+        templatesController.loadTemplates();
     }
 
     showRecent() {

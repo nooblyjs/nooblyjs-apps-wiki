@@ -10,6 +10,11 @@
 'use strict';
 
 const Routes = require('./routes');
+const SpacesRoutes = require('./routes/spacesRoutes');
+const NavigationRoutes = require('./routes/navigationRoutes');
+const DocumentRoutes = require('./routes/documentRoutes');
+const SearchRoutes = require('./routes/searchRoutes');
+const UserRoutes = require('./routes/userRoutes');
 const Views = require('./views');
 const { initializeDocumentFiles } = require('./activities/documentContent');
 const { processTask } = require('./activities/taskProcessor');
@@ -55,6 +60,11 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   
   // Register routes and views
   Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
   Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
 }
 
