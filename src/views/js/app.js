@@ -439,6 +439,21 @@ class WikiApp {
         }
     }
 
+    async loadSpaces() {
+        try {
+            // Fetch updated spaces data
+            const spacesResponse = await fetch('/applications/wiki/api/spaces');
+            this.data.spaces = await spacesResponse.json();
+
+            // Re-render the spaces list in the navigation
+            spacesController.renderSpacesList();
+
+            console.log('Spaces refreshed successfully');
+        } catch (error) {
+            console.error('Error loading spaces:', error);
+        }
+    }
+
 
     // Modal methods
 

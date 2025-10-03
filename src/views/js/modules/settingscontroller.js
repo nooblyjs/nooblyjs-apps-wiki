@@ -28,9 +28,58 @@ export const settingsController = {
             if (response.ok) {
                 const spaces = await response.json();
                 this.renderSpacesList(spaces);
+                // Re-bind event listeners after rendering
+                this.bindSpaceEventListeners();
             }
         } catch (error) {
             console.error('Error loading spaces:', error);
+        }
+    },
+
+    bindSpaceEventListeners() {
+        // Create Space Button
+        const createSpaceBtn = document.getElementById('settingsCreateSpaceBtn');
+        if (createSpaceBtn) {
+            createSpaceBtn.replaceWith(createSpaceBtn.cloneNode(true));
+            document.getElementById('settingsCreateSpaceBtn').addEventListener('click', () => {
+                this.showCreateSpaceForm();
+            });
+        }
+
+        // Create Space Form - Cancel Button
+        const cancelCreateSpaceBtn = document.getElementById('cancelCreateSpaceBtn');
+        if (cancelCreateSpaceBtn) {
+            cancelCreateSpaceBtn.replaceWith(cancelCreateSpaceBtn.cloneNode(true));
+            document.getElementById('cancelCreateSpaceBtn').addEventListener('click', () => {
+                this.hideCreateSpaceForm();
+            });
+        }
+
+        // Create Space Form - Submit
+        const createSpaceForm = document.getElementById('inlineCreateSpaceForm');
+        if (createSpaceForm) {
+            createSpaceForm.replaceWith(createSpaceForm.cloneNode(true));
+            document.getElementById('inlineCreateSpaceForm').addEventListener('submit', (e) => {
+                this.handleCreateSpace(e);
+            });
+        }
+
+        // Edit Space Form - Cancel Button
+        const cancelEditSpaceBtn = document.getElementById('cancelEditSpaceBtn');
+        if (cancelEditSpaceBtn) {
+            cancelEditSpaceBtn.replaceWith(cancelEditSpaceBtn.cloneNode(true));
+            document.getElementById('cancelEditSpaceBtn').addEventListener('click', () => {
+                this.hideEditSpaceForm();
+            });
+        }
+
+        // Edit Space Form - Submit
+        const editSpaceForm = document.getElementById('inlineEditSpaceForm');
+        if (editSpaceForm) {
+            editSpaceForm.replaceWith(editSpaceForm.cloneNode(true));
+            document.getElementById('inlineEditSpaceForm').addEventListener('submit', (e) => {
+                this.handleEditSpace(e);
+            });
         }
     },
 
@@ -56,16 +105,39 @@ export const settingsController = {
                 <td><small>${new Date(space.createdAt).toLocaleDateString()}</small></td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="settingsController.editSpace(${space.id})" title="Edit">
+                        <button class="btn btn-outline-secondary space-edit-btn" data-space-id="${space.id}" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="settingsController.deleteSpace(${space.id})" title="Delete">
+                        <button class="btn btn-outline-danger space-delete-btn" data-space-id="${space.id}" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </td>
             </tr>
         `).join('');
+
+        // Bind event listeners for edit and delete buttons
+        this.bindSpaceActionButtons();
+    },
+
+    bindSpaceActionButtons() {
+        // Edit buttons
+        const editButtons = document.querySelectorAll('.space-edit-btn');
+        editButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const spaceId = parseInt(e.currentTarget.getAttribute('data-space-id'));
+                this.editSpace(spaceId);
+            });
+        });
+
+        // Delete buttons
+        const deleteButtons = document.querySelectorAll('.space-delete-btn');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const spaceId = parseInt(e.currentTarget.getAttribute('data-space-id'));
+                this.deleteSpace(spaceId);
+            });
+        });
     },
 
     getSpaceIcon(type) {
@@ -112,11 +184,25 @@ export const settingsController = {
                         ${item.starredAt ? `<i class="bi bi-dot"></i>${this.formatDate(item.starredAt)}` : ''}
                     </small>
                 </div>
-                <button class="btn btn-sm btn-outline-danger" onclick="settingsController.removeActivityItem('${type}', ${index})">
+                <button class="btn btn-sm btn-outline-danger activity-remove-btn" data-activity-type="${type}" data-activity-index="${index}">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
         `).join('');
+
+        // Bind event listeners to remove buttons
+        this.bindActivityRemoveButtons();
+    },
+
+    bindActivityRemoveButtons() {
+        const removeButtons = document.querySelectorAll('.activity-remove-btn');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.getAttribute('data-activity-type');
+                const index = parseInt(e.currentTarget.getAttribute('data-activity-index'));
+                this.removeActivityItem(type, index);
+            });
+        });
     },
 
     formatDate(dateString) {
@@ -156,15 +242,6 @@ export const settingsController = {
     },
 
     bindEventListeners() {
-        // Spaces Management
-        const createSpaceBtn = document.getElementById('settingsCreateSpaceBtn');
-        if (createSpaceBtn) {
-            createSpaceBtn.replaceWith(createSpaceBtn.cloneNode(true));
-            document.getElementById('settingsCreateSpaceBtn').addEventListener('click', () => {
-                this.app.showModal('createSpaceModal');
-            });
-        }
-
         // Activity Management
         const clearRecentBtn = document.getElementById('clearRecentBtn');
         if (clearRecentBtn) {
@@ -200,12 +277,216 @@ export const settingsController = {
         }
     },
 
+    showCreateSpaceForm() {
+        const formContainer = document.getElementById('createSpaceFormContainer');
+        const spacesListCard = document.getElementById('spacesListCard');
+
+        if (formContainer) {
+            formContainer.classList.remove('hidden');
+            // Scroll to form
+            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Hide the spaces list
+        if (spacesListCard) {
+            spacesListCard.classList.add('hidden');
+        }
+    },
+
+    hideCreateSpaceForm() {
+        const formContainer = document.getElementById('createSpaceFormContainer');
+        const spacesListCard = document.getElementById('spacesListCard');
+
+        if (formContainer) {
+            formContainer.classList.add('hidden');
+        }
+
+        // Show the spaces list
+        if (spacesListCard) {
+            spacesListCard.classList.remove('hidden');
+        }
+
+        // Reset form
+        const form = document.getElementById('inlineCreateSpaceForm');
+        if (form) form.reset();
+    },
+
+    async handleCreateSpace(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const spaceData = {
+            name: formData.get('spaceName'),
+            type: formData.get('spaceType'),
+            description: formData.get('spaceDescription'),
+            path: formData.get('spacePath'),
+            visibility: formData.get('spaceVisibility')
+        };
+
+        try {
+            const response = await fetch('/applications/wiki/api/spaces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(spaceData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.app.showNotification('Space created successfully!', 'success');
+                this.hideCreateSpaceForm();
+                this.loadSpacesManagement();
+
+                // Refresh the spaces navigator in the left sidebar
+                if (this.app.loadSpaces) {
+                    await this.app.loadSpaces();
+                }
+            } else {
+                throw new Error(result.error || 'Failed to create space');
+            }
+        } catch (error) {
+            console.error('Error creating space:', error);
+            this.app.showNotification('Failed to create space: ' + error.message, 'error');
+        }
+    },
+
     async editSpace(spaceId) {
-        this.app.showNotification('Edit space feature coming soon!', 'info');
+        try {
+            // Load space data
+            const response = await fetch(`/applications/wiki/api/spaces/${spaceId}`);
+            if (response.ok) {
+                const space = await response.json();
+                this.showEditSpaceForm(space);
+            } else {
+                throw new Error('Failed to load space data');
+            }
+        } catch (error) {
+            console.error('Error loading space for edit:', error);
+            this.app.showNotification('Failed to load space data', 'error');
+        }
+    },
+
+    showEditSpaceForm(space) {
+        const formContainer = document.getElementById('editSpaceFormContainer');
+        const spacesListCard = document.getElementById('spacesListCard');
+        const createFormContainer = document.getElementById('createSpaceFormContainer');
+
+        // Hide create form if it's visible
+        if (createFormContainer) {
+            createFormContainer.classList.add('hidden');
+        }
+
+        // Show edit form
+        if (formContainer) {
+            formContainer.classList.remove('hidden');
+            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Hide the spaces list
+        if (spacesListCard) {
+            spacesListCard.classList.add('hidden');
+        }
+
+        // Populate form with space data
+        document.getElementById('editSpaceId').value = space.id;
+        document.getElementById('editSpaceName').value = space.name;
+        document.getElementById('editSpaceType').value = space.type;
+        document.getElementById('editSpaceDescription').value = space.description || '';
+
+        // Extract just the folder name from the full path
+        const pathParts = space.path.split('/');
+        const folderName = pathParts[pathParts.length - 1];
+        document.getElementById('editSpacePath').value = folderName;
+
+        document.getElementById('editSpaceVisibility').value = space.visibility;
+
+        // Bind form submit event listener first (before cloning cancel button)
+        const editForm = document.getElementById('inlineEditSpaceForm');
+        if (editForm) {
+            // Remove old listener by cloning the form
+            const newForm = editForm.cloneNode(true);
+            editForm.parentNode.replaceChild(newForm, editForm);
+
+            // Add submit listener
+            document.getElementById('inlineEditSpaceForm').addEventListener('submit', (e) => {
+                this.handleEditSpace(e);
+            });
+
+            // Add cancel button listener after form is cloned
+            const cancelBtn = document.getElementById('cancelEditSpaceBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.hideEditSpaceForm();
+                });
+            }
+        }
+    },
+
+    hideEditSpaceForm() {
+        const formContainer = document.getElementById('editSpaceFormContainer');
+        const spacesListCard = document.getElementById('spacesListCard');
+
+        if (formContainer) {
+            formContainer.classList.add('hidden');
+        }
+
+        // Show the spaces list
+        if (spacesListCard) {
+            spacesListCard.classList.remove('hidden');
+        }
+
+        // Reset form
+        const form = document.getElementById('inlineEditSpaceForm');
+        if (form) form.reset();
+    },
+
+    async handleEditSpace(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const spaceId = formData.get('spaceId');
+        const spaceData = {
+            name: formData.get('spaceName'),
+            type: formData.get('spaceType'),
+            description: formData.get('spaceDescription'),
+            path: formData.get('spacePath'),
+            visibility: formData.get('spaceVisibility')
+        };
+
+        try {
+            const response = await fetch(`/applications/wiki/api/spaces/${spaceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(spaceData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.app.showNotification('Space updated successfully!', 'success');
+                this.hideEditSpaceForm();
+                this.loadSpacesManagement();
+
+                // Refresh the spaces navigator in the left sidebar
+                if (this.app.loadSpaces) {
+                    await this.app.loadSpaces();
+                }
+            } else {
+                throw new Error(result.error || 'Failed to update space');
+            }
+        } catch (error) {
+            console.error('Error updating space:', error);
+            this.app.showNotification('Failed to update space: ' + error.message, 'error');
+        }
     },
 
     async deleteSpace(spaceId) {
-        if (!confirm('Are you sure you want to delete this space? This action cannot be undone.')) {
+        if (!confirm('Are you sure you want to delete this space entry? The space content will be preserved.')) {
             return;
         }
 
@@ -217,6 +498,11 @@ export const settingsController = {
             if (response.ok) {
                 this.app.showNotification('Space deleted successfully', 'success');
                 this.loadSpacesManagement();
+
+                // Refresh the spaces navigator in the left sidebar
+                if (this.app.loadSpaces) {
+                    await this.app.loadSpaces();
+                }
             } else {
                 throw new Error('Failed to delete space');
             }

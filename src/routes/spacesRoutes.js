@@ -121,6 +121,24 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
+  // Get single space by ID
+  app.get('/applications/wiki/api/spaces/:id', async (req, res) => {
+    try {
+      const spaceId = parseInt(req.params.id);
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.id === spaceId);
+
+      if (!space) {
+        return res.status(404).json({ error: 'Space not found' });
+      }
+
+      res.json(space);
+    } catch (error) {
+      logger.error('Error fetching space:', error);
+      res.status(500).json({ error: 'Failed to fetch space' });
+    }
+  });
+
   // Create a new space
   app.post('/applications/wiki/api/spaces', async (req, res) => {
     try {
@@ -227,6 +245,139 @@ module.exports = (options, eventEmitter, services) => {
     } catch (error) {
       logger.error('Error creating space:', error);
       res.status(500).json({ success: false, message: 'Failed to create space' });
+    }
+  });
+
+  // Update space
+  app.put('/applications/wiki/api/spaces/:id', async (req, res) => {
+    try {
+      const spaceId = parseInt(req.params.id);
+      const { name, description, visibility, type, path } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ success: false, error: 'Space name is required' });
+      }
+
+      if (!path) {
+        return res.status(400).json({ success: false, error: 'Folder path is required' });
+      }
+
+      if (!type) {
+        return res.status(400).json({ success: false, error: 'Space type is required' });
+      }
+
+      // Load current spaces
+      const spaces = await dataManager.read('spaces');
+      const spaceIndex = spaces.findIndex(s => s.id === spaceId);
+
+      if (spaceIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Space not found' });
+      }
+
+      const currentSpace = spaces[spaceIndex];
+      const fullPath = require('path').resolve(process.cwd(), path);
+      const pathChanged = currentSpace.path !== fullPath;
+
+      // Load space templates
+      const templatesConfig = await loadSpacesTemplate();
+      const spaceTemplate = templatesConfig.spaces.find(t => t.type === type);
+
+      if (!spaceTemplate) {
+        return res.status(400).json({ success: false, error: `Invalid space type: ${type}` });
+      }
+
+      // If path changed, check if new folder is empty and initialize if needed
+      if (pathChanged) {
+        try {
+          const fs = require('fs').promises;
+
+          // Check if new folder exists and is empty
+          let isEmpty = false;
+          try {
+            const files = await fs.readdir(fullPath);
+            isEmpty = files.length === 0;
+          } catch (err) {
+            // Folder doesn't exist, will be created
+            isEmpty = true;
+          }
+
+          if (isEmpty) {
+            logger.info(`Initializing new folder for space ${name}: ${fullPath}`);
+            const sampleDocuments = await initializeSpaceFromTemplate(
+              spaceTemplate,
+              path,
+              filing,
+              logger,
+              req.user ? req.user.name : 'System'
+            );
+
+            // Update document count
+            currentSpace.documentCount = sampleDocuments.length;
+            logger.info(`Initialized ${sampleDocuments.length} sample documents in new folder`);
+          }
+        } catch (initError) {
+          logger.error(`Error initializing new folder for space ${name}:`, initError);
+          // Continue anyway, just log the error
+        }
+      }
+
+      // Update space properties
+      currentSpace.name = name;
+      currentSpace.description = description || currentSpace.description;
+      currentSpace.visibility = visibility || currentSpace.visibility;
+      currentSpace.type = type;
+      currentSpace.path = fullPath;
+      currentSpace.permissions = spaceTemplate.permissions;
+      currentSpace.updatedAt = new Date().toISOString();
+
+      // Save updated spaces
+      spaces[spaceIndex] = currentSpace;
+      await dataManager.write('spaces', spaces);
+
+      // Clear relevant caches
+      await cache.delete('wiki:spaces:list');
+      await cache.delete(`wiki:space:${spaceId}:documents`);
+
+      logger.info(`Updated space: ${name} (ID: ${spaceId})`);
+
+      res.json({ success: true, space: currentSpace });
+    } catch (error) {
+      logger.error('Error updating space:', error);
+      res.status(500).json({ success: false, error: 'Failed to update space' });
+    }
+  });
+
+  // Delete a space (only removes from spaces.json, leaves content intact)
+  app.delete('/applications/wiki/api/spaces/:id', async (req, res) => {
+    try {
+      const spaceId = parseInt(req.params.id);
+
+      // Load current spaces
+      const spaces = await dataManager.read('spaces');
+      const spaceIndex = spaces.findIndex(s => s.id === spaceId);
+
+      if (spaceIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Space not found' });
+      }
+
+      const deletedSpace = spaces[spaceIndex];
+
+      // Remove the space from the array
+      spaces.splice(spaceIndex, 1);
+
+      // Save updated spaces
+      await dataManager.write('spaces', spaces);
+
+      // Clear relevant caches
+      await cache.delete('wiki:spaces:list');
+      await cache.delete(`wiki:space:${spaceId}:documents`);
+
+      logger.info(`Deleted space: ${deletedSpace.name} (ID: ${spaceId}). Content folder preserved at: ${deletedSpace.path}`);
+
+      res.json({ success: true, message: 'Space deleted successfully' });
+    } catch (error) {
+      logger.error('Error deleting space:', error);
+      res.status(500).json({ success: false, error: 'Failed to delete space' });
     }
   });
 

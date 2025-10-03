@@ -123,16 +123,39 @@ export const userController = {
     updateUserProfileUI() {
         if (!this.app.userProfile) return;
 
-        // Update header profile
+        // Update header profile text
         const userName = document.getElementById('userName');
         const userRole = document.getElementById('userRole');
         const userInitials = document.getElementById('userInitials');
 
         if (userName) userName.textContent = this.app.userProfile.name || 'User';
         if (userRole) userRole.textContent = this.capitalizeFirst(this.app.userProfile.role || 'administrator');
-        if (userInitials) {
-            const initials = this.getInitials(this.app.userProfile.name || 'User');
-            userInitials.textContent = initials;
+
+        // Update header avatar
+        const headerAvatarImage = document.getElementById('headerAvatarImage');
+        const headerAvatarInitials = document.getElementById('headerAvatarInitials');
+
+        if (this.app.userProfile.avatar) {
+            // Show avatar image in header, hide initials
+            if (headerAvatarImage) {
+                headerAvatarImage.src = this.app.userProfile.avatar;
+                headerAvatarImage.classList.remove('hidden');
+            }
+            if (headerAvatarInitials) {
+                headerAvatarInitials.classList.add('hidden');
+            }
+        } else {
+            // Show initials in header, hide avatar image
+            if (headerAvatarImage) {
+                headerAvatarImage.classList.add('hidden');
+            }
+            if (headerAvatarInitials) {
+                headerAvatarInitials.classList.remove('hidden');
+            }
+            if (userInitials) {
+                const initials = this.getInitials(this.app.userProfile.name || 'User');
+                userInitials.textContent = initials;
+            }
         }
 
         // Update profile page avatar

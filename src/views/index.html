@@ -116,8 +116,11 @@
 
                     <div id="userProfile" class="nav-item dropdown me-3" title="Click to edit profile">
                         <a class="nav-link dropdown-toggle d-flex align-items-center text-white" href="#" data-bs-toggle="dropdown">
-                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                <span id="userInitials" class="text-primary fw-bold">AD</span>
+                            <div class="position-relative me-2" style="width: 32px; height: 32px;">
+                                <img id="headerAvatarImage" src="" alt="Avatar" class="rounded-circle hidden" style="width: 32px; height: 32px; object-fit: cover;">
+                                <div id="headerAvatarInitials" class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <span id="userInitials" class="text-primary fw-bold">AD</span>
+                                </div>
                             </div>
                             <div class="d-none d-md-block">
                                 <div id="userName" class="small">Admin User</div>
@@ -809,7 +812,113 @@
                         <div class="tab-content" id="settingsTabContent">
                             <!-- Spaces Management Tab -->
                             <div class="tab-pane fade show active" id="spaces-panel" role="tabpanel">
-                                <div class="card">
+                                <!-- Edit Space Form (Hidden by default) -->
+                                <div id="editSpaceFormContainer" class="card mb-3 hidden">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-pencil-square me-2"></i>Edit Space
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="inlineEditSpaceForm">
+                                            <input type="hidden" id="editSpaceId" name="spaceId">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceName" class="form-label">Space Name</label>
+                                                    <input type="text" class="form-control" id="editSpaceName" name="spaceName" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceType" class="form-label">Type</label>
+                                                    <select class="form-select" id="editSpaceType" name="spaceType" required>
+                                                        <option value="personal">Personal</option>
+                                                        <option value="shared">Shared</option>
+                                                        <option value="readonly">Read-Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="editSpaceDescription" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="editSpaceDescription" name="spaceDescription" rows="2"></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="editSpacePath" class="form-label">Folder Path</label>
+                                                    <input type="text" class="form-control" id="editSpacePath" name="spacePath" required>
+                                                    <div class="form-text">If you change the path and the new folder is empty, it will be initialized with template files</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceVisibility" class="form-label">Visibility</label>
+                                                    <select class="form-select" id="editSpaceVisibility" name="spaceVisibility" required>
+                                                        <option value="private">Private</option>
+                                                        <option value="team">Team</option>
+                                                        <option value="public">Public</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-circle me-1"></i>Update Space
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="cancelEditSpaceBtn">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Create Space Form (Hidden by default) -->
+                                <div id="createSpaceFormContainer" class="card mb-3 hidden">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-plus-circle me-2"></i>Create New Space
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="inlineCreateSpaceForm">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceName" class="form-label">Space Name</label>
+                                                    <input type="text" class="form-control" id="newSpaceName" name="spaceName" required placeholder="e.g., Project Documentation">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceType" class="form-label">Type</label>
+                                                    <select class="form-select" id="newSpaceType" name="spaceType" required>
+                                                        <option value="personal">Personal</option>
+                                                        <option value="shared">Shared</option>
+                                                        <option value="readonly">Read-Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="newSpaceDescription" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="newSpaceDescription" name="spaceDescription" rows="2" placeholder="Describe the purpose of this space..."></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="newSpacePath" class="form-label">Folder Path</label>
+                                                    <input type="text" class="form-control" id="newSpacePath" name="spacePath" required placeholder="e.g., documents-projects">
+                                                    <div class="form-text">The directory where documents for this space will be stored</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceVisibility" class="form-label">Visibility</label>
+                                                    <select class="form-select" id="newSpaceVisibility" name="spaceVisibility" required>
+                                                        <option value="private">Private</option>
+                                                        <option value="team">Team</option>
+                                                        <option value="public">Public</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-circle me-1"></i>Create Space
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="cancelCreateSpaceBtn">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Spaces List -->
+                                <div class="card" id="spacesListCard">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">
                                             <i class="bi bi-folder2-open me-2"></i>Manage Spaces
