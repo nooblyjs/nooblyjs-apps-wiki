@@ -585,8 +585,7 @@ module.exports = (options, eventEmitter, services) => {
         updatedAt: new Date().toISOString()
       };
       await dataManager.write('activity', [activityData]);
-
-      logger.info('Activity data saved successfully');
+      
       res.json({ success: true });
     } catch (error) {
       logger.error('Error saving activity data:', error);
