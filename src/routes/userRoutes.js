@@ -324,7 +324,7 @@ module.exports = (options, eventEmitter, services) => {
       const user = req.user;
       const fileExtension = path.extname(req.file.originalname) || '.png';
       const fileName = `avatar-${user.id}${fileExtension}`;
-      const mediaDir = path.join(process.cwd(), '.application', 'wiki-data', 'media');
+      const mediaDir = path.join(process.cwd(), '.application', '', 'media');
       const filePath = path.join(mediaDir, fileName);
 
       // Ensure media directory exists
@@ -366,7 +366,7 @@ module.exports = (options, eventEmitter, services) => {
   app.get('/applications/wiki/media/:filename', async (req, res) => {
     try {
       const fileName = req.params.filename;
-      const mediaDir = path.join(process.cwd(), '.application', 'wiki-data', 'media');
+      const mediaDir = path.join(process.cwd(), '.application', '', 'media');
       const filePath = path.join(mediaDir, fileName);
 
       // Check if file exists

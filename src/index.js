@@ -31,7 +31,7 @@ const DataManager = require('./components/dataManager');
  */
 module.exports = (options, eventEmitter, serviceRegistry) => {
   
-  const dataDirectory = options.dataDirectory || './.application/wiki-data'
+  const dataDirectory = options.dataDirectory || './.application/'
   const filesDir = options.filesDir || './.application/wiki-files'
   const cacheProvider = options.filesDir || 'memory'
   const filerProvider = options.filesDir || 'local'

@@ -6,7 +6,7 @@
 const path = require('path');
 
 class DataManager {
-  constructor(dataDir = './application/wiki-data', filerService = null) {
+  constructor(dataDir = './application/', filerService = null) {
     this.dataDir = dataDir;
     this.filer = filerService;
   }
