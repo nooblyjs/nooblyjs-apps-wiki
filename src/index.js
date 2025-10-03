@@ -19,6 +19,7 @@ const Views = require('./views');
 const { initializeDocumentFiles } = require('./activities/documentContent');
 const { processTask } = require('./activities/taskProcessor');
 const DataManager = require('./components/dataManager');
+const AIService = require('./components/aiService');
 
 /**
  * Creates the wiki service
@@ -45,6 +46,7 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   const logger = serviceRegistry.logger(loggerProvider);
   const queue = serviceRegistry.queue(queueProvider);
   const search = serviceRegistry.searching(searchProvider);
+  const aiService = new AIService(serviceRegistry, dataManager, logger);
   
   // Initialize wiki data if not exists
   (async () => {
@@ -54,18 +56,18 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
       logger.error('Failed to initialize wiki data:', error);
     }
   })();
-  
+
   // Start background queue worker
-  startQueueWorker({ dataManager, filing, cache, logger, queue, search });
-  
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search, aiService });
+
   // Register routes and views
-  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
-  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search });
+  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
 }
 
 /**

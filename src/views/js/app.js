@@ -5,6 +5,7 @@ import { searchController } from "./modules/searchcontroller.js";
 import { userController } from "./modules/usercontroller.js";
 import { templatesController } from "./modules/templatescontroller.js";
 import { settingsController } from "./modules/settingscontroller.js";
+import { aiChatController } from "./modules/aichatcontroller.js";
 
 /**
  * @fileoverview Updated Wiki Application with new layout
@@ -43,6 +44,7 @@ class WikiApp {
         userController.init(this);
         templatesController.init(this);
         settingsController.init(this);
+        aiChatController.init(this);
 
         this.init();
     }

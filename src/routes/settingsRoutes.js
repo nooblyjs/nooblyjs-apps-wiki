@@ -19,7 +19,7 @@
  */
 module.exports = (options, eventEmitter, services) => {
   const app = options;
-  const { dataManager, filing, cache, logger, queue, search } = services;
+  const { dataManager, filing, cache, logger, queue, search, aiService } = services;
 
   // Get AI settings
   app.get('/applications/wiki/api/settings/ai', async (req, res) => {
@@ -155,28 +155,24 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { provider, apiKey, model } = req.body;
+      const { provider, apiKey, model, endpoint } = req.body;
 
       if (!provider || !apiKey) {
         return res.status(400).json({ error: 'Provider and API key are required' });
       }
 
-      // TODO: Implement actual API testing based on provider
-      // For now, just simulate a successful test
       logger.info(`Testing ${provider} connection for user ${req.user.id}`);
 
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use AI service to test the connection
+      const result = await aiService.testConnection(provider, apiKey, model, endpoint);
 
-      res.json({
-        success: true,
-        message: 'Connection test successful',
-        provider,
-        model
-      });
+      res.json(result);
     } catch (error) {
       logger.error('Error testing AI connection:', error);
-      res.status(500).json({ error: 'Failed to test AI connection' });
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to test AI connection'
+      });
     }
   });
 };

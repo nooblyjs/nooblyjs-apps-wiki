@@ -569,10 +569,10 @@ export const settingsController = {
             provider: formData.get('llmProvider'),
             apiKey: formData.get('aiApiKey'),
             model: formData.get('llmModel'),
-            temperature: parseFloat(formData.get('llmTemperature')),
-            maxTokens: parseInt(formData.get('llmMaxTokens')),
-            endpoint: formData.get('llmEndpoint'),
-            enabled: formData.has('enableAI')
+            temperature: parseFloat(formData.get('llmTemperature')) || 0.7,
+            maxTokens: parseInt(formData.get('llmMaxTokens')) || 4096,
+            endpoint: formData.get('llmEndpoint') || '',
+            enabled: document.getElementById('enableAI').checked
         };
 
         try {
@@ -588,6 +588,11 @@ export const settingsController = {
 
             if (result.success) {
                 this.app.showNotification('AI settings saved successfully!', 'success');
+
+                // Refresh AI chat status
+                if (window.wikiApp && window.wikiApp.aiChatController) {
+                    await window.wikiApp.aiChatController.checkAIStatus();
+                }
             } else {
                 throw new Error(result.error || 'Failed to save AI settings');
             }
@@ -632,14 +637,15 @@ export const settingsController = {
                 body: JSON.stringify({
                     provider,
                     apiKey,
-                    model: document.getElementById('llmModel').value
+                    model: document.getElementById('llmModel').value,
+                    endpoint: document.getElementById('llmEndpoint').value
                 })
             });
 
             const result = await response.json();
 
             if (result.success) {
-                this.app.showNotification('Connection successful!', 'success');
+                this.app.showNotification(`Connection successful! Model: ${result.model}`, 'success');
             } else {
                 throw new Error(result.error || 'Connection test failed');
             }

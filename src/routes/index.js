@@ -42,6 +42,7 @@ module.exports = (options, eventEmitter, services) => {
   const userRoutes = require('./userRoutes');
   const wizardRoutes = require('./wizardRoutes');
   const settingsRoutes = require('./settingsRoutes');
+  const aiChatRoutes = require('./aiChatRoutes');
 
   // Register all routes
   documentRoutes(app, eventEmitter, services);
@@ -51,5 +52,6 @@ module.exports = (options, eventEmitter, services) => {
   userRoutes(app, eventEmitter, services);
   wizardRoutes(app, eventEmitter, services);
   settingsRoutes(app, eventEmitter, services);
+  aiChatRoutes(app, eventEmitter, services);
 
 };
