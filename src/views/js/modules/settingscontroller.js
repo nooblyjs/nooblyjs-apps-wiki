@@ -185,7 +185,7 @@ export const settingsController = {
                     </small>
                 </div>
                 <button class="btn btn-sm btn-outline-danger activity-remove-btn" data-activity-type="${type}" data-activity-index="${index}">
-                    <i class="bi bi-x"></i>
+                    <i class="bi bi-trash me-1"></i>
                 </button>
             </div>
         `).join('');
