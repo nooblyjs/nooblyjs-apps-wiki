@@ -6,9 +6,11 @@
     <title>Wiki</title>
     <link rel="stylesheet" href="/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
 
     <!-- Bootstrap 5 JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body>
     <!-- Login/Register Page -->
@@ -519,8 +521,11 @@
                                     <div class="card">
                                         <div class="card-body text-center">
                                             <div class="mb-3">
-                                                <div class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
-                                                    <span id="profileInitials" class="text-white fw-bold fs-1">AD</span>
+                                                <div id="profileAvatarContainer" class="position-relative d-inline-block">
+                                                    <img id="profileAvatarImage" src="" alt="Avatar" class="rounded-circle hidden" style="width: 120px; height: 120px; object-fit: cover;">
+                                                    <div id="profileAvatarInitials" class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                                        <span id="profileInitials" class="text-white fw-bold fs-1">AD</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <button type="button" id="changeAvatarBtn" class="btn btn-outline-primary btn-sm">
@@ -1103,6 +1108,38 @@
                     <button type="submit" class="btn btn-primary">Rename</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div id="avatarUploadModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title">Change Avatar</h5>
+                <button id="closeAvatarModal" class="modal-close btn btn-link text-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="avatarFileInput" class="form-label">Select Image</label>
+                    <input type="file" class="form-control" id="avatarFileInput" accept="image/*">
+                    <div class="form-text">Select a JPG, PNG, or GIF image</div>
+                </div>
+
+                <div id="avatarCropContainer" class="hidden mb-3">
+                    <div class="text-center mb-2">
+                        <small class="text-muted">Drag to reposition, scroll to zoom</small>
+                    </div>
+                    <div style="max-height: 400px; overflow: hidden;">
+                        <img id="avatarImageToCrop" style="max-width: 100%; display: block;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" id="cancelAvatarUpload" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="saveAvatarBtn" class="btn btn-primary hidden">Save Avatar</button>
+            </div>
         </div>
     </div>
 

@@ -135,10 +135,31 @@ export const userController = {
             userInitials.textContent = initials;
         }
 
-        // Update modal profile
+        // Update profile page avatar
+        const profileAvatarImage = document.getElementById('profileAvatarImage');
+        const profileAvatarInitials = document.getElementById('profileAvatarInitials');
         const profileInitials = document.getElementById('profileInitials');
-        if (profileInitials) {
-            profileInitials.textContent = this.getInitials(this.app.userProfile.name || 'User');
+
+        if (this.app.userProfile.avatar) {
+            // Show avatar image, hide initials
+            if (profileAvatarImage) {
+                profileAvatarImage.src = this.app.userProfile.avatar;
+                profileAvatarImage.classList.remove('hidden');
+            }
+            if (profileAvatarInitials) {
+                profileAvatarInitials.classList.add('hidden');
+            }
+        } else {
+            // Show initials, hide avatar image
+            if (profileAvatarImage) {
+                profileAvatarImage.classList.add('hidden');
+            }
+            if (profileAvatarInitials) {
+                profileAvatarInitials.classList.remove('hidden');
+            }
+            if (profileInitials) {
+                profileInitials.textContent = this.getInitials(this.app.userProfile.name || 'User');
+            }
         }
     },
 
@@ -206,12 +227,12 @@ export const userController = {
             newForm.addEventListener('submit', (e) => this.handleUserProfileSubmit.call(this, e));
         }
 
-        // Change avatar button (placeholder)
+        // Change avatar button
         const avatarBtn = document.getElementById('changeAvatarBtn');
         if (avatarBtn) {
             avatarBtn.replaceWith(avatarBtn.cloneNode(true)); // Remove old listeners
             document.getElementById('changeAvatarBtn').addEventListener('click', () => {
-                this.app.showNotification('Avatar change feature coming soon!', 'info');
+                this.showAvatarUploadModal();
             });
         }
 
@@ -318,6 +339,159 @@ export const userController = {
             console.error('Error changing password:', error);
             this.app.showNotification('Failed to change password: ' + error.message, 'error');
         }
+    },
+
+    // Avatar upload methods
+    showAvatarUploadModal() {
+        this.app.showModal('avatarUploadModal');
+
+        // Reset file input
+        const fileInput = document.getElementById('avatarFileInput');
+        if (fileInput) fileInput.value = '';
+
+        // Hide crop container
+        const cropContainer = document.getElementById('avatarCropContainer');
+        if (cropContainer) cropContainer.classList.add('hidden');
+
+        const saveBtn = document.getElementById('saveAvatarBtn');
+        if (saveBtn) saveBtn.classList.add('hidden');
+
+        // Bind event listeners
+        this.bindAvatarModalEvents();
+    },
+
+    bindAvatarModalEvents() {
+        const fileInput = document.getElementById('avatarFileInput');
+        const closeBtn = document.getElementById('closeAvatarModal');
+        const cancelBtn = document.getElementById('cancelAvatarUpload');
+        const saveBtn = document.getElementById('saveAvatarBtn');
+
+        // File input change
+        if (fileInput) {
+            fileInput.replaceWith(fileInput.cloneNode(true));
+            document.getElementById('avatarFileInput').addEventListener('change', (e) => this.handleAvatarFileSelect(e));
+        }
+
+        // Close button
+        if (closeBtn) {
+            closeBtn.replaceWith(closeBtn.cloneNode(true));
+            document.getElementById('closeAvatarModal').addEventListener('click', () => {
+                this.closeAvatarModal();
+            });
+        }
+
+        // Cancel button
+        if (cancelBtn) {
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            document.getElementById('cancelAvatarUpload').addEventListener('click', () => {
+                this.closeAvatarModal();
+            });
+        }
+
+        // Save button
+        if (saveBtn) {
+            saveBtn.replaceWith(saveBtn.cloneNode(true));
+            document.getElementById('saveAvatarBtn').addEventListener('click', () => this.saveAvatar());
+        }
+    },
+
+    handleAvatarFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            this.app.showNotification('Please select an image file', 'error');
+            return;
+        }
+
+        // Read file and show cropper
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = document.getElementById('avatarImageToCrop');
+            img.src = event.target.result;
+
+            // Show crop container and save button
+            document.getElementById('avatarCropContainer').classList.remove('hidden');
+            document.getElementById('saveAvatarBtn').classList.remove('hidden');
+
+            // Destroy existing cropper if any
+            if (this.cropper) {
+                this.cropper.destroy();
+            }
+
+            // Initialize cropper
+            this.cropper = new Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: false,
+                cropBoxResizable: false,
+                toggleDragModeOnDblclick: false
+            });
+        };
+        reader.readAsDataURL(file);
+    },
+
+    async saveAvatar() {
+        if (!this.cropper) {
+            this.app.showNotification('No image to save', 'error');
+            return;
+        }
+
+        try {
+            // Get cropped canvas
+            const canvas = this.cropper.getCroppedCanvas({
+                width: 200,
+                height: 200,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            // Convert to blob
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('avatar', blob, 'avatar.png');
+
+                try {
+                    const response = await fetch('/applications/wiki/api/profile/avatar', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Update profile with new avatar URL
+                        this.app.userProfile.avatar = result.avatarUrl;
+                        this.updateUserProfileUI();
+                        this.app.showNotification('Avatar updated successfully!', 'success');
+                        this.closeAvatarModal();
+                    } else {
+                        throw new Error(result.error || 'Failed to upload avatar');
+                    }
+                } catch (error) {
+                    console.error('Error uploading avatar:', error);
+                    this.app.showNotification('Failed to upload avatar: ' + error.message, 'error');
+                }
+            }, 'image/png');
+        } catch (error) {
+            console.error('Error saving avatar:', error);
+            this.app.showNotification('Failed to save avatar: ' + error.message, 'error');
+        }
+    },
+
+    closeAvatarModal() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        this.app.hideModal('avatarUploadModal');
     },
 
     // Authentication methods

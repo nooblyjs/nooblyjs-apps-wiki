@@ -11,6 +11,9 @@
 
 const { readUsers, writeUsers } = require('../auth/passport-config');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
 
 /**
  * Configures and registers user routes with the Express application.
@@ -23,6 +26,26 @@ const bcrypt = require('bcryptjs');
 module.exports = (options, eventEmitter, services) => {
   const app = options;
   const { dataManager, filing, cache, logger, queue, search } = services;
+
+  // Configure multer for avatar uploads
+  const storage = multer.memoryStorage();
+  const upload = multer({
+    storage: storage,
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
 
   // Authentication endpoints
   app.post('/applications/wiki/login', (req, res) => {
@@ -278,6 +301,84 @@ module.exports = (options, eventEmitter, services) => {
         success: false,
         error: 'Internal server error'
       });
+    }
+  });
+
+  // Avatar upload endpoint
+  app.post('/applications/wiki/api/profile/avatar', upload.single('avatar'), async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded'
+        });
+      }
+
+      const user = req.user;
+      const fileExtension = path.extname(req.file.originalname) || '.png';
+      const fileName = `avatar-${user.id}${fileExtension}`;
+      const mediaDir = path.join(process.cwd(), '.application', 'wiki-data', 'media');
+      const filePath = path.join(mediaDir, fileName);
+
+      // Ensure media directory exists
+      try {
+        await fs.mkdir(mediaDir, { recursive: true });
+      } catch (err) {
+        logger.error('Error creating media directory:', err);
+      }
+
+      // Write file to disk
+      await fs.writeFile(filePath, req.file.buffer);
+
+      logger.info(`Avatar uploaded for user ${user.email}: ${fileName}`);
+
+      // Update user avatar in users.json
+      const users = await readUsers();
+      const userIndex = users.findIndex(u => u.id === user.id);
+
+      if (userIndex !== -1) {
+        users[userIndex].avatar = `/applications/wiki/media/${fileName}`;
+        await writeUsers(users);
+      }
+
+      res.json({
+        success: true,
+        message: 'Avatar uploaded successfully',
+        avatarUrl: `/applications/wiki/media/${fileName}`
+      });
+    } catch (error) {
+      logger.error('Avatar upload error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to upload avatar'
+      });
+    }
+  });
+
+  // Serve avatar images
+  app.get('/applications/wiki/media/:filename', async (req, res) => {
+    try {
+      const fileName = req.params.filename;
+      const mediaDir = path.join(process.cwd(), '.application', 'wiki-data', 'media');
+      const filePath = path.join(mediaDir, fileName);
+
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+        res.sendFile(filePath);
+      } catch (err) {
+        res.status(404).json({ error: 'Avatar not found' });
+      }
+    } catch (error) {
+      logger.error('Error serving avatar:', error);
+      res.status(500).json({ error: 'Failed to serve avatar' });
     }
   });
 
