@@ -41,6 +41,7 @@ module.exports = (options, eventEmitter, services) => {
   const navigationRoutes = require('./navigationRoutes');
   const userRoutes = require('./userRoutes');
   const wizardRoutes = require('./wizardRoutes');
+  const settingsRoutes = require('./settingsRoutes');
 
   // Register all routes
   documentRoutes(app, eventEmitter, services);
@@ -49,5 +50,6 @@ module.exports = (options, eventEmitter, services) => {
   navigationRoutes(app, eventEmitter, services);
   userRoutes(app, eventEmitter, services);
   wizardRoutes(app, eventEmitter, services);
+  settingsRoutes(app, eventEmitter, services);
 
 };

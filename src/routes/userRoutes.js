@@ -9,6 +9,9 @@
 
 'use strict';
 
+const { readUsers, writeUsers } = require('../auth/passport-config');
+const bcrypt = require('bcryptjs');
+
 /**
  * Configures and registers user routes with the Express application.
  *
@@ -47,72 +50,68 @@ module.exports = (options, eventEmitter, services) => {
     try {
       // Check if user is authenticated with Passport
       if (!req.isAuthenticated()) {
+        logger.warn('Profile request but user not authenticated');
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      // Get current user from Passport session
+      // Get current user from Passport session (from users.json)
       const currentUser = req.user;
-      const cacheKey = `wiki:user:profile:${currentUser.id}`;
-      let userProfile = await cache.get(cacheKey);
+      logger.info(`Loading profile for user: ${currentUser.email}, name: ${currentUser.name}`);
 
-      if (!userProfile) {
-        // Load from dataServe or create default profile
-        try {
-          userProfile = await dataManager.read(`userProfile_${currentUser.id}`);
-          if (!userProfile) {
-            // Create default user profile from current user
-            userProfile = {
-              id: currentUser.id,
-              username: currentUser.email,
-              name: currentUser.name || 'User',
-              email: currentUser.email,
-              role: 'administrator',
-              bio: 'System administrator of the wiki platform.',
-              location: '',
-              timezone: 'UTC',
-              preferences: {
-                emailNotifications: true,
-                darkMode: false,
-                defaultLanguage: 'en'
-              },
-              avatar: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-
-            // Save default profile
-            await dataManager.write(`userProfile_${currentUser.id}`, userProfile);
-            logger.info('Created default user profile');
-          }
-
-          // Cache for 30 minutes
-          await cache.put(cacheKey, userProfile, 1800);
-          logger.info('Loaded user profile from dataServe and cached');
-        } catch (error) {
-          logger.error('Error loading user profile from dataServe:', error);
-          // Return default profile without saving
-          userProfile = {
-            id: currentUser.id,
-            username: currentUser.email,
-            name: currentUser.name || 'User',
-            email: currentUser.email,
-            role: 'administrator',
+      // Load user preferences from userPreferences.json
+      let userPreferences;
+      try {
+        userPreferences = await dataManager.read(`userPreferences_${currentUser.id}`);
+        if (!userPreferences) {
+          // Create default preferences
+          userPreferences = {
+            userId: currentUser.id,
             bio: '',
             location: '',
             timezone: 'UTC',
-            preferences: {
-              emailNotifications: true,
-              darkMode: false,
-              defaultLanguage: 'en'
-            },
-            avatar: null,
+            emailNotifications: true,
+            darkMode: false,
+            defaultLanguage: 'en',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
+          await dataManager.write(`userPreferences_${currentUser.id}`, userPreferences);
+          logger.info(`Created default preferences for user ${currentUser.id}`);
         }
-      } else {
-        logger.info('Loaded user profile from cache');
+      } catch (error) {
+        logger.error('Error loading user preferences:', error);
+        // Use defaults
+        userPreferences = {
+          userId: currentUser.id,
+          bio: '',
+          location: '',
+          timezone: 'UTC',
+          emailNotifications: true,
+          darkMode: false,
+          defaultLanguage: 'en',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
       }
+
+      // Combine user data from users.json with preferences from userPreferences.json
+      const userProfile = {
+        id: currentUser.id,
+        name: currentUser.name || '',
+        email: currentUser.email,
+        role: 'administrator',
+        bio: userPreferences.bio || '',
+        location: userPreferences.location || '',
+        timezone: userPreferences.timezone || 'UTC',
+        preferences: {
+          emailNotifications: userPreferences.emailNotifications ?? true,
+          darkMode: userPreferences.darkMode ?? false,
+          defaultLanguage: userPreferences.defaultLanguage || 'en'
+        },
+        avatar: currentUser.avatar || null,
+        createdAt: currentUser.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
       res.json(userProfile);
     } catch (error) {
@@ -131,7 +130,6 @@ module.exports = (options, eventEmitter, services) => {
       const {
         name,
         email,
-        role,
         bio,
         location,
         timezone,
@@ -143,45 +141,65 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ error: 'Name and email are required' });
       }
 
-      // Get current user and profile
       const currentUser = req.user;
-      let currentProfile;
-      try {
-        currentProfile = await dataManager.read(`userProfile_${currentUser.id}`);
-      } catch (error) {
-        logger.warn('No existing user profile found, creating new one');
+
+      // Update name and email in users.json
+      const users = await readUsers();
+      const userIndex = users.findIndex(u => u.id === currentUser.id);
+
+      if (userIndex === -1) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
-      // Create updated profile
-      const updatedProfile = {
-        ...(currentProfile || {}),
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        role: role || 'administrator',
+      users[userIndex].name = name.trim();
+      users[userIndex].email = email.trim().toLowerCase();
+      await writeUsers(users);
+
+      logger.info(`Updated user data in users.json for ${email}`);
+
+      // Update preferences in userPreferences.json
+      let userPreferences;
+      try {
+        userPreferences = await dataManager.read(`userPreferences_${currentUser.id}`);
+      } catch (error) {
+        logger.info('No existing preferences, creating new');
+      }
+
+      const updatedPreferences = {
+        ...(userPreferences || {}),
+        userId: currentUser.id,
         bio: bio || '',
         location: location || '',
         timezone: timezone || 'UTC',
-        preferences: {
-          emailNotifications: preferences?.emailNotifications ?? true,
-          darkMode: preferences?.darkMode ?? false,
-          defaultLanguage: preferences?.defaultLanguage || 'en'
-        },
+        emailNotifications: preferences?.emailNotifications ?? true,
+        darkMode: preferences?.darkMode ?? false,
+        defaultLanguage: preferences?.defaultLanguage || 'en',
         updatedAt: new Date().toISOString(),
-        // Preserve existing fields
-        id: currentUser.id,
-        username: currentUser.email,
-        avatar: currentProfile?.avatar || null,
-        createdAt: currentProfile?.createdAt || new Date().toISOString()
+        createdAt: userPreferences?.createdAt || new Date().toISOString()
       };
 
-      // Save updated profile
-      await dataManager.write(`userProfile_${currentUser.id}`, updatedProfile);
+      await dataManager.write(`userPreferences_${currentUser.id}`, updatedPreferences);
 
-      // Clear cache to force refresh
-      const cacheKey = `wiki:user:profile:${currentUser.id}`;
-      await cache.delete(cacheKey);
+      logger.info(`Updated user preferences for user ${currentUser.id}`);
 
-      logger.info(`Updated user profile for ${currentUser.email}: ${name}`);
+      // Return combined profile
+      const updatedProfile = {
+        id: currentUser.id,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        role: 'administrator',
+        bio: updatedPreferences.bio,
+        location: updatedPreferences.location,
+        timezone: updatedPreferences.timezone,
+        preferences: {
+          emailNotifications: updatedPreferences.emailNotifications,
+          darkMode: updatedPreferences.darkMode,
+          defaultLanguage: updatedPreferences.defaultLanguage
+        },
+        avatar: currentUser.avatar || null,
+        createdAt: currentUser.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
       res.json({
         success: true,
@@ -191,6 +209,75 @@ module.exports = (options, eventEmitter, services) => {
     } catch (error) {
       logger.error('Error updating user profile:', error);
       res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+
+  // Password change endpoint
+  app.post('/applications/wiki/api/profile/change-password', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: 'Current password and new password are required'
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'New password must be at least 6 characters'
+        });
+      }
+
+      // Verify current password
+      const user = req.user;
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+          error: 'Current password is incorrect'
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password in users.json
+      const users = await readUsers();
+      const userIndex = users.findIndex(u => u.id === user.id);
+
+      if (userIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      users[userIndex].password = hashedPassword;
+      await writeUsers(users);
+
+      logger.info(`Password changed successfully for user ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } catch (error) {
+      logger.error('Change password error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
     }
   });
 

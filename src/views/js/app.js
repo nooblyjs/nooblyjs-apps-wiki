@@ -4,6 +4,7 @@ import { documentController } from "./modules/documentcontroller.js";
 import { searchController } from "./modules/searchcontroller.js";
 import { userController } from "./modules/usercontroller.js";
 import { templatesController } from "./modules/templatescontroller.js";
+import { settingsController } from "./modules/settingscontroller.js";
 
 /**
  * @fileoverview Updated Wiki Application with new layout
@@ -41,6 +42,7 @@ class WikiApp {
         searchController.init(this);
         userController.init(this);
         templatesController.init(this);
+        settingsController.init(this);
 
         this.init();
     }
@@ -147,9 +149,16 @@ class WikiApp {
             userController.handleLogout();
         });
 
-        // User profile click
-        document.getElementById('userProfile')?.addEventListener('click', () => {
+        // User profile menu item click
+        document.getElementById('profileMenuItem')?.addEventListener('click', (e) => {
+            e.preventDefault();
             userController.showUserProfileModal();
+        });
+
+        // Settings menu item click
+        document.getElementById('settingsMenuItem')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            settingsController.showSettings();
         });
 
         // Sidebar collapsible sections

@@ -143,4 +143,71 @@ router.get('/check', (req, res) => {
   }
 });
 
+router.post('/change-password', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password and new password are required'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters'
+      });
+    }
+
+    // Verify current password
+    const user = req.user;
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in users file
+    const { readUsers, writeUsers } = require('./passport-config');
+    const users = await readUsers();
+    const userIndex = users.findIndex(u => u.id === user.id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    users[userIndex].password = hashedPassword;
+    await writeUsers(users);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 module.exports = router;

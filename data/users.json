@@ -1,12 +1,12 @@
 [
   {
-    "id": "1759425037808",
+    "id": "1759474034900",
     "email": "stephenrbooysen@gmail.com",
-    "password": "$2b$10$zEQjeIMq21JvIeOjWcjOgeKQuGKiTw/l/peL89wYHpIs4NWRnYYWK",
+    "password": "$2b$10$4XHfqGBFd0mdeeBGP/rA0.sYxxqQ1goZRlRJahH0nHl6K.wrTidU6",
     "name": "Stephen Booysen",
     "provider": "local",
     "initialized": true,
-    "createdAt": "2025-10-02T17:10:37.808Z",
-    "initializedAt": "2025-10-02T17:10:41.316Z"
+    "createdAt": "2025-10-03T06:47:14.900Z",
+    "initializedAt": "2025-10-03T06:47:19.814Z"
   }
 ]

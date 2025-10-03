@@ -88,25 +88,32 @@ export const userController = {
     // User Profile Management
     async loadUserProfile() {
         try {
+            console.log('Loading user profile...');
             const response = await fetch('/applications/wiki/api/profile');
+            console.log('Profile API response status:', response.status);
+
             if (response.ok) {
                 this.app.userProfile = await response.json();
+                console.log('User profile loaded:', this.app.userProfile);
                 this.updateUserProfileUI();
             } else {
-                console.warn('Failed to load user profile, using defaults');
+                const errorText = await response.text();
+                console.error('Failed to load user profile:', response.status, errorText);
+                console.warn('Using fallback profile');
+                // Use a minimal fallback - the API should create the profile on first access
                 this.app.userProfile = {
-                    name: 'Admin User',
-                    email: 'admin@example.com',
+                    name: 'User',
+                    email: 'user@example.com',
                     role: 'administrator'
                 };
                 this.updateUserProfileUI();
             }
         } catch (error) {
             console.error('Error loading user profile:', error);
-            // Use default profile
+            // Use minimal fallback profile
             this.app.userProfile = {
-                name: 'Admin User',
-                email: 'admin@example.com',
+                name: 'User',
+                email: 'user@example.com',
                 role: 'administrator'
             };
             this.updateUserProfileUI();
@@ -121,22 +128,22 @@ export const userController = {
         const userRole = document.getElementById('userRole');
         const userInitials = document.getElementById('userInitials');
 
-        if (userName) userName.textContent = this.app.userProfile.name || 'Admin User';
+        if (userName) userName.textContent = this.app.userProfile.name || 'User';
         if (userRole) userRole.textContent = this.capitalizeFirst(this.app.userProfile.role || 'administrator');
         if (userInitials) {
-            const initials = this.getInitials(this.app.userProfile.name || 'Admin User');
+            const initials = this.getInitials(this.app.userProfile.name || 'User');
             userInitials.textContent = initials;
         }
 
         // Update modal profile
         const profileInitials = document.getElementById('profileInitials');
         if (profileInitials) {
-            profileInitials.textContent = this.getInitials(this.app.userProfile.name || 'Admin User');
+            profileInitials.textContent = this.getInitials(this.app.userProfile.name || 'User');
         }
     },
 
     getInitials(name) {
-        if (!name) return 'AU';
+        if (!name) return 'U';
         return name.split(' ')
                    .map(part => part.charAt(0))
                    .join('')
@@ -168,34 +175,53 @@ export const userController = {
         document.getElementById('darkMode').checked = this.app.userProfile.preferences?.darkMode ?? false;
         document.getElementById('defaultLanguage').value = this.app.userProfile.preferences?.defaultLanguage || 'en';
 
-        // Show modal
-        this.app.showModal('userProfileModal');
+        // Update profile initials
+        const profileInitials = document.getElementById('profileInitials');
+        if (profileInitials) {
+            profileInitials.textContent = this.getInitials(this.app.userProfile.name || 'User');
+        }
+
+        // Show profile view
+        this.app.setActiveView('profile');
 
         // Bind form events
         this.bindUserProfileEvents();
     },
 
     bindUserProfileEvents() {
-        // Close modal events
-        document.getElementById('closeUserProfileModal')?.addEventListener('click', () => {
-            this.app.hideModal('userProfileModal');
-        });
-
-        document.getElementById('cancelUserProfile')?.addEventListener('click', () => {
-            this.app.hideModal('userProfileModal');
-        });
+        // Cancel button - go back to home
+        const cancelBtn = document.getElementById('cancelUserProfile');
+        if (cancelBtn) {
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('cancelUserProfile').addEventListener('click', () => {
+                this.app.showHome();
+            });
+        }
 
         // Form submission
         const form = document.getElementById('userProfileForm');
         if (form) {
-            form.removeEventListener('submit', this.handleUserProfileSubmit);
-            form.addEventListener('submit', (e) => this.handleUserProfileSubmit(e));
+            form.replaceWith(form.cloneNode(true)); // Remove old listeners
+            const newForm = document.getElementById('userProfileForm');
+            newForm.addEventListener('submit', (e) => this.handleUserProfileSubmit.call(this, e));
         }
 
         // Change avatar button (placeholder)
-        document.getElementById('changeAvatarBtn')?.addEventListener('click', () => {
-            this.app.showNotification('Avatar change feature coming soon!', 'info');
-        });
+        const avatarBtn = document.getElementById('changeAvatarBtn');
+        if (avatarBtn) {
+            avatarBtn.replaceWith(avatarBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('changeAvatarBtn').addEventListener('click', () => {
+                this.app.showNotification('Avatar change feature coming soon!', 'info');
+            });
+        }
+
+        // Password change form
+        const passwordForm = document.getElementById('changePasswordForm');
+        if (passwordForm) {
+            passwordForm.replaceWith(passwordForm.cloneNode(true)); // Remove old listeners
+            const newPasswordForm = document.getElementById('changePasswordForm');
+            newPasswordForm.addEventListener('submit', (e) => this.handlePasswordChange.call(this, e));
+        }
     },
 
     async handleUserProfileSubmit(e) {
@@ -230,7 +256,7 @@ export const userController = {
             if (result.success) {
                 this.app.userProfile = result.profile;
                 this.updateUserProfileUI();
-                this.app.hideModal('userProfileModal');
+                this.app.showHome();
                 this.app.showNotification('Profile updated successfully!', 'success');
             } else {
                 throw new Error(result.error || 'Failed to update profile');
@@ -238,6 +264,59 @@ export const userController = {
         } catch (error) {
             console.error('Error updating profile:', error);
             this.app.showNotification('Failed to update profile: ' + error.message, 'error');
+        }
+    },
+
+    async handlePasswordChange(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const currentPassword = formData.get('currentPassword');
+        const newPassword = formData.get('newPassword');
+        const confirmNewPassword = formData.get('confirmNewPassword');
+
+        // Only proceed if all password fields are filled
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            this.app.showNotification('Please fill in all password fields', 'error');
+            return;
+        }
+
+        // Validate passwords match
+        if (newPassword !== confirmNewPassword) {
+            this.app.showNotification('New passwords do not match', 'error');
+            return;
+        }
+
+        // Validate password length
+        if (newPassword.length < 6) {
+            this.app.showNotification('Password must be at least 6 characters long', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/applications/wiki/api/profile/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.app.showNotification('Password changed successfully!', 'success');
+                // Clear the form
+                e.target.reset();
+            } else {
+                throw new Error(result.error || 'Failed to change password');
+            }
+        } catch (error) {
+            console.error('Error changing password:', error);
+            this.app.showNotification('Failed to change password: ' + error.message, 'error');
         }
     },
 
