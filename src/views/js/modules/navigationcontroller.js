@@ -187,6 +187,52 @@ export const navigationController = {
                 this.showContextMenu(e, null, 'folder'); // null means root directory
             }
         });
+
+        // Drag and drop for folders
+        fileTree.querySelectorAll('.folder-item').forEach(folderItem => {
+            folderItem.setAttribute('draggable', 'true');
+
+            folderItem.addEventListener('dragstart', (e) => {
+                if (this.isReadOnlyMode) {
+                    e.preventDefault();
+                    return;
+                }
+                this.handleDragStart(e, folderItem.dataset.folderPath, 'folder');
+            });
+
+            folderItem.addEventListener('dragover', (e) => {
+                if (this.isReadOnlyMode) return;
+                this.handleDragOver(e);
+            });
+
+            folderItem.addEventListener('dragenter', (e) => {
+                if (this.isReadOnlyMode) return;
+                this.handleDragEnter(e, folderItem);
+            });
+
+            folderItem.addEventListener('dragleave', (e) => {
+                if (this.isReadOnlyMode) return;
+                this.handleDragLeave(e, folderItem);
+            });
+
+            folderItem.addEventListener('drop', (e) => {
+                if (this.isReadOnlyMode) return;
+                this.handleDrop(e, folderItem.dataset.folderPath, 'folder');
+            });
+        });
+
+        // Drag and drop for files
+        fileTree.querySelectorAll('.file-item').forEach(fileItem => {
+            fileItem.setAttribute('draggable', 'true');
+
+            fileItem.addEventListener('dragstart', (e) => {
+                if (this.isReadOnlyMode) {
+                    e.preventDefault();
+                    return;
+                }
+                this.handleDragStart(e, fileItem.dataset.documentPath, 'file');
+            });
+        });
     },
 
     // Selective tree update methods
@@ -516,6 +562,31 @@ export const navigationController = {
                 const folderPath = card.dataset.folderPath;
                 this.showContextMenu(e, folderPath, 'folder');
             });
+
+            // Drag and drop for folder cards
+            if (!this.isReadOnlyMode) {
+                card.setAttribute('draggable', 'true');
+
+                card.addEventListener('dragstart', (e) => {
+                    this.handleDragStart(e, card.dataset.folderPath, 'folder');
+                });
+
+                card.addEventListener('dragover', (e) => {
+                    this.handleDragOver(e);
+                });
+
+                card.addEventListener('dragenter', (e) => {
+                    this.handleDragEnter(e, card);
+                });
+
+                card.addEventListener('dragleave', (e) => {
+                    this.handleDragLeave(e, card);
+                });
+
+                card.addEventListener('drop', (e) => {
+                    this.handleDrop(e, card.dataset.folderPath, 'folder');
+                });
+            }
         });
 
         // File cards click events
@@ -557,6 +628,15 @@ export const navigationController = {
                 // Hide preview
                 this.hideFilePreview();
             });
+
+            // Drag and drop for file cards
+            if (!this.isReadOnlyMode) {
+                card.setAttribute('draggable', 'true');
+
+                card.addEventListener('dragstart', (e) => {
+                    this.handleDragStart(e, card.dataset.documentPath, 'file');
+                });
+            }
         });
 
         // Context menu for empty folder area (right-click on empty space)
@@ -1519,5 +1599,120 @@ export const navigationController = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    // Drag and Drop Methods
+    handleDragStart(e, itemPath, itemType) {
+        e.stopPropagation();
+
+        // Store drag data
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            sourcePath: itemPath,
+            itemType: itemType,
+            spaceId: this.app.currentSpace.id
+        }));
+
+        e.dataTransfer.effectAllowed = 'move';
+
+        // Add visual feedback - make the dragged element semi-transparent
+        e.target.style.opacity = '0.5';
+        e.target.classList.add('dragging');
+    },
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+    },
+
+    handleDragEnter(e, targetElement) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Add visual feedback to drop target
+        targetElement.classList.add('drag-over');
+    },
+
+    handleDragLeave(e, targetElement) {
+        e.stopPropagation();
+
+        // Remove visual feedback only if actually leaving the element
+        const rect = targetElement.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+
+        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+            targetElement.classList.remove('drag-over');
+        }
+    },
+
+    async handleDrop(e, targetPath, targetType) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Get drag data
+        const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const { sourcePath, itemType, spaceId } = dragData;
+
+        // Remove visual feedback from all elements
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        document.querySelectorAll('.dragging').forEach(el => {
+            el.style.opacity = '';
+            el.classList.remove('dragging');
+        });
+
+        // Validate drop target
+        if (targetType !== 'folder') {
+            console.log('Can only drop into folders');
+            return;
+        }
+
+        // Prevent dropping into the same location
+        const sourceParent = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : '';
+        if (sourceParent === targetPath) {
+            console.log('Already in this folder');
+            return;
+        }
+
+        // Prevent dropping folder into itself or its children
+        if (itemType === 'folder' && (targetPath === sourcePath || targetPath.startsWith(sourcePath + '/'))) {
+            this.app.showNotification('Cannot move a folder into itself', 'error');
+            return;
+        }
+
+        try {
+            // Call the move API
+            const response = await fetch('/applications/wiki/api/move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sourcePath: sourcePath,
+                    targetPath: targetPath,
+                    spaceId: spaceId,
+                    itemType: itemType
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.app.showNotification(`${itemType === 'folder' ? 'Folder' : 'File'} moved successfully`, 'success');
+
+                // Refresh the file tree
+                await this.loadFileTree();
+
+                // Reload the current folder view if we're in it
+                if (this.currentFolderPath !== undefined) {
+                    await this.loadFolderContent(this.currentFolderPath);
+                }
+            } else {
+                this.app.showNotification(result.message || 'Failed to move item', 'error');
+            }
+        } catch (error) {
+            console.error('Error moving item:', error);
+            this.app.showNotification('Failed to move item', 'error');
+        }
     }
 };

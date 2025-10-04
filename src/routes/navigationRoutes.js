@@ -450,4 +450,186 @@ module.exports = (options, eventEmitter, services) => {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
+
+  // Move file or folder endpoint (for drag and drop)
+  app.post('/applications/wiki/api/move', async (req, res) => {
+    try {
+      const { sourcePath, targetPath, spaceId, itemType } = req.body;
+
+      // Validation
+      if (!sourcePath || !spaceId || !itemType) {
+        return res.status(400).json({
+          success: false,
+          message: 'Source path, space ID, and item type are required'
+        });
+      }
+
+      if (!['file', 'folder'].includes(itemType)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Item type must be either "file" or "folder"'
+        });
+      }
+
+      logger.info(`Moving ${itemType}: ${sourcePath} to ${targetPath || 'root'} in space ${spaceId}`);
+
+      // Find the space
+      const spaces = await dataManager.read('spaces');
+      const space = spaces.find(s => s.id === parseInt(spaceId));
+
+      if (!space) {
+        return res.status(404).json({ success: false, message: 'Space not found' });
+      }
+
+      // Determine space base directory
+      const fs = require('fs').promises;
+      let spaceBaseDir;
+      if (space.path) {
+        spaceBaseDir = space.path;
+      } else {
+        const documentsDir = path.resolve(__dirname, '../../../documents');
+        spaceBaseDir = path.resolve(documentsDir, space.name);
+      }
+
+      // Build absolute paths
+      const sourceAbsolutePath = path.resolve(spaceBaseDir, sourcePath);
+
+      // Calculate destination path
+      let destinationAbsolutePath;
+      if (!targetPath || targetPath === '' || targetPath === '/') {
+        // Moving to root
+        const itemName = path.basename(sourcePath);
+        destinationAbsolutePath = path.resolve(spaceBaseDir, itemName);
+      } else {
+        // Moving to a folder
+        const itemName = path.basename(sourcePath);
+        destinationAbsolutePath = path.resolve(spaceBaseDir, targetPath, itemName);
+      }
+
+      // Security checks
+      if (!sourceAbsolutePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to move from outside space directory: ${sourcePath}`);
+        return res.status(403).json({ success: false, message: 'Access denied: Invalid source path' });
+      }
+
+      if (!destinationAbsolutePath.startsWith(spaceBaseDir)) {
+        logger.warn(`Blocked attempt to move to outside space directory: ${targetPath}`);
+        return res.status(403).json({ success: false, message: 'Access denied: Invalid destination path' });
+      }
+
+      // Prevent moving to same location
+      if (sourceAbsolutePath === destinationAbsolutePath) {
+        return res.status(400).json({
+          success: false,
+          message: 'Source and destination are the same'
+        });
+      }
+
+      // For folders: prevent moving into itself or its subdirectories
+      if (itemType === 'folder') {
+        if (destinationAbsolutePath.startsWith(sourceAbsolutePath + path.sep) ||
+            destinationAbsolutePath === sourceAbsolutePath) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot move a folder into itself or its subdirectories'
+          });
+        }
+      }
+
+      try {
+        // Check if source exists
+        await fs.access(sourceAbsolutePath);
+
+        // Check if destination already exists
+        try {
+          await fs.access(destinationAbsolutePath);
+          return res.status(409).json({
+            success: false,
+            message: `A ${itemType} with that name already exists at the destination`
+          });
+        } catch (existsError) {
+          // Good, destination doesn't exist
+        }
+
+        // Ensure destination directory exists
+        const destinationDir = path.dirname(destinationAbsolutePath);
+        await fs.mkdir(destinationDir, { recursive: true });
+
+        // Perform the move
+        await fs.rename(sourceAbsolutePath, destinationAbsolutePath);
+
+        // Calculate the new relative path for response (normalize to forward slashes)
+        const newRelativePath = path.relative(spaceBaseDir, destinationAbsolutePath).replace(/\\/g, '/');
+
+        // Update documents.json if this is a file or if it's a folder with documents inside
+        if (itemType === 'file' || itemType === 'folder') {
+          try {
+            const documents = await dataManager.read('documents');
+            let updated = false;
+
+            for (const doc of documents) {
+              // Check if this document's path needs updating
+              if (doc.spaceId === parseInt(spaceId)) {
+                const docFilePath = doc.filePath || doc.path;
+
+                // Normalize paths for comparison (ensure forward slashes)
+                const normalizedDocPath = docFilePath ? docFilePath.replace(/\\/g, '/') : '';
+                const normalizedSourcePath = sourcePath.replace(/\\/g, '/');
+
+                if (itemType === 'file' && normalizedDocPath === normalizedSourcePath) {
+                  // Update single file
+                  doc.filePath = newRelativePath;
+                  doc.path = newRelativePath;
+                  updated = true;
+                  logger.info(`Updated document metadata: ${sourcePath} -> ${newRelativePath}`);
+                } else if (itemType === 'folder' && normalizedDocPath && normalizedDocPath.startsWith(normalizedSourcePath + '/')) {
+                  // Update files within moved folder
+                  const relativePart = normalizedDocPath.substring(normalizedSourcePath.length + 1);
+                  const newDocPath = path.join(newRelativePath, relativePart).replace(/\\/g, '/');
+                  doc.filePath = newDocPath;
+                  doc.path = newDocPath;
+                  updated = true;
+                  logger.info(`Updated document metadata: ${docFilePath} -> ${newDocPath}`);
+                }
+              }
+            }
+
+            if (updated) {
+              await dataManager.write('documents', documents);
+              logger.info(`Updated documents.json after moving ${itemType}`);
+            }
+          } catch (docError) {
+            logger.warn(`Failed to update documents.json: ${docError.message}`);
+            // Don't fail the whole operation if metadata update fails
+          }
+        }
+
+        logger.info(`Successfully moved ${itemType} from ${sourcePath} to ${newRelativePath}`);
+
+        res.json({
+          success: true,
+          message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} moved successfully`,
+          newPath: newRelativePath
+        });
+
+      } catch (fileError) {
+        logger.error(`Failed to move ${itemType} ${sourcePath}:`, fileError);
+        if (fileError.code === 'ENOENT') {
+          res.status(404).json({
+            success: false,
+            message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} not found`
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: `Failed to move ${itemType}: ` + fileError.message
+          });
+        }
+      }
+
+    } catch (error) {
+      logger.error('Error in move endpoint:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
 };

@@ -392,6 +392,34 @@ body {
   min-width: 0; /* Important for text-overflow to work in flex containers */
 }
 
+/* Drag and Drop Styles */
+.folder-item.dragging,
+.file-item.dragging {
+  opacity: 0.5;
+  cursor: move;
+}
+
+.folder-item.drag-over {
+  background-color: var(--bs-primary);
+  color: white;
+  outline: 2px dashed var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.folder-item.drag-over .bi-folder {
+  color: white;
+}
+
+.folder-item[draggable="true"],
+.file-item[draggable="true"] {
+  cursor: grab;
+}
+
+.folder-item[draggable="true"]:active,
+.file-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
 .empty-tree {
   text-align: center;
   padding: 2rem 1rem;
@@ -470,6 +498,37 @@ body {
   box-shadow: var(--app-shadow);
   transform: translateY(-1px);
   border-color: var(--bs-primary);
+}
+
+/* Drag and Drop Styles for Cards */
+.item-card.dragging {
+  opacity: 0.5;
+  cursor: move;
+}
+
+.item-card.drag-over {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+  outline: 2px dashed var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.item-card.drag-over .item-name,
+.item-card.drag-over .item-meta {
+  color: white;
+}
+
+.item-card.drag-over .item-icon {
+  color: white;
+}
+
+.item-card[draggable="true"] {
+  cursor: grab;
+}
+
+.item-card[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 .item-icon {
