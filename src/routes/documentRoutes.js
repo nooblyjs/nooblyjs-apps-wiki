@@ -958,4 +958,100 @@ ${documentPath}\
       res.status(500).json({ success: false, error: 'Failed to upload file' });
     }
   });
+
+  // Convert Office documents to Markdown
+  app.post('/applications/wiki/api/documents/convert-to-markdown', async (req, res) => {
+    try {
+      const { path: documentPath, spaceName } = req.body;
+
+      if (!documentPath || !spaceName) {
+        return res.status(400).json({ success: false, error: 'Document path and space name are required' });
+      }
+
+      logger.info(`Converting document to markdown: ${documentPath} in space: ${spaceName}`);
+
+      // Get the absolute path to the document
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          success: false,
+          error: pathError.message
+        });
+      }
+
+      // Check if file exists
+      try {
+        await fs.access(absolutePath);
+      } catch (error) {
+        return res.status(404).json({ success: false, error: 'File not found' });
+      }
+
+      // Determine file type and use appropriate processor
+      const ext = path.extname(absolutePath).toLowerCase();
+      let markdown = '';
+      let processor = null;
+
+      try {
+        if (ext === '.docx' || ext === '.doc') {
+          processor = require('../processing/docxprocessor');
+          markdown = await processor.convertToMarkdown(absolutePath);
+        } else if (ext === '.xlsx' || ext === '.xls') {
+          processor = require('../processing/xlsxprocessor');
+          markdown = await processor.convertToMarkdown(absolutePath);
+        } else if (ext === '.pptx' || ext === '.ppt') {
+          processor = require('../processing/pptxprocessor');
+          markdown = await processor.convertToMarkdown(absolutePath);
+        } else {
+          return res.status(400).json({ success: false, error: 'Unsupported file type for conversion' });
+        }
+      } catch (conversionError) {
+        logger.error(`Conversion failed: ${conversionError.message}`);
+        return res.status(500).json({ success: false, error: `Conversion failed: ${conversionError.message}` });
+      }
+
+      // Create .originals folder if it doesn't exist
+      const originalsDir = path.join(documentsDir, '.originals');
+      await fs.mkdir(originalsDir, { recursive: true });
+
+      // Copy original file to .originals folder
+      const originalFileName = path.basename(absolutePath);
+      const originalBackupPath = path.join(originalsDir, originalFileName);
+      await fs.copyFile(absolutePath, originalBackupPath);
+
+      logger.info(`Backed up original file to: ${originalBackupPath}`);
+
+      // Create markdown file with same name but .md extension
+      const fileNameWithoutExt = path.basename(documentPath, ext);
+      const markdownFileName = `${fileNameWithoutExt}.md`;
+      const markdownPath = path.join(path.dirname(absolutePath), markdownFileName);
+
+      // Write markdown content
+      await fs.writeFile(markdownPath, markdown, 'utf8');
+
+      logger.info(`Created markdown file: ${markdownPath}`);
+
+      // Delete the original file
+      await fs.unlink(absolutePath);
+
+      logger.info(`Deleted original file: ${absolutePath}`);
+
+      // Calculate the relative path for the markdown file
+      const relativePath = path.relative(documentsDir, markdownPath);
+      const markdownRelativePath = relativePath.split(path.sep).join('/');
+
+      res.json({
+        success: true,
+        message: 'Document converted to markdown successfully',
+        markdownPath: markdownRelativePath,
+        originalBackupPath: path.relative(documentsDir, originalBackupPath).split(path.sep).join('/')
+      });
+
+    } catch (error) {
+      logger.error('Error converting document to markdown:', error);
+      res.status(500).json({ success: false, error: 'Failed to convert document' });
+    }
+  });
 };

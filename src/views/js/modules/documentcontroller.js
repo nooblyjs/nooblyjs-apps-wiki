@@ -188,6 +188,9 @@ export const documentController = {
         // Setup download button functionality
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
 
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
         // Setup star button functionality
         this.setupStarButton(doc);
 
@@ -235,6 +238,9 @@ export const documentController = {
 
         // Setup download button functionality
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
+
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
 
         // Setup star button functionality
         this.setupStarButton(doc);
@@ -293,6 +299,9 @@ export const documentController = {
         // Setup download button functionality
         const downloadUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}&download=true`;
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
+
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
 
         // Setup star button functionality
         this.setupStarButton(doc);
@@ -368,6 +377,9 @@ export const documentController = {
         const downloadUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}&download=true`;
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
 
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
         // Setup star button functionality
         this.setupStarButton(doc);
 
@@ -425,6 +437,9 @@ export const documentController = {
         const downloadUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}&download=true`;
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
 
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
         // Setup star button functionality
         this.setupStarButton(doc);
 
@@ -478,6 +493,9 @@ export const documentController = {
         // Setup download button functionality
         this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
 
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
         // Setup star button functionality
         this.setupStarButton(doc);
 
@@ -521,6 +539,67 @@ export const documentController = {
                 link.click();
                 document.body.removeChild(link);
             };
+        }
+    },
+
+    /**
+     * Helper method to setup convert to markdown button functionality
+     */
+    setupConvertButton(documentData) {
+        const convertBtn = document.getElementById('convertToMarkdownBtn');
+        if (!convertBtn) return;
+
+        // Check if file is convertible (docx, pptx, xlsx)
+        const ext = documentData.metadata?.extension?.toLowerCase();
+        const isConvertible = ['.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls'].includes(ext);
+
+        if (isConvertible) {
+            convertBtn.style.display = 'inline-block';
+            convertBtn.onclick = async (e) => {
+                e.preventDefault();
+                await this.convertToMarkdown(documentData);
+            };
+        } else {
+            convertBtn.style.display = 'none';
+        }
+    },
+
+    /**
+     * Convert document to markdown
+     */
+    async convertToMarkdown(documentData) {
+        try {
+            this.app.showNotification('Converting to markdown...', 'info');
+
+            const response = await fetch('/applications/wiki/api/documents/convert-to-markdown', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    path: documentData.path,
+                    spaceName: documentData.spaceName
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.app.showNotification('Document converted successfully!', 'success');
+
+                // Reload the file tree to show the new markdown file
+                if (navigationController && navigationController.loadFileTree) {
+                    await navigationController.loadFileTree();
+                }
+
+                // Open the newly created markdown file
+                this.openDocumentByPath(result.markdownPath, documentData.spaceName);
+            } else {
+                throw new Error(result.error || 'Conversion failed');
+            }
+        } catch (error) {
+            console.error('Error converting to markdown:', error);
+            this.app.showNotification('Failed to convert document: ' + error.message, 'error');
         }
     },
 
