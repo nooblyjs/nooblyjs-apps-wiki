@@ -1,0 +1,24 @@
+#application specific
+documents/
+documents-readonly/
+documents-shared/
+.application/
+assets/
+posts/
+published-sites
+themes/
+templates/
+watch/
+data/
+
+#nodent goes here...
+node_modules/
+
+#electron
+dist/
+.DS_Store
+*.log
+
+#env
+.env
+*.env.*

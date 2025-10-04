@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+
+    <!-- Bootstrap 5 JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+</head>
+<body>
+    <!-- Login/Register Page -->
+    <div id="loginPage" class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+        <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-journal-bookmark fs-1 text-primary mb-3"></i>
+                    <h1 class="h3 mb-2">Wiki</h1>
+                    <p class="text-muted">Knowledge Management Platform</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div id="loginError" class="alert alert-danger hidden"></div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+
+                <!-- Register Form (Hidden by default) -->
+                <form id="registerForm" class="hidden">
+                    <div class="mb-3">
+                        <label for="registerName" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="registerName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="registerEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="registerPassword" name="password" minlength="6" required>
+                        <small class="form-text text-muted">Minimum 6 characters</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerPasswordConfirm" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="registerPasswordConfirm" name="passwordConfirm" minlength="6" required>
+                    </div>
+                    <div id="registerError" class="alert alert-danger hidden"></div>
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+
+                <!-- Toggle between Login and Register -->
+                <div class="text-center mt-3">
+                    <a href="#" id="toggleAuthMode" class="text-decoration-none">
+                        <small>Don't have an account? <span class="text-primary fw-bold">Register</span></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Wiki Application -->
+    <div id="wikiApp" class="hidden">
+        <!-- Header -->
+        <header class="navbar navbar-expand-lg app-header">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <i class="bi bi-journal-bookmark me-2"></i>
+                    <span>Wiki</span>
+                </a>
+
+                <!-- Search Bar -->
+                <div class="flex-grow-1 mx-4 position-relative">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-white-50">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="globalSearch" placeholder="Search knowledge base..." class="form-control search-input border-0">
+                    </div>
+                    <div id="searchSuggestions" class="position-absolute top-100 start-0 w-100 bg-white border shadow-sm hidden">
+                        <!-- Search suggestions will be populated here -->
+                    </div>
+                </div>
+
+                <!-- User Profile and Navigation -->
+                <div class="navbar-nav d-flex flex-row align-items-center">
+                    <!-- Create Dropdown -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="createDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Create
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="createDropdown">
+                            <li><a class="dropdown-item" href="#" id="createFolderMenuItem">
+                                <i class="bi bi-folder-plus me-2"></i>Create Folder
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="createFileMenuItem">
+                                <i class="bi bi-file-earmark-plus me-2"></i>Create File
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="uploadFileMenuItem">
+                                <i class="bi bi-upload me-2"></i>Upload File
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <!-- AI Chat Toggle Button -->
+                    <button class="btn btn-light btn-sm me-3" id="aiChatToggleBtn" title="Toggle AI Assistant">
+                        <i class="bi bi-robot"></i>
+                    </button>
+
+                    <div id="userProfile" class="nav-item dropdown me-3" title="Click to edit profile">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center text-white" href="#" data-bs-toggle="dropdown">
+                            <div class="position-relative me-2" style="width: 32px; height: 32px;">
+                                <img id="headerAvatarImage" src="" alt="Avatar" class="rounded-circle hidden" style="width: 32px; height: 32px; object-fit: cover;">
+                                <div id="headerAvatarInitials" class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <span id="userInitials" class="text-primary fw-bold">AD</span>
+                                </div>
+                            </div>
+                            <div class="d-none d-md-block">
+                                <div id="userName" class="small">Admin User</div>
+                                <div id="userRole" class="text-white-50" style="font-size: 0.75rem;">Administrator</div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="profileMenuItem"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#" id="settingsMenuItem"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="d-flex">
+            <!-- Left Sidebar -->
+            <aside id="leftSidebar" class="app-sidebar bg-light border-end p-3 overflow-auto">
+                <!-- Collapsible Shortcuts Section -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2" id="shortcutsHeader" data-bs-toggle="collapse" data-bs-target="#shortcutsContent" role="button">
+                        <i class="bi bi-chevron-down me-2"></i>
+                        <span class="fw-semibold text-uppercase small text-muted">Shortcuts</span>
+                    </div>
+                    <div id="shortcutsContent" class="collapse show">
+                        <nav class="nav flex-column">
+                            <a href="#" id="shortcutHome" class="nav-link text-dark d-flex align-items-center py-2 px-2 rounded">
+                                <i class="bi bi-house me-2"></i>
+                                <span>Home</span>
+                            </a>
+                            <a href="#" id="shortcutRecent" class="nav-link text-dark d-flex align-items-center py-2 px-2 rounded">
+                                <i class="bi bi-clock-history me-2"></i>
+                                <span>Recent</span>
+                            </a>
+                            <a href="#" id="shortcutStarred" class="nav-link text-dark d-flex align-items-center py-2 px-2 rounded">
+                                <i class="bi bi-star me-2"></i>
+                                <span>Starred</span>
+                            </a>
+                            <a href="#" id="shortcutTemplates" class="nav-link text-dark d-flex align-items-center py-2 px-2 rounded">
+                                <i class="bi bi-clipboard me-2"></i>
+                                <span>Templates</span>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Files Section -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-semibold text-uppercase small text-muted">Files</span>
+                        <div class="btn-group btn-group-sm">
+                            <button id="uploadBtn" class="btn btn-outline-secondary btn-sm" title="Upload File">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                            <button id="createFolderBtn" class="btn btn-outline-secondary btn-sm" title="New Folder">
+                                <i class="bi bi-folder-plus"></i>
+                            </button>
+                            <button id="createFileBtn" class="btn btn-outline-secondary btn-sm" title="New File">
+                                <i class="bi bi-file-plus"></i>
+                            </button>
+                            <button id="publishBtn" class="btn btn-outline-secondary btn-sm" title="Publish">
+                                <i class="bi bi-cloud-upload"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="fileTree" class="file-tree" style="min-height: 200px;">
+                        <!-- Loading placeholder -->
+                        <div class="placeholder-glow">
+                            <div class="placeholder col-10 mb-2"></div>
+                            <div class="placeholder col-8 mb-2 ms-3"></div>
+                            <div class="placeholder col-9 mb-2 ms-3"></div>
+                            <div class="placeholder col-7 mb-2"></div>
+                            <div class="placeholder col-11 mb-2 ms-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Spaces Section at Bottom -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2" id="spacesHeader" data-bs-toggle="collapse" data-bs-target="#spacesContent" role="button">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-chevron-down me-2"></i>
+                            <span class="fw-semibold text-uppercase small text-muted">Spaces</span>
+                        </div>
+                        <button id="createSpaceBtn" class="btn btn-outline-secondary btn-sm" title="New Space">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div id="spacesContent" class="collapse show">
+                        <div id="spacesList" class="nav flex-column">
+                            <!-- Loading placeholder -->
+                            <div class="placeholder-glow">
+                                <div class="d-flex align-items-center mb-2 p-2">
+                                    <div class="placeholder rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                                    <div class="placeholder col-8"></div>
+                                </div>
+                                <div class="d-flex align-items-center mb-2 p-2">
+                                    <div class="placeholder rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                                    <div class="placeholder col-7"></div>
+                                </div>
+                                <div class="d-flex align-items-center mb-2 p-2">
+                                    <div class="placeholder rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                                    <div class="placeholder col-9"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Resize Handle -->
+            <div id="sidebarResizeHandle" class="sidebar-resize-handle"></div>
+
+            <!-- Main Content Area -->
+            <main id="mainContent" class="app-main p-4 overflow-auto">
+                <!-- Home View -->
+                <div id="homeView" class="view">
+                    <div class="mb-4">
+                        <h1 id="workspaceTitle" class="h2 mb-1">Welcome to the Wiki</h1>
+                        <p id="workspaceSubtitle" class="text-muted">Your documentation workspace dashboard</p>
+                    </div>
+
+                    <!-- Home Content Area (for home.md) -->
+                    <div id="homeContentArea" class="mb-4 hidden">
+                        <div class="card">
+                            <div class="card-body markdown-content">
+                                <div id="homeContentBody">
+                                    <!-- home.md content will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Sections -->
+                    <div class="row g-4">
+                        <!-- Recent Files Section -->
+                        <div class="col-12 col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clock-history me-2 text-primary"></i>
+                                        <h5 class="mb-0">Recent Files</h5>
+                                    </div>
+                                    <button id="refreshRecentBtn" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentFilesContent">
+                                        <div class="text-center text-muted py-4">
+                                            <i class="bi bi-clock-history display-4 mb-2"></i>
+                                            <p>No recent markdown files found</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Starred Files Section -->
+                        <div class="col-12 col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-star me-2 text-warning"></i>
+                                        <h5 class="mb-0">Starred Files</h5>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="starredFilesContent">
+                                        <div class="text-center text-muted py-4">
+                                            <i class="bi bi-star display-4 mb-2"></i>
+                                            <p>No starred markdown files found</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Templates Section -->
+                        <div class="col-12" id="templatesSection">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clipboard me-2 text-success"></i>
+                                        <h5 class="mb-0">Templates</h5>
+                                    </div>
+                                    <button id="templatesNewBtn" class="btn btn-outline-success btn-sm" title="New Template">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="templatesContent">
+                                        <!-- Templates will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spaces View -->
+                <div id="spacesView" class="view hidden">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="h2">Spaces</h1>
+                        <button id="createSpaceFromView" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-2"></i>Create Space
+                        </button>
+                    </div>
+                    <div id="spacesGrid" class="row g-3">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Space Detail View -->
+                <div id="spaceView" class="view hidden">
+                    <div class="space-header">
+                        <nav class="breadcrumb">
+                            <a href="#" id="backToHome">Home</a>
+                            <span class="breadcrumb-separator">/</span>
+                            <span id="currentSpaceName"></span>
+                        </nav>
+                        <div class="space-actions">
+                            <button id="createDocInSpace" class="btn btn-primary">+ New Document</button>
+                            <button id="createFolderInSpace" class="btn btn-secondary">+ New Folder</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-content-sections">
+                        <!-- Recent Files in Space -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-history"></use>
+                                    </svg>
+                                    <h2>Recent Files</h2>
+                                </div>
+                            </div>
+                            <div id="spaceRecentFiles" class="files-grid">
+                                <!-- Recent files will be loaded here -->
+                            </div>
+                        </section>
+
+                        <!-- Starred Files in Space -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-star"></use>
+                                    </svg>
+                                    <h2>Starred Files</h2>
+                                </div>
+                            </div>
+                            <div id="spaceStarredFiles" class="files-grid">
+                                <!-- Starred files will be loaded here -->
+                            </div>
+                        </section>
+
+                        <!-- Root Files and Folders -->
+                        <section class="space-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <svg width="20" height="20" class="section-icon">
+                                        <use href="#icon-folder"></use>
+                                    </svg>
+                                    <h2>Files & Folders</h2>
+                                </div>
+                            </div>
+                            <div id="spaceRootItems" class="items-grid">
+                                <!-- Root level files and folders will be loaded here -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Editor View -->
+                <div id="editorView" class="view hidden">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <nav class="breadcrumb">
+                                <a href="#" id="editorBackToSpace" class="text-decoration-none">Space</a>
+                                <span class="breadcrumb-separator">/</span>
+                                <span id="editorDocTitle" class="text-muted"></span>
+                            </nav>
+                            <div class="editor-actions d-flex gap-2">
+                                <button id="saveDoc" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    Save
+                                </button>
+                                <button id="previewDoc" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-eye me-1"></i>
+                                    Preview
+                                </button>
+                                <button id="closeEditor" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-x-lg me-1"></i>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-main">
+                            <div id="markdownEditor" class="editor-pane">
+                                <div class="editor-toolbar">
+                                    <div class="toolbar-group">
+                                        <button id="boldBtn" class="btn btn-outline-secondary btn-sm" title="Bold (Ctrl+B)">
+                                            <i class="bi bi-type-bold"></i>
+                                        </button>
+                                        <button id="italicBtn" class="btn btn-outline-secondary btn-sm" title="Italic (Ctrl+I)">
+                                            <i class="bi bi-type-italic"></i>
+                                        </button>
+                                        <button id="codeBtn" class="btn btn-outline-secondary btn-sm" title="Inline Code">
+                                            <i class="bi bi-code"></i>
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button id="h1Btn" class="btn btn-outline-secondary btn-sm" title="Heading 1">H1</button>
+                                        <button id="h2Btn" class="btn btn-outline-secondary btn-sm" title="Heading 2">H2</button>
+                                        <button id="h3Btn" class="btn btn-outline-secondary btn-sm" title="Heading 3">H3</button>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    <div class="toolbar-group">
+                                        <button id="listBtn" class="btn btn-outline-secondary btn-sm" title="Unordered List">
+                                            <i class="bi bi-list-ul"></i>
+                                        </button>
+                                        <button id="numberedListBtn" class="btn btn-outline-secondary btn-sm" title="Ordered List">
+                                            <i class="bi bi-list-ol"></i>
+                                        </button>
+                                        <button id="linkBtn" class="btn btn-outline-secondary btn-sm" title="Link">
+                                            <i class="bi bi-link"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="editorTextarea" placeholder="Start writing..."></textarea>
+                            </div>
+                            <div id="previewPane" class="preview-pane hidden">
+                                <div class="preview-header">
+                                    <h3>Preview</h3>
+                                </div>
+                                <div id="previewContent" class="preview-content markdown-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document View -->
+                <div id="documentView" class="view hidden">
+                    <div class="document-container">
+                        <div class="document-header">
+                            <nav class="breadcrumb">
+                                <a href="#" id="docBackToSpace" class="text-decoration-none">Space</a>
+                                <span class="breadcrumb-separator">/</span>
+                                <span id="currentDocTitle" class="text-muted"></span>
+                            </nav>
+                            <div class="document-actions d-flex gap-2">
+                                <button id="editDocBtn" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    Edit
+                                </button>
+                                <button id="starDocBtn" class="btn btn-outline-secondary btn-sm star-btn">
+                                    <i class="bi bi-star me-1"></i>
+                                    <span class="star-text">Star</span>
+                                </button>
+                                <button id="convertToMarkdownBtn" class="btn btn-outline-primary btn-sm" style="display: none;">
+                                    <i class="bi bi-file-earmark-text me-1"></i>
+                                    Convert to Markdown
+                                </button>
+                                <button id="downloadDocBtn" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-download me-1"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Content will be inserted directly here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Search Results View -->
+                <div id="searchView" class="view hidden">
+                    <div class="view-header">
+                        <h1>Search Results</h1>
+                        <span id="searchQuery" class="search-query"></span>
+                    </div>
+                    <div id="searchResults" class="search-results">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- User Profile View -->
+                <div id="profileView" class="view hidden">
+                    <div class="container-fluid">
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h1 class="h2 mb-0">User Profile</h1>
+                                <p class="text-muted">Manage your account settings and preferences</p>
+                            </div>
+                        </div>
+
+                        <form id="userProfileForm">
+                            <div class="row g-4">
+                                <!-- Profile Information Card -->
+                                <div class="col-lg-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <div id="profileAvatarContainer" class="position-relative d-inline-block">
+                                                    <img id="profileAvatarImage" src="" alt="Avatar" class="rounded-circle hidden" style="width: 120px; height: 120px; object-fit: cover;">
+                                                    <div id="profileAvatarInitials" class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                                        <span id="profileInitials" class="text-white fw-bold fs-1">AD</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" id="changeAvatarBtn" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-camera me-1"></i>
+                                                Change Avatar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Profile Form -->
+                                <div class="col-lg-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="bi bi-person me-2"></i>
+                                                Personal Information
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="profileName" class="form-label">Full Name</label>
+                                                    <input type="text" class="form-control" id="profileName" name="profileName" required>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="profileEmail" class="form-label">Email Address</label>
+                                                    <input type="email" class="form-control" id="profileEmail" name="profileEmail" required>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="profileRole" class="form-label">Role</label>
+                                                    <select class="form-select" id="profileRole" name="profileRole">
+                                                        <option value="administrator">Administrator</option>
+                                                        <option value="editor">Editor</option>
+                                                        <option value="viewer">Viewer</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="profileLocation" class="form-label">
+                                                        <i class="bi bi-geo-alt me-1"></i>
+                                                        Location
+                                                    </label>
+                                                    <input type="text" class="form-control" id="profileLocation" name="profileLocation" placeholder="City, Country">
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label for="profileBio" class="form-label">
+                                                        <i class="bi bi-card-text me-1"></i>
+                                                        Bio
+                                                    </label>
+                                                    <textarea class="form-control" id="profileBio" name="profileBio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Preferences Card -->
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="bi bi-sliders me-2"></i>
+                                                Preferences
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="profileTimezone" class="form-label">
+                                                        <i class="bi bi-clock me-1"></i>
+                                                        Timezone
+                                                    </label>
+                                                    <select class="form-select" id="profileTimezone" name="profileTimezone">
+                                                        <option value="UTC">UTC</option>
+                                                        <optgroup label="Africa">
+                                                            <option value="Africa/Abidjan">Abidjan</option>
+                                                            <option value="Africa/Accra">Accra</option>
+                                                            <option value="Africa/Addis_Ababa">Addis Ababa</option>
+                                                            <option value="Africa/Algiers">Algiers</option>
+                                                            <option value="Africa/Cairo">Cairo</option>
+                                                            <option value="Africa/Casablanca">Casablanca</option>
+                                                            <option value="Africa/Johannesburg">Johannesburg</option>
+                                                            <option value="Africa/Lagos">Lagos</option>
+                                                            <option value="Africa/Nairobi">Nairobi</option>
+                                                            <option value="Africa/Tunis">Tunis</option>
+                                                        </optgroup>
+                                                        <optgroup label="America">
+                                                            <option value="America/Anchorage">Anchorage</option>
+                                                            <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                                                            <option value="America/Bogota">Bogota</option>
+                                                            <option value="America/Caracas">Caracas</option>
+                                                            <option value="America/Chicago">Chicago</option>
+                                                            <option value="America/Denver">Denver</option>
+                                                            <option value="America/Los_Angeles">Los Angeles</option>
+                                                            <option value="America/Mexico_City">Mexico City</option>
+                                                            <option value="America/New_York">New York</option>
+                                                            <option value="America/Phoenix">Phoenix</option>
+                                                            <option value="America/Santiago">Santiago</option>
+                                                            <option value="America/Sao_Paulo">São Paulo</option>
+                                                            <option value="America/Toronto">Toronto</option>
+                                                            <option value="America/Vancouver">Vancouver</option>
+                                                        </optgroup>
+                                                        <optgroup label="Asia">
+                                                            <option value="Asia/Baghdad">Baghdad</option>
+                                                            <option value="Asia/Bangkok">Bangkok</option>
+                                                            <option value="Asia/Beirut">Beirut</option>
+                                                            <option value="Asia/Dhaka">Dhaka</option>
+                                                            <option value="Asia/Dubai">Dubai</option>
+                                                            <option value="Asia/Hong_Kong">Hong Kong</option>
+                                                            <option value="Asia/Jakarta">Jakarta</option>
+                                                            <option value="Asia/Jerusalem">Jerusalem</option>
+                                                            <option value="Asia/Karachi">Karachi</option>
+                                                            <option value="Asia/Kolkata">Kolkata</option>
+                                                            <option value="Asia/Kuala_Lumpur">Kuala Lumpur</option>
+                                                            <option value="Asia/Manila">Manila</option>
+                                                            <option value="Asia/Riyadh">Riyadh</option>
+                                                            <option value="Asia/Seoul">Seoul</option>
+                                                            <option value="Asia/Shanghai">Shanghai</option>
+                                                            <option value="Asia/Singapore">Singapore</option>
+                                                            <option value="Asia/Taipei">Taipei</option>
+                                                            <option value="Asia/Tehran">Tehran</option>
+                                                            <option value="Asia/Tokyo">Tokyo</option>
+                                                        </optgroup>
+                                                        <optgroup label="Australia & Pacific">
+                                                            <option value="Australia/Adelaide">Adelaide</option>
+                                                            <option value="Australia/Brisbane">Brisbane</option>
+                                                            <option value="Australia/Melbourne">Melbourne</option>
+                                                            <option value="Australia/Perth">Perth</option>
+                                                            <option value="Australia/Sydney">Sydney</option>
+                                                            <option value="Pacific/Auckland">Auckland</option>
+                                                            <option value="Pacific/Fiji">Fiji</option>
+                                                            <option value="Pacific/Honolulu">Honolulu</option>
+                                                        </optgroup>
+                                                        <optgroup label="Europe">
+                                                            <option value="Europe/Amsterdam">Amsterdam</option>
+                                                            <option value="Europe/Athens">Athens</option>
+                                                            <option value="Europe/Berlin">Berlin</option>
+                                                            <option value="Europe/Brussels">Brussels</option>
+                                                            <option value="Europe/Budapest">Budapest</option>
+                                                            <option value="Europe/Copenhagen">Copenhagen</option>
+                                                            <option value="Europe/Dublin">Dublin</option>
+                                                            <option value="Europe/Helsinki">Helsinki</option>
+                                                            <option value="Europe/Istanbul">Istanbul</option>
+                                                            <option value="Europe/Lisbon">Lisbon</option>
+                                                            <option value="Europe/London">London</option>
+                                                            <option value="Europe/Madrid">Madrid</option>
+                                                            <option value="Europe/Moscow">Moscow</option>
+                                                            <option value="Europe/Oslo">Oslo</option>
+                                                            <option value="Europe/Paris">Paris</option>
+                                                            <option value="Europe/Prague">Prague</option>
+                                                            <option value="Europe/Rome">Rome</option>
+                                                            <option value="Europe/Stockholm">Stockholm</option>
+                                                            <option value="Europe/Vienna">Vienna</option>
+                                                            <option value="Europe/Warsaw">Warsaw</option>
+                                                            <option value="Europe/Zurich">Zurich</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="defaultLanguage" class="form-label">
+                                                        <i class="bi bi-translate me-1"></i>
+                                                        Default Language
+                                                    </label>
+                                                    <select class="form-select" id="defaultLanguage" name="defaultLanguage">
+                                                        <option value="en">English</option>
+                                                        <option value="es">Spanish</option>
+                                                        <option value="fr">French</option>
+                                                        <option value="de">German</option>
+                                                        <option value="ja">Japanese</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                                                        <label class="form-check-label" for="emailNotifications">
+                                                            <i class="bi bi-envelope me-1"></i>
+                                                            Email notifications
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="darkMode" name="darkMode">
+                                                        <label class="form-check-label" for="darkMode">
+                                                            <i class="bi bi-moon-stars me-1"></i>
+                                                            Dark mode (coming soon)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Password Change Card -->
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">
+                                                <i class="bi bi-shield-lock me-2"></i>
+                                                Change Password
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="changePasswordForm">
+                                                <div class="row g-3">
+                                                    <div class="col-12">
+                                                        <label for="currentPassword" class="form-label">Current Password</label>
+                                                        <input type="password" class="form-control" id="currentPassword" name="currentPassword">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label for="newPassword" class="form-label">New Password</label>
+                                                        <input type="password" class="form-control" id="newPassword" name="newPassword" minlength="6">
+                                                        <div class="form-text">Password must be at least 6 characters long</div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                                                        <input type="password" class="form-control" id="confirmNewPassword" name="confirmNewPassword">
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="bi bi-key me-1"></i>
+                                                        Change Password
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="mt-3 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Save Changes
+                                        </button>
+                                        <button type="button" id="cancelUserProfile" class="btn btn-outline-secondary">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settingsView" class="view hidden">
+                    <div class="container-fluid">
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h1 class="h2 mb-0">Settings</h1>
+                                <p class="text-muted">Manage your account, spaces, and preferences</p>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tabs -->
+                        <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="spaces-tab" data-bs-toggle="tab" data-bs-target="#spaces-panel" type="button" role="tab">
+                                    <i class="bi bi-folder me-2"></i>Spaces
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity-panel" type="button" role="tab">
+                                    <i class="bi bi-clock-history me-2"></i>Activity
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-panel" type="button" role="tab">
+                                    <i class="bi bi-cpu me-2"></i>AI & LLM
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="settingsTabContent">
+                            <!-- Spaces Management Tab -->
+                            <div class="tab-pane fade show active" id="spaces-panel" role="tabpanel">
+                                <!-- Edit Space Form (Hidden by default) -->
+                                <div id="editSpaceFormContainer" class="card mb-3 hidden">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-pencil-square me-2"></i>Edit Space
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="inlineEditSpaceForm">
+                                            <input type="hidden" id="editSpaceId" name="spaceId">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceName" class="form-label">Space Name</label>
+                                                    <input type="text" class="form-control" id="editSpaceName" name="spaceName" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceType" class="form-label">Type</label>
+                                                    <select class="form-select" id="editSpaceType" name="spaceType" required>
+                                                        <option value="personal">Personal</option>
+                                                        <option value="shared">Shared</option>
+                                                        <option value="readonly">Read-Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="editSpaceDescription" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="editSpaceDescription" name="spaceDescription" rows="2"></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="editSpacePath" class="form-label">Folder Path</label>
+                                                    <input type="text" class="form-control" id="editSpacePath" name="spacePath" required>
+                                                    <div class="form-text">If you change the path and the new folder is empty, it will be initialized with template files</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="editSpaceVisibility" class="form-label">Visibility</label>
+                                                    <select class="form-select" id="editSpaceVisibility" name="spaceVisibility" required>
+                                                        <option value="private">Private</option>
+                                                        <option value="team">Team</option>
+                                                        <option value="public">Public</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-circle me-1"></i>Update Space
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="cancelEditSpaceBtn">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Create Space Form (Hidden by default) -->
+                                <div id="createSpaceFormContainer" class="card mb-3 hidden">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-plus-circle me-2"></i>Create New Space
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="inlineCreateSpaceForm">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceName" class="form-label">Space Name</label>
+                                                    <input type="text" class="form-control" id="newSpaceName" name="spaceName" required placeholder="e.g., Project Documentation">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceType" class="form-label">Type</label>
+                                                    <select class="form-select" id="newSpaceType" name="spaceType" required>
+                                                        <option value="personal">Personal</option>
+                                                        <option value="shared">Shared</option>
+                                                        <option value="readonly">Read-Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="newSpaceDescription" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="newSpaceDescription" name="spaceDescription" rows="2" placeholder="Describe the purpose of this space..."></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="newSpacePath" class="form-label">Folder Path</label>
+                                                    <input type="text" class="form-control" id="newSpacePath" name="spacePath" required placeholder="e.g., documents-projects">
+                                                    <div class="form-text">The directory where documents for this space will be stored</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="newSpaceVisibility" class="form-label">Visibility</label>
+                                                    <select class="form-select" id="newSpaceVisibility" name="spaceVisibility" required>
+                                                        <option value="private">Private</option>
+                                                        <option value="team">Team</option>
+                                                        <option value="public">Public</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-circle me-1"></i>Create Space
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="cancelCreateSpaceBtn">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Spaces List -->
+                                <div class="card" id="spacesListCard">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-folder2-open me-2"></i>Manage Spaces
+                                        </h5>
+                                        <button type="button" class="btn btn-primary btn-sm" id="settingsCreateSpaceBtn">
+                                            <i class="bi bi-plus-circle me-1"></i>Create Space
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Type</th>
+                                                        <th>Documents</th>
+                                                        <th>Created</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="spacesManagementList">
+                                                    <!-- Dynamic content -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Activity Management Tab -->
+                            <div class="tab-pane fade" id="activity-panel" role="tabpanel">
+                                <div class="row g-4">
+                                    <!-- Recent Activity -->
+                                    <div class="col-lg-6">
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="bi bi-clock-history me-2"></i>Recent Activity
+                                                </h5>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" id="clearRecentBtn">
+                                                    <i class="bi bi-trash me-1"></i>Clear All
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="recentActivityList" class="list-group list-group-flush">
+                                                    <!-- Dynamic content -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Starred Documents -->
+                                    <div class="col-lg-6">
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="bi bi-star-fill me-2"></i>Starred Documents
+                                                </h5>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" id="clearStarredBtn">
+                                                    <i class="bi bi-trash me-1"></i>Clear All
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="starredActivityList" class="list-group list-group-flush">
+                                                    <!-- Dynamic content -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI & LLM Settings Tab -->
+                            <div class="tab-pane fade" id="ai-panel" role="tabpanel">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-robot me-2"></i>AI Configuration
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="aiSettingsForm">
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label for="llmProvider" class="form-label">LLM Provider</label>
+                                                    <select class="form-select" id="llmProvider" name="llmProvider">
+                                                        <option value="">-- Select Provider --</option>
+                                                        <option value="chatgpt">OpenAI (ChatGPT)</option>
+                                                        <option value="claude">Anthropic (Claude)</option>
+                                                        <option value="ollama">Local (Ollama)</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Select your AI provider</small>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label for="aiApiKey" class="form-label">API Key</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control" id="aiApiKey" name="aiApiKey" placeholder="Enter your API key">
+                                                        <button class="btn btn-outline-secondary" type="button" id="toggleApiKeyBtn">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                    <small class="form-text text-muted">Your API key is stored securely and encrypted.</small>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label for="llmModel" class="form-label">Model</label>
+                                                    <input type="text" class="form-control" id="llmModel" name="llmModel" placeholder="e.g., gpt-4, claude-3-5-sonnet-20241022, llama2">
+                                                    <small class="form-text text-muted">Leave blank to use default model</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="llmTemperature" class="form-label">Temperature</label>
+                                                    <input type="number" class="form-control" id="llmTemperature" name="llmTemperature" min="0" max="2" step="0.1" value="0.7">
+                                                    <small class="form-text text-muted">0 = Focused, 2 = Creative</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="llmMaxTokens" class="form-label">Max Tokens</label>
+                                                    <input type="number" class="form-control" id="llmMaxTokens" name="llmMaxTokens" min="100" max="100000" step="100" value="4096">
+                                                    <small class="form-text text-muted">Max response length</small>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label for="llmEndpoint" class="form-label">Custom Endpoint (Optional)</label>
+                                                    <input type="url" class="form-control" id="llmEndpoint" name="llmEndpoint" placeholder="https://api.example.com/v1">
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="enableAI" name="enableAI">
+                                                        <label class="form-check-label" for="enableAI">Enable AI Features</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <hr>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="bi bi-check-circle me-1"></i>Save AI Settings
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary" id="testAIConnectionBtn">
+                                                            <i class="bi bi-plug me-1"></i>Test Connection
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- AI Chat Panel (Right Sidebar) -->
+            <aside id="aiChatPanel" class="ai-chat-panel hidden">
+                <!-- Resize Handle -->
+                <div id="aiChatResizeHandle" class="ai-chat-resize-handle"></div>
+
+                <!-- Chat Header -->
+                <div class="ai-chat-header">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="bi bi-robot me-2"></i>
+                            AI Assistant
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="aiChatClearBtn" title="Clear chat history">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="aiChatCollapseBtn" title="Close">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div id="aiChatMessages" class="ai-chat-messages">
+                    <!-- Welcome message -->
+                    <div class="ai-chat-welcome text-center text-muted p-4">
+                        <i class="bi bi-robot" style="font-size: 3rem;"></i>
+                        <p class="mt-3 mb-1"><strong>Welcome to AI Assistant</strong></p>
+                        <p class="small">Ask me anything about your wiki documents!</p>
+                        <div class="mt-3">
+                            <small class="text-muted">Configure AI settings to get started</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="ai-chat-input-container">
+                    <form id="aiChatForm" class="ai-chat-form">
+                        <div class="input-group">
+                            <textarea id="aiChatInput" class="form-control" placeholder="Ask a question..." rows="1" style="resize: none; max-height: 120px;"></textarea>
+                            <button type="submit" class="btn btn-primary" id="aiChatSendBtn">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="ai-chat-status text-muted small px-2 py-1" id="aiChatStatus">
+                        <span id="aiChatStatusText"></span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="createSpaceModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title">Create New Space</h5>
+                <button id="closeCreateSpaceModal" class="btn-close" aria-label="Close"></button>
+            </div>
+            <form id="createSpaceForm" class="p-3">
+                <div class="mb-3">
+                    <label for="spaceName" class="form-label">Space Name</label>
+                    <input type="text" class="form-control" id="spaceName" name="spaceName" placeholder="My Space" required>
+                </div>
+                <div class="mb-3">
+                    <label for="spaceDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="spaceDescription" name="spaceDescription" rows="2" placeholder="Brief description of this space"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="spaceVisibility" class="form-label">Visibility</label>
+                    <select class="form-select" id="spaceVisibility" name="spaceVisibility">
+                        <option value="private">Private</option>
+                        <option value="team">Team</option>
+                        <option value="public">Public</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="spaceType" class="form-label">Space Type</label>
+                    <select class="form-select" id="spaceType" name="spaceType">
+                        <option value="personal">Personal Space (Private, read-write)</option>
+                        <option value="shared">Shared Space (Team, read-write)</option>
+                        <option value="readonly">Read-Only Space (Reference materials)</option>
+                    </select>
+                    <small class="form-text text-muted">Template determines folders and sample files to create</small>
+                </div>
+                <div class="mb-3">
+                    <label for="spacePath" class="form-label">Folder Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="spacePath" name="spacePath" placeholder="documents-my-space" required>
+                        <button class="btn btn-outline-secondary" type="button" id="browseSpaceFolder" title="Browse folder">
+                            <i class="bi bi-folder2-open"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Relative path from application root (e.g., documents-my-space)</small>
+                </div>
+                <div class="d-flex justify-content-end gap-2 pt-2">
+                    <button type="button" id="cancelCreateSpace" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Space</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div id="createFolderModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Folder</h2>
+                <button id="closeCreateFolderModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="createFolderForm">
+                <div class="form-group">
+                    <label for="folderName">Folder Name</label>
+                    <input type="text" id="folderName" name="folderName" required>
+                </div>
+                <div class="form-group" id="folderLocationInfo" style="display: none;">
+                    <small class="text-muted">Location: <span id="folderLocationText">Root</span></small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelCreateFolder" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create File Modal -->
+    <div id="createFileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New File</h2>
+                <button id="closeCreateFileModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="createFileForm" class="p-3">
+                <div class="mb-3">
+                    <label for="fileName" class="form-label">File Name</label>
+                    <input type="text" id="fileName" name="fileName" class="form-control" placeholder="MyDocument.md" required>
+                </div>
+                <div class="mb-3">
+                    <label for="fileLocation" class="form-label">Location</label>
+                    <select id="fileLocation" name="fileLocation" class="form-select">
+                        <option value="">Root</option>
+                        <!-- Dynamic options will be added here -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="fileTemplate" class="form-label">Template (Optional)</label>
+                    <select id="fileTemplate" name="fileTemplate" class="form-select">
+                        <option value="">Blank Document</option>
+                        <option value="basic">Basic Article</option>
+                        <option value="api">API Documentation</option>
+                        <option value="meeting">Meeting Notes</option>
+                        <option value="requirements">Requirements Doc</option>
+                    </select>
+                </div>
+                <div class="modal-actions d-flex justify-content-end gap-2">
+                    <button type="button" id="cancelCreateFile" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename <span id="renameItemType">Item</span></h2>
+                <button id="closeRenameModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="renameForm">
+                <div class="form-group">
+                    <label for="newItemName">New Name</label>
+                    <input type="text" id="newItemName" name="newItemName" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelRename" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div id="avatarUploadModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title">Change Avatar</h5>
+                <button id="closeAvatarModal" class="modal-close btn btn-link text-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="avatarFileInput" class="form-label">Select Image</label>
+                    <input type="file" class="form-control" id="avatarFileInput" accept="image/*">
+                    <div class="form-text">Select a JPG, PNG, or GIF image</div>
+                </div>
+
+                <div id="avatarCropContainer" class="hidden mb-3">
+                    <div class="text-center mb-2">
+                        <small class="text-muted">Drag to reposition, scroll to zoom</small>
+                    </div>
+                    <div style="max-height: 400px; overflow: hidden;">
+                        <img id="avatarImageToCrop" style="max-width: 100%; display: block;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" id="cancelAvatarUpload" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="saveAvatarBtn" class="btn btn-primary hidden">Save Avatar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal hidden">
+        <div class="modal-content user-profile-modal">
+            <div class="modal-header">
+                <h2>User Profile</h2>
+                <button id="closeUserProfileModal" class="modal-close">
+                    <svg width="16" height="16">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <form id="userProfileForm">
+                <div class="profile-section">
+                    <div class="profile-avatar-section">
+                        <div class="profile-avatar-large">
+                            <span id="profileInitials">AD</span>
+                        </div>
+                        <button type="button" id="changeAvatarBtn" class="btn btn-secondary">
+                            <i class="fas fa-camera"></i>
+                            Change Avatar
+                        </button>
+                    </div>
+                    
+                    <div class="profile-form-section">
+                        <div class="form-group">
+                            <label for="profileName">Full Name</label>
+                            <input type="text" id="profileName" name="profileName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileEmail">Email Address</label>
+                            <input type="email" id="profileEmail" name="profileEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileRole">Role</label>
+                            <select id="profileRole" name="profileRole">
+                                <option value="administrator">Administrator</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileBio">Bio</label>
+                            <textarea id="profileBio" name="profileBio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileLocation">Location</label>
+                            <input type="text" id="profileLocation" name="profileLocation" placeholder="City, Country">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileTimezone">Timezone</label>
+                            <select id="profileTimezone" name="profileTimezone">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time</option>
+                                <option value="America/Chicago">Central Time</option>
+                                <option value="America/Denver">Mountain Time</option>
+                                <option value="America/Los_Angeles">Pacific Time</option>
+                                <option value="Europe/London">London</option>
+                                <option value="Europe/Paris">Paris</option>
+                                <option value="Asia/Tokyo">Tokyo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-settings-section">
+                    <h3>Preferences</h3>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                            <span class="checkmark"></span>
+                            Email notifications
+                        </label>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="darkMode" name="darkMode">
+                            <span class="checkmark"></span>
+                            Dark mode (coming soon)
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="defaultLanguage">Default Language</label>
+                        <select id="defaultLanguage" name="defaultLanguage">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="ja">Japanese</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelUserProfile" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu for File Tree -->
+    <div id="fileContextMenu" class="context-menu hidden">
+        <div class="context-menu-item" id="contextCreateFolder">
+            <svg width="16" height="16">
+                <use href="#icon-folder"></use>
+            </svg>
+            <span>Create Folder</span>
+        </div>
+        <div class="context-menu-item" id="contextCreateFile">
+            <svg width="16" height="16">
+                <use href="#icon-plus"></use>
+            </svg>
+            <span>Create File</span>
+        </div>
+        <div class="context-menu-item" id="contextUpload">
+            <svg width="16" height="16">
+                <use href="#icon-share"></use>
+            </svg>
+            <span>Upload File</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="contextRename">
+            <svg width="16" height="16">
+                <use href="#icon-edit"></use>
+            </svg>
+            <span>Rename</span>
+        </div>
+        <div class="context-menu-item context-menu-item-danger" id="contextDelete">
+            <svg width="16" height="16">
+                <use href="#icon-x"></use>
+            </svg>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Hidden file input for uploads -->
+    <input type="file" id="fileUploadInput" multiple style="display: none;">
+
+    <div id="overlay" class="overlay hidden"></div>
+
+    <!-- External Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
