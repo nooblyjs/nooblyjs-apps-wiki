@@ -1,0 +1,7 @@
+# Processing
+
+## Phase 1 Requirement
+I would like to implement some processing components that can translate certain types of files into markdown. In the @src/processing folder there is docxprocess.js,  pptxprocessor.js and xlsxprocessor.js files. What I would like us to do is the following. When a user uploads a microsoft word, microsoft powerpoint of microsoft excel document I would like you to give them the option to convert it to markdown. This can done by using the current process of uploading the file, then immediatly open the viewer of that document. As per the current specification that will show the document view with the download functionality. On this screen show a button to allow the user to convert the file to markdown. If the user decides to do that create a folder in the folder the user is in named ".originals". Then once the markdown file is ceated, wht the name "{original filename}".md, copy the original file into the ".originals" folder. Lets do this cool change
+
+### Tasks
+
