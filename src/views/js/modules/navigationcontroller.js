@@ -13,6 +13,7 @@ export const navigationController = {
     renameItemPath: null,
     renameItemType: null,
     isReadOnlyMode: false,
+    currentViewMode: 'grid', // 'grid', 'details', 'cards'
 
     init(app) {
         this.app = app;
@@ -488,6 +489,17 @@ export const navigationController = {
                                 ${totalFolders > 0 ? `<span class="stat-badge">${totalFolders} folder${totalFolders !== 1 ? 's' : ''}</span>` : ''}
                             </div>
                         </div>
+                        <div class="view-mode-switcher">
+                            <button class="view-mode-btn ${this.currentViewMode === 'details' ? 'active' : ''}" data-view="details" title="Details View">
+                                <i class="bi bi-list-ul"></i>
+                            </button>
+                            <button class="view-mode-btn ${this.currentViewMode === 'grid' ? 'active' : ''}" data-view="grid" title="Grid View">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                            </button>
+                            <button class="view-mode-btn ${this.currentViewMode === 'cards' ? 'active' : ''}" data-view="cards" title="Card View">
+                                <i class="bi bi-card-image"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -497,37 +509,7 @@ export const navigationController = {
                             <i class="bi bi-folder empty-folder-icon"></i>
                             <p>This folder is empty</p>
                         </div>
-                    ` : `
-                        <div class="items-grid">
-                            ${folderContent.folders.map(folder => {
-                                const childCount = folder.childCount || 0;
-                                return `
-                                    <div class="item-card folder-card" data-folder-path="${folder.path}">
-                                        <i class="bi bi-folder item-icon"></i>
-                                        <div class="item-info">
-                                            <div class="item-name">${folder.name}</div>
-                                            <div class="item-meta">Folder • ${childCount} item${childCount !== 1 ? 's' : ''}</div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                            ${folderContent.files.map(file => {
-                                const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
-                                const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
-                                const iconColor = fileTypeInfo.color;
-
-                                return `
-                                <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}">
-                                    <i class="bi ${iconClass} item-icon" style="color: ${iconColor};"></i>
-                                    <div class="item-info">
-                                        <div class="item-name">${file.title || file.name}</div>
-                                        <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
-                                    </div>
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `}
+                    ` : this.renderFolderContentByMode(folderContent)}
                 </div>
             </div>
         `;
@@ -545,6 +527,174 @@ export const navigationController = {
         this.bindFolderViewEvents();
     },
 
+    renderFolderContentByMode(folderContent) {
+        switch (this.currentViewMode) {
+            case 'details':
+                return this.renderDetailsView(folderContent);
+            case 'cards':
+                return this.renderCardsView(folderContent);
+            case 'grid':
+            default:
+                return this.renderGridView(folderContent);
+        }
+    },
+
+    renderGridView(folderContent) {
+        return `
+            <div class="items-grid">
+                ${folderContent.folders.map(folder => {
+                    const childCount = folder.childCount || 0;
+                    return `
+                        <div class="item-card folder-card" data-folder-path="${folder.path}" draggable="${!this.isReadOnlyMode}">
+                            <i class="bi bi-folder item-icon"></i>
+                            <div class="item-info">
+                                <div class="item-name">${folder.name}</div>
+                                <div class="item-meta">Folder • ${childCount} item${childCount !== 1 ? 's' : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+                ${folderContent.files.map(file => {
+                    const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
+                    const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                    const iconColor = fileTypeInfo.color;
+
+                    return `
+                    <div class="item-card file-card" data-document-path="${file.path}" data-space-name="${file.spaceName}" draggable="${!this.isReadOnlyMode}">
+                        <i class="bi ${iconClass} item-icon" style="color: ${iconColor};"></i>
+                        <div class="item-info">
+                            <div class="item-name">${file.title || file.name}</div>
+                            <div class="item-meta">File • ${this.getFileTypeFromExtension(file.path || file.name)}</div>
+                        </div>
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderDetailsView(folderContent) {
+        return `
+            <div class="items-details">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Name</th>
+                            <th style="width: 120px;">Size</th>
+                            <th style="width: 180px;">Date Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${folderContent.folders.map(folder => {
+                            const childCount = folder.childCount || 0;
+                            const created = folder.created || folder.createdAt || '';
+                            const formattedDate = created ? new Date(created).toLocaleDateString() : 'N/A';
+
+                            return `
+                                <tr class="folder-row" data-folder-path="${folder.path}" draggable="${!this.isReadOnlyMode}">
+                                    <td><i class="bi bi-folder" style="color: #6c757d; font-size: 1.2rem;"></i></td>
+                                    <td><strong>${folder.name}</strong></td>
+                                    <td class="text-muted">${childCount} item${childCount !== 1 ? 's' : ''}</td>
+                                    <td class="text-muted">${formattedDate}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                        ${folderContent.files.map(file => {
+                            const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
+                            const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                            const iconColor = fileTypeInfo.color;
+                            const size = file.size || file.metadata?.size || 0;
+                            const formattedSize = this.formatFileSize(size);
+                            const created = file.created || file.createdAt || file.metadata?.created || '';
+                            const formattedDate = created ? new Date(created).toLocaleDateString() : 'N/A';
+
+                            return `
+                                <tr class="file-row" data-document-path="${file.path}" data-space-name="${file.spaceName}" draggable="${!this.isReadOnlyMode}">
+                                    <td><i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 1.2rem;"></i></td>
+                                    <td>${file.title || file.name}</td>
+                                    <td class="text-muted">${formattedSize}</td>
+                                    <td class="text-muted">${formattedDate}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
+
+    renderCardsView(folderContent) {
+        return `
+            <div class="items-cards row">
+                ${folderContent.folders.map(folder => {
+                    const childCount = folder.childCount || 0;
+                    const created = folder.created || folder.createdAt || '';
+                    const formattedDate = created ? new Date(created).toLocaleDateString() : 'N/A';
+
+                    return `
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card folder-card-bootstrap" data-folder-path="${folder.path}" draggable="${!this.isReadOnlyMode}">
+                                <div class="card-body text-center">
+                                    <div class="card-preview card-preview-folder">
+                                        <i class="bi bi-folder" style="font-size: 4rem; color: #6c757d;"></i>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="card-title-text"><strong>${folder.name}</strong></div>
+                                    <small class="text-muted">${childCount} item${childCount !== 1 ? 's' : ''}</small><br>
+                                    <small class="text-muted">${formattedDate}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+                ${folderContent.files.map(file => {
+                    const fileTypeInfo = this.getFileTypeInfo(file.path || file.name);
+                    const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                    const iconColor = fileTypeInfo.color;
+                    const size = file.size || file.metadata?.size || 0;
+                    const formattedSize = this.formatFileSize(size);
+                    const created = file.created || file.createdAt || file.metadata?.created || '';
+                    const formattedDate = created ? new Date(created).toLocaleDateString() : 'N/A';
+                    const fileExt = this.getFileTypeFromExtension(file.path || file.name);
+                    const viewer = fileTypeInfo.category;
+
+                    return `
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card file-card-bootstrap"
+                                data-document-path="${file.path}"
+                                data-space-name="${file.spaceName}"
+                                data-viewer="${viewer}"
+                                draggable="${!this.isReadOnlyMode}">
+                                <div class="card-body text-center">
+                                    <div class="card-preview card-preview-loading" data-file-path="${file.path}" data-space-name="${file.spaceName}">
+                                        <div class="spinner-border text-secondary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="card-title-text"><strong>${file.title || file.name}</strong></div>
+                                    <small class="text-muted">${fileExt} • ${formattedSize}</small><br>
+                                    <small class="text-muted">${formattedDate}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
     bindFolderViewEvents() {
         // Initialize file preview
         this.initFilePreview();
@@ -555,76 +705,110 @@ export const navigationController = {
             this.app.showHome();
         });
 
-        // Folder cards click events
-        document.querySelectorAll('#folderView .folder-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const folderPath = card.dataset.folderPath;
+        // View mode switcher buttons
+        document.querySelectorAll('.view-mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const newMode = btn.dataset.view;
+                if (newMode !== this.currentViewMode) {
+                    this.currentViewMode = newMode;
+                    // Reload the current folder with new view mode
+                    this.loadFolderContent(this.app.currentFolder);
+                }
+            });
+        });
+
+        // Bind events for all view modes
+        this.bindFolderItemEvents();
+        this.bindFileItemEvents();
+
+        // Load card previews if in card view mode
+        if (this.currentViewMode === 'cards') {
+            this.loadCardPreviews();
+        }
+    },
+
+    bindFolderItemEvents() {
+        // Handle both grid cards, table rows, and Bootstrap cards
+        const folderItems = document.querySelectorAll(
+            '#folderView .folder-card, #folderView .folder-row, #folderView .folder-card-bootstrap'
+        );
+
+        folderItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const folderPath = item.dataset.folderPath;
                 this.loadFolderContent(folderPath);
             });
 
             // Context menu for folders
-            card.addEventListener('contextmenu', (e) => {
+            item.addEventListener('contextmenu', (e) => {
                 e.stopPropagation();
-                const folderPath = card.dataset.folderPath;
+                const folderPath = item.dataset.folderPath;
                 this.showContextMenu(e, folderPath, 'folder');
             });
 
-            // Drag and drop for folder cards
+            // Drag and drop for folder items
             if (!this.isReadOnlyMode) {
-                card.setAttribute('draggable', 'true');
+                item.setAttribute('draggable', 'true');
 
-                card.addEventListener('dragstart', (e) => {
-                    this.handleDragStart(e, card.dataset.folderPath, 'folder');
+                item.addEventListener('dragstart', (e) => {
+                    this.handleDragStart(e, item.dataset.folderPath, 'folder');
                 });
 
-                card.addEventListener('dragover', (e) => {
+                item.addEventListener('dragover', (e) => {
                     this.handleDragOver(e);
                 });
 
-                card.addEventListener('dragenter', (e) => {
-                    this.handleDragEnter(e, card);
+                item.addEventListener('dragenter', (e) => {
+                    this.handleDragEnter(e, item);
                 });
 
-                card.addEventListener('dragleave', (e) => {
-                    this.handleDragLeave(e, card);
+                item.addEventListener('dragleave', (e) => {
+                    this.handleDragLeave(e, item);
                 });
 
-                card.addEventListener('drop', (e) => {
-                    this.handleDrop(e, card.dataset.folderPath, 'folder');
+                item.addEventListener('drop', (e) => {
+                    this.handleDrop(e, item.dataset.folderPath, 'folder');
                 });
             }
         });
+    },
 
-        // File cards click events
-        document.querySelectorAll('#folderView .file-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const documentPath = card.dataset.documentPath;
-                const spaceName = card.dataset.spaceName;
+    bindFileItemEvents() {
+        // Handle both grid cards, table rows, and Bootstrap cards
+        const fileItems = document.querySelectorAll(
+            '#folderView .file-card, #folderView .file-row, #folderView .file-card-bootstrap'
+        );
+
+        fileItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const documentPath = item.dataset.documentPath;
+                const spaceName = item.dataset.spaceName;
                 documentController.openDocumentByPath(documentPath, spaceName);
             });
 
             // Context menu for files
-            card.addEventListener('contextmenu', (e) => {
+            item.addEventListener('contextmenu', (e) => {
                 e.stopPropagation();
-                const filePath = card.dataset.documentPath;
-                const spaceName = card.dataset.spaceName;
+                const filePath = item.dataset.documentPath;
+                const spaceName = item.dataset.spaceName;
                 this.contextMenuTargetSpaceName = spaceName;
                 this.showContextMenu(e, filePath, 'file');
             });
 
-            // Preview on hover for file cards
-            card.addEventListener('mouseenter', (e) => {
-                const documentPath = card.dataset.documentPath;
-                const spaceName = card.dataset.spaceName;
+            // Preview on hover for file items
+            item.addEventListener('mouseenter', (e) => {
+                const documentPath = item.dataset.documentPath;
+                const spaceName = item.dataset.spaceName;
 
                 // Add small delay before showing preview
                 this.previewTimeout = setTimeout(() => {
-                    this.currentPreviewCard = card;
-                    this.showFilePreview(card, documentPath, spaceName);
+                    this.currentPreviewCard = item;
+                    this.showFilePreview(item, documentPath, spaceName);
                 }, 500); // 500ms delay
             });
 
-            card.addEventListener('mouseleave', () => {
+            item.addEventListener('mouseleave', () => {
                 // Clear timeout if mouse leaves before preview shows
                 if (this.previewTimeout) {
                     clearTimeout(this.previewTimeout);
@@ -635,12 +819,12 @@ export const navigationController = {
                 this.hideFilePreview();
             });
 
-            // Drag and drop for file cards
+            // Drag and drop for file items
             if (!this.isReadOnlyMode) {
-                card.setAttribute('draggable', 'true');
+                item.setAttribute('draggable', 'true');
 
-                card.addEventListener('dragstart', (e) => {
-                    this.handleDragStart(e, card.dataset.documentPath, 'file');
+                item.addEventListener('dragstart', (e) => {
+                    this.handleDragStart(e, item.dataset.documentPath, 'file');
                 });
             }
         });
@@ -658,6 +842,85 @@ export const navigationController = {
                 }
             });
         }
+    },
+
+    async loadCardPreviews() {
+        const previewElements = document.querySelectorAll('.card-preview-loading');
+
+        for (const previewEl of previewElements) {
+            const filePath = previewEl.dataset.filePath;
+            const spaceName = previewEl.dataset.spaceName;
+
+            if (!filePath || !spaceName) continue;
+
+            try {
+                const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(filePath)}&spaceName=${encodeURIComponent(spaceName)}&enhanced=true`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to load preview');
+                }
+
+                const data = await response.json();
+                const { content: fileContent, metadata } = data;
+                const viewer = metadata?.viewer || 'default';
+
+                let previewHtml = '';
+
+                switch (viewer) {
+                    case 'image':
+                        const imageUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(filePath)}&spaceName=${encodeURIComponent(spaceName)}`;
+                        previewHtml = `<img src="${imageUrl}" alt="Preview" style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px;" />`;
+                        break;
+
+                    case 'markdown':
+                        if (typeof marked !== 'undefined') {
+                            const preview = fileContent.substring(0, 200) + (fileContent.length > 200 ? '...' : '');
+                            const rendered = marked.parse(preview);
+                            previewHtml = `<div class="markdown-preview-card">${rendered}</div>`;
+                        } else {
+                            const preview = fileContent.substring(0, 150) + (fileContent.length > 150 ? '...' : '');
+                            previewHtml = `<pre style="font-size: 0.7rem; text-align: left; margin: 0; padding: 0.5rem;">${this.escapeHtml(preview)}</pre>`;
+                        }
+                        break;
+
+                    case 'text':
+                    case 'code':
+                    case 'web':
+                    case 'data':
+                        const preview = fileContent.substring(0, 150) + (fileContent.length > 150 ? '...' : '');
+                        previewHtml = `<pre style="font-size: 0.7rem; text-align: left; margin: 0; padding: 0.5rem; white-space: pre-wrap;">${this.escapeHtml(preview)}</pre>`;
+                        break;
+
+                    case 'pdf':
+                        previewHtml = `<i class="bi bi-file-pdf" style="font-size: 4rem; color: #dc3545;"></i>`;
+                        break;
+
+                    default:
+                        const fileTypeInfo = this.getFileTypeInfo(filePath);
+                        const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                        const iconColor = fileTypeInfo.color;
+                        previewHtml = `<i class="bi ${iconClass}" style="font-size: 4rem; color: ${iconColor};"></i>`;
+                        break;
+                }
+
+                previewEl.innerHTML = previewHtml;
+                previewEl.classList.remove('card-preview-loading');
+            } catch (error) {
+                console.error('Error loading preview for', filePath, error);
+                // Show error icon
+                const fileTypeInfo = this.getFileTypeInfo(filePath);
+                const iconClass = this.getFileTypeIconClass(fileTypeInfo.category);
+                const iconColor = fileTypeInfo.color;
+                previewEl.innerHTML = `<i class="bi ${iconClass}" style="font-size: 4rem; color: ${iconColor};"></i>`;
+                previewEl.classList.remove('card-preview-loading');
+            }
+        }
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     },
 
     // Context Menu Methods

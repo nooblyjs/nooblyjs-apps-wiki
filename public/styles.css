@@ -1646,3 +1646,237 @@ body {
 .ai-chat-messages::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+/* ===================================
+   Folder View Mode Switcher Styles
+   =================================== */
+
+.view-mode-switcher {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.view-mode-btn {
+  background: transparent;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6c757d;
+}
+
+.view-mode-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+.view-mode-btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.view-mode-btn i {
+  font-size: 1rem;
+}
+
+/* ===================================
+   Details View (Table) Styles
+   =================================== */
+
+.items-details {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.items-details .table {
+  margin-bottom: 0;
+}
+
+.items-details thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
+.items-details tbody tr {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.items-details tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.folder-row, .file-row {
+  user-select: none;
+}
+
+.folder-row td, .file-row td {
+  vertical-align: middle;
+  padding: 0.75rem;
+}
+
+/* Drag and drop states for table rows */
+.folder-row.dragging, .file-row.dragging {
+  opacity: 0.5;
+  background-color: #e9ecef;
+}
+
+.folder-row.drag-over, .file-row.drag-over {
+  background-color: #cfe2ff;
+  border-top: 2px solid #0d6efd;
+  border-bottom: 2px solid #0d6efd;
+}
+
+/* ===================================
+   Card View (Bootstrap Cards) Styles
+   =================================== */
+
+.items-cards {
+  margin-top: 1rem;
+}
+
+.folder-card-bootstrap,
+.file-card-bootstrap {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #dee2e6;
+  height: 100%;
+}
+
+.folder-card-bootstrap:hover,
+.file-card-bootstrap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: #0d6efd;
+}
+
+.card-preview {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 1rem;
+  overflow: hidden;
+}
+
+.card-preview-loading {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-preview-folder {
+  background-color: #f8f9fa;
+}
+
+.card-preview img {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: contain;
+}
+
+.card-preview .markdown-preview-card {
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  max-height: 150px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.card-preview pre {
+  margin: 0;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  max-height: 150px;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+}
+
+.folder-card-bootstrap .card-footer,
+.file-card-bootstrap .card-footer {
+  background-color: white;
+  border-top: 1px solid #dee2e6;
+  padding: 0.75rem;
+}
+
+.card-title-text {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drag and drop states for cards */
+.folder-card-bootstrap.dragging,
+.file-card-bootstrap.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.folder-card-bootstrap.drag-over {
+  border-color: #0d6efd;
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* ===================================
+   Grid View (Existing) Enhancements
+   =================================== */
+
+.items-grid .item-card {
+  user-select: none;
+}
+
+.items-grid .item-card.dragging {
+  opacity: 0.5;
+}
+
+.items-grid .folder-card.drag-over {
+  background-color: #cfe2ff;
+  border-color: #0d6efd;
+  border-width: 2px;
+}
+
+/* ===================================
+   Responsive Adjustments for Views
+   =================================== */
+
+@media (max-width: 768px) {
+  .view-mode-switcher {
+    margin-top: 0.5rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .folder-title-section {
+    flex-wrap: wrap;
+  }
+
+  .items-details table {
+    font-size: 0.9rem;
+  }
+
+  .items-details th:nth-child(3),
+  .items-details td:nth-child(3),
+  .items-details th:nth-child(4),
+  .items-details td:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .items-cards .col-md-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
