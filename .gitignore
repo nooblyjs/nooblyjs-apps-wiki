@@ -8,6 +8,8 @@ posts/
 published-sites
 themes/
 templates/
+watch/
+data/
 
 #node
 node_modules/
