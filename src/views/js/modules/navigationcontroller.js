@@ -58,6 +58,9 @@ export const navigationController = {
         // Store the full tree data for later use
         this.fullFileTree = tree;
 
+        // Populate window.documents array for wiki-code access
+        this.populateWindowDocuments(tree);
+
         // Render only root level items initially (folders collapsed)
         fileTree.innerHTML = this.renderTreeNodes(tree, 0, true);
         this.bindFileTreeEvents();
@@ -403,6 +406,9 @@ export const navigationController = {
 
     // Folder View Methods
     async loadFolderContent(folderPath) {
+        // Update window.currentDocuments for wiki-code access
+        this.updateCurrentDocuments(folderPath);
+
         // Find the folder data from the full tree
         const folder = this.findFolderInTree(this.fullFileTree, folderPath);
         if (!folder) return;
@@ -1714,5 +1720,94 @@ export const navigationController = {
             console.error('Error moving item:', error);
             this.app.showNotification('Failed to move item', 'error');
         }
+    },
+
+    /**
+     * Populate window.documents array for wiki-code access
+     * Converts the file tree into a structured format accessible from wiki-code blocks
+     */
+    populateWindowDocuments(tree) {
+        const convertNodeToDocument = (node) => {
+            const doc = {
+                name: node.name || node.title,
+                type: node.type,
+                created: node.created || node.createdAt || new Date().toISOString(),
+                path: node.path,
+                space: this.app.currentSpace?.id?.toString() || '1',
+                icon: this.getFileIcon(node.path || node.name)
+            };
+
+            if (node.type === 'folder') {
+                doc.icon = 'bg-1 folder';
+                doc.children = (node.children || []).map(child => convertNodeToDocument(child));
+            } else {
+                doc.icon = 'bg-1 file';
+                doc.children = [];
+            }
+
+            return doc;
+        };
+
+        // Populate window.documents with the full tree structure
+        window.documents = tree.map(node => convertNodeToDocument(node));
+
+        // Initialize window.currentDocuments as empty array (will be populated by loadFolderContent)
+        if (!window.currentDocuments) {
+            window.currentDocuments = [];
+        }
+
+        console.log('window.documents populated:', window.documents);
+    },
+
+    /**
+     * Update window.currentDocuments when a folder is loaded
+     */
+    updateCurrentDocuments(folderPath) {
+        if (!this.fullFileTree) {
+            window.currentDocuments = [];
+            return;
+        }
+
+        // Find the folder in the tree
+        const findFolder = (nodes, path) => {
+            for (const node of nodes) {
+                if (node.type === 'folder' && node.path === path) {
+                    return node;
+                }
+                if (node.type === 'folder' && node.children) {
+                    const found = findFolder(node.children, path);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        // If folderPath is null or empty, use root level
+        if (!folderPath) {
+            window.currentDocuments = this.fullFileTree.map(node => ({
+                name: node.name || node.title,
+                type: node.type,
+                created: node.created || node.createdAt || new Date().toISOString(),
+                path: node.path,
+                space: this.app.currentSpace?.id?.toString() || '1',
+                icon: node.type === 'folder' ? 'bg-1 folder' : 'bg-1 file'
+            }));
+        } else {
+            const folder = findFolder(this.fullFileTree, folderPath);
+            if (folder && folder.children) {
+                window.currentDocuments = folder.children.map(node => ({
+                    name: node.name || node.title,
+                    type: node.type,
+                    created: node.created || node.createdAt || new Date().toISOString(),
+                    path: node.path,
+                    space: this.app.currentSpace?.id?.toString() || '1',
+                    icon: node.type === 'folder' ? 'bg-1 folder' : 'bg-1 file'
+                }));
+            } else {
+                window.currentDocuments = [];
+            }
+        }
+
+        console.log('window.currentDocuments updated for path:', folderPath, window.currentDocuments);
     }
 };

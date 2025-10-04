@@ -416,7 +416,9 @@ export const documentController = {
         contentWrapper.className = 'document-content-wrapper markdown-viewer';
 
         if (typeof marked !== 'undefined') {
-            const renderedContent = marked.parse(doc.content);
+            // Process wiki-code blocks before rendering
+            const processedContent = this.processWikiCodeBlocks(doc.content);
+            const renderedContent = marked.parse(processedContent);
             contentWrapper.innerHTML = `
                 <div class="markdown-content">
                     ${renderedContent}
@@ -1100,7 +1102,9 @@ export const documentController = {
         if (previewPane.classList.contains('hidden')) {
             // Show preview
             if (typeof marked !== 'undefined') {
-                const renderedContent = marked.parse(textarea.value || '');
+                // Process wiki-code blocks before rendering
+                const processedContent = this.processWikiCodeBlocks(textarea.value || '');
+                const renderedContent = marked.parse(processedContent);
                 previewContent.innerHTML = renderedContent;
 
                 // Apply syntax highlighting
@@ -1346,5 +1350,34 @@ export const documentController = {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
+    /**
+     * Process wiki-code blocks in markdown content
+     * Executes javascript code blocks with 'wiki-code' language tag and replaces them with the returned HTML
+     */
+    processWikiCodeBlocks(content) {
+        // Match code blocks with wiki-code language tag
+        const wikiCodeRegex = /```wiki-code\s*\n([\s\S]*?)```/g;
+
+        return content.replace(wikiCodeRegex, (match, code) => {
+            try {
+                // Create a function from the code and execute it
+                // Wrap the code in a return statement if it's just an expression
+                const trimmedCode = code.trim();
+
+                // Create and execute the function
+                const func = new Function('return ' + trimmedCode);
+                const result = func()();
+
+                // Return the result (should be a string)
+                return result || '';
+            } catch (error) {
+                console.error('Error executing wiki-code block:', error);
+                return `<div class="alert alert-danger">
+                    <strong>Wiki-code execution error:</strong> ${this.escapeHtml(error.message)}
+                </div>`;
+            }
+        });
     }
 };
