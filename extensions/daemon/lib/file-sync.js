@@ -244,8 +244,56 @@ class FileSync {
       // List all files in watch folder to verify
       await this.listWatchFolderContents();
 
+      // Upload any local files that aren't in the space
+      await this.uploadUntrackedFiles();
+
     } catch (error) {
       console.error('[Sync] Error syncing from space:', error.message);
+    }
+  }
+
+  /**
+   * Upload any local files that aren't tracked in the space
+   */
+  async uploadUntrackedFiles() {
+    try {
+      console.log('[Sync] Checking for untracked local files to upload...');
+
+      const localFiles = await this.getAllFiles(this.watchFolder);
+      const spaces = await this.apiClient.getSpaces();
+      const space = spaces.find(s => s.id === this.spaceId);
+
+      if (!space) {
+        console.error('[Sync] Space not found for upload check!');
+        return;
+      }
+
+      const spaceName = space.name;
+      let uploadCount = 0;
+
+      for (const filePath of localFiles) {
+        const relativePath = path.relative(this.watchFolder, filePath);
+        const isTracked = this.stateManager.isDocumentTracked(relativePath);
+
+        if (!isTracked) {
+          console.log(`[Sync] Found untracked local file: ${relativePath}`);
+          try {
+            await this.uploadFile(filePath);
+            uploadCount++;
+          } catch (error) {
+            console.error(`[Sync] Failed to upload ${relativePath}:`, error.message);
+          }
+        }
+      }
+
+      if (uploadCount > 0) {
+        console.log(`[Sync] ✓ Uploaded ${uploadCount} untracked file(s) to space`);
+      } else {
+        console.log('[Sync] No untracked files to upload');
+      }
+
+    } catch (error) {
+      console.error('[Sync] Error uploading untracked files:', error.message);
     }
   }
 

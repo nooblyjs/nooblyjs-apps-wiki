@@ -11,7 +11,7 @@ templates/
 watch/
 data/
 
-#node
+#nodent goes here...
 node_modules/
 
 #electron
