@@ -81,6 +81,7 @@ Democratize access to organizational knowledge by breaking down silos between ar
 - **Live Collaboration:** Real-time collaborative editing with conflict resolution and change tracking
 - **Version History:** Complete edit history with diff views and rollback capabilities
 - **Template Integration:** Dynamic template application with variable substitution and custom field support
+- **Custom Code Injection:** Execute JavaScript in markdown using `wiki-code` blocks with access to document structure via `window.documents` and `window.currentDocuments` global arrays
 
 #### 1.2 Intelligent File Management
 - **Hierarchical Organization:** Space-based organization with nested folder structures and tagging system
@@ -268,9 +269,34 @@ The platform implements 11 integrated microservices providing enterprise-grade f
 - **Saved Searches:** Personal and shared search collections with alerting capabilities
 - **Global Search:** Unified search across all content types and metadata
 
-### 6. Template & Content Management System
+### 6. Custom Code Injection & Dynamic Content
 
-#### 6.1 Dynamic Template Engine
+#### 6.1 Wiki-Code Execution Engine
+- **In-Place Code Execution:** Execute JavaScript functions directly within markdown documents using `wiki-code` language blocks
+- **Dynamic Content Generation:** Code blocks return HTML/text that replaces the code block in rendered output
+- **Error Handling:** Graceful error handling with user-friendly error messages displayed inline
+- **Security Context:** Code executes in browser context with access to current user session and document structure
+- **Live Preview Support:** Code execution works in both document view and live preview modes
+
+#### 6.2 Document Structure Access
+- **Global Document Array:** `window.documents` provides full hierarchical tree of all documents and folders with metadata (name, type, path, created date, space, icon, children)
+- **Current Folder Array:** `window.currentDocuments` provides array of documents in the currently viewed folder
+- **Real-time Updates:** Arrays automatically populated and updated when navigating folders or loading file tree
+- **Rich Metadata:** Each document entry includes type (folder/document), path, creation date, space ID, and display icon information
+- **Nested Traversal:** Full support for recursive folder structures with children arrays
+
+#### 6.3 Use Cases & Applications
+- **Dynamic Navigation:** Generate custom navigation menus based on folder structure and user context
+- **Document Statistics:** Display live counts, metrics, and analytics about wiki content
+- **Custom Dashboards:** Create personalized overview pages with dynamic widgets and visualizations
+- **Interactive Tables:** Build sortable, filterable document listings with custom formatting
+- **Automated TOC:** Generate table of contents from folder hierarchy with links
+- **Conditional Content:** Show/hide content based on current folder, space, or document metadata
+- **Data Visualization:** Create charts, graphs, and visual representations of document data
+
+### 7. Template & Content Management System
+
+#### 7.1 Dynamic Template Engine
 - **Rich Templates:** JSON-based templates with variable substitution and conditional logic
 - **Template Categories:** Pre-built templates for meeting notes, architecture decisions, requirements
 - **Custom Fields:** User-defined field types with validation and formatting rules
@@ -444,6 +470,12 @@ The platform implements 11 integrated microservices providing enterprise-grade f
   - Real-time file system monitoring with configurable patterns
   - Delta synchronization with conflict detection and resolution
   - Batch processing with efficient change handling
+
+- **Custom Code Injection & Dynamic Content**
+  - Wiki-code execution engine for in-place JavaScript execution
+  - Document structure access via global window.documents and window.currentDocuments arrays
+  - Dynamic content generation with error handling and live preview support
+  - Use cases including dynamic navigation, statistics, dashboards, and data visualization
 
 ### 🚧 Phase 3: Enterprise Features (In Progress)
 - **Enhanced Collaboration**

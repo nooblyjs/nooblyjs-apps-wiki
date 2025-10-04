@@ -21,6 +21,7 @@ A collaborative documentation and knowledge management platform built with the N
 - Tag-based organization and filtering
 - Folder hierarchies for structured content
 - Document templates for consistency
+- **Custom code injection** with `wiki-code` blocks for dynamic content
 
 ### 🔒 **Permission Controls**
 - Space-level permissions (read-write / read-only)
@@ -41,6 +42,13 @@ A collaborative documentation and knowledge management platform built with the N
 - File tree view with folder expansion
 - Multiple document viewers (Markdown, PDF, Code, Images)
 - Dark mode support (coming soon)
+
+### ⚡ **Dynamic Content & Extensibility**
+- **Wiki-Code Execution:** Execute JavaScript functions directly in markdown documents
+- **Document API Access:** Global `window.documents` and `window.currentDocuments` arrays for programmatic access
+- **Use Cases:** Dynamic navigation, statistics dashboards, custom tables, automated content generation
+- **Live Preview:** Code execution works in both view and edit modes
+- **Error Handling:** Graceful error messages displayed inline for debugging
 
 ## Quick Start
 
@@ -183,6 +191,53 @@ Create reusable document templates:
 1. Navigate to the Templates section
 2. Create a new template with standard content
 3. Use templates when creating new documents
+
+### Custom Code Injection (Wiki-Code)
+
+Execute JavaScript directly in markdown documents for dynamic content:
+
+**Basic Example:**
+````markdown
+```wiki-code
+function() {
+  return "Hello World from wiki-code!";
+}
+```
+````
+
+**Access Document Structure:**
+````markdown
+```wiki-code
+function() {
+  let html = '<ul>';
+  for (let i = 0; i < window.currentDocuments.length; i++) {
+    const doc = window.currentDocuments[i];
+    html += '<li>' + doc.name + ' (' + doc.type + ')</li>';
+  }
+  html += '</ul>';
+  return html;
+}
+```
+````
+
+**Available Global Variables:**
+- `window.documents` - Full hierarchical tree of all documents/folders
+- `window.currentDocuments` - Array of documents in current folder
+
+**Document Object Structure:**
+```javascript
+{
+  name: "filename.md",
+  type: "document" | "folder",
+  created: "2025-01-01T00:00:00.000Z",
+  path: "folder/filename.md",
+  space: "1",
+  icon: "bg-1 file",
+  children: [] // For folders only
+}
+```
+
+See `documents/wiki-code-feature-demo.md` for comprehensive examples.
 
 ## Configuration
 
@@ -402,6 +457,8 @@ MIT License - See LICENSE file for details
 
 ## Roadmap
 
+- [x] Custom code injection with wiki-code blocks ✅
+- [x] Document structure API access ✅
 - [ ] Dark mode support
 - [ ] Real-time collaboration
 - [ ] Document versioning

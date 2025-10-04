@@ -4,7 +4,7 @@ This document provides specific guidance for working with the NooblyJS Wiki Appl
 
 ## Project Overview
 
-The NooblyJS Wiki Application is a collaborative documentation and knowledge management platform built with the NooblyJS framework. It provides organized workspaces (spaces) for creating, managing, and searching documentation with full-text search and version control capabilities.
+The NooblyJS Wiki Application is a collaborative documentation and knowledge management platform built with the NooblyJS framework. It provides organized workspaces (spaces) for creating, managing, and searching documentation with full-text search, version control capabilities, and custom code injection for dynamic content generation.
 
 ## Development Commands
 
@@ -108,6 +108,127 @@ The application heavily relies on NooblyJS Core services:
    - **Personal Space** (id: 1) - Private documents, read-write permissions
    - **Shared Space** (id: 2) - Team collaboration, read-write permissions
    - **Read-Only Space** (id: 3) - Reference materials, read-only permissions
+
+5. **Custom Code Injection**: The platform supports dynamic content generation through wiki-code blocks:
+   ```markdown
+   ```wiki-code
+   function() {
+     return "Hello World";
+   }
+   ```
+   ```
+   - Code is executed in `src/views/js/modules/documentcontroller.js:processWikiCodeBlocks()`
+   - Provides access to `window.documents` and `window.currentDocuments` global arrays
+   - Arrays populated in `src/views/js/modules/navigationcontroller.js:populateWindowDocuments()`
+   - Enables dynamic navigation, statistics, dashboards, and custom content generation
+
+## Custom Code Injection Feature
+
+### Overview
+The wiki supports executing JavaScript code blocks directly within markdown documents for dynamic content generation. This powerful feature enables users to create interactive dashboards, dynamic navigation, live statistics, and custom visualizations without modifying the application code.
+
+### Implementation Details
+
+#### Frontend Components
+1. **Document Controller** (`src/views/js/modules/documentcontroller.js`)
+   - `showMarkdownViewer()` - Calls `processWikiCodeBlocks()` before rendering markdown
+   - `togglePreview()` - Applies code execution in live preview mode
+   - `processWikiCodeBlocks()` - Regex-based parser that finds and executes wiki-code blocks
+
+2. **Navigation Controller** (`src/views/js/modules/navigationcontroller.js`)
+   - `renderFileTree()` - Calls `populateWindowDocuments()` to initialize global arrays
+   - `loadFolderContent()` - Updates `window.currentDocuments` when navigating folders
+   - `populateWindowDocuments()` - Converts file tree to structured document objects
+   - `updateCurrentDocuments()` - Filters documents for current folder context
+
+#### Code Execution Process
+1. Regex matches code blocks with `wiki-code` language tag
+2. Code is wrapped in `new Function('return ' + code)` for safe execution
+3. Function is called twice: `func()()` to execute the user's function
+4. Returned string replaces the code block in rendered HTML
+5. Errors are caught and displayed as Bootstrap alert messages
+
+#### Global API Objects
+```javascript
+// Full document tree structure
+window.documents = [{
+  name: "Folder Name",
+  type: "folder" | "document",
+  created: "ISO timestamp",
+  path: "relative/path",
+  space: "space_id",
+  icon: "display_icon",
+  children: [/* nested items */]
+}]
+
+// Current folder contents
+window.currentDocuments = [{
+  name: "File Name",
+  type: "folder" | "document",
+  created: "ISO timestamp",
+  path: "relative/path",
+  space: "space_id",
+  icon: "display_icon"
+}]
+```
+
+### Usage Examples
+
+#### Basic Output
+```markdown
+```wiki-code
+function() {
+  return "Hello World from wiki-code!";
+}
+```
+```
+
+#### List Current Folder
+```markdown
+```wiki-code
+function() {
+  let html = '<ul>';
+  for (let i = 0; i < window.currentDocuments.length; i++) {
+    html += '<li>' + window.currentDocuments[i].name + '</li>';
+  }
+  html += '</ul>';
+  return html;
+}
+```
+```
+
+#### Document Statistics
+```markdown
+```wiki-code
+function() {
+  let count = 0;
+  function countDocs(items) {
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type === 'document') count++;
+      if (items[i].children) countDocs(items[i].children);
+    }
+  }
+  countDocs(window.documents);
+  return '<p>Total Documents: <strong>' + count + '</strong></p>';
+}
+```
+```
+
+### Security Considerations
+- Code executes in browser context with full window object access
+- No server-side execution or file system access
+- User session data is accessible through window object
+- XSS protection relies on proper HTML escaping of user input
+- Only authenticated users can create/edit documents with code
+
+### Demo Document
+See `documents/wiki-code-feature-demo.md` for comprehensive examples including:
+- Simple text output
+- Dynamic date/time
+- Dynamic lists
+- Current folder contents
+- Document statistics
+- Interactive tables
 
 ## Common Tasks
 
