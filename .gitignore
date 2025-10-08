@@ -1,15 +1,10 @@
 #application specific
+.application/
 documents/
 documents-readonly/
 documents-shared/
-.application/
-assets/
-posts/
-published-sites
-themes/
-templates/
 watch/
-data/
+.data/
 
 #nodent goes here...
 node_modules/
