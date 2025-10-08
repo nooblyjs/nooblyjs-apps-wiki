@@ -233,7 +233,12 @@ export const settingsController = {
         if (!settings) return;
 
         document.getElementById('llmProvider').value = settings.provider || '';
-        document.getElementById('aiApiKey').value = settings.apiKey || '';
+        const apiKeyInput = document.getElementById('aiApiKey');
+        apiKeyInput.value = settings.apiKey || '';
+
+        // Store the original masked key to detect changes
+        this.originalApiKey = settings.apiKey || '';
+
         document.getElementById('llmModel').value = settings.model || '';
         document.getElementById('llmTemperature').value = settings.temperature || 0.7;
         document.getElementById('llmMaxTokens').value = settings.maxTokens || 4096;
@@ -262,18 +267,19 @@ export const settingsController = {
             document.getElementById('aiSettingsForm').addEventListener('submit', (e) => this.handleAISettingsSave(e));
         }
 
-        // Toggle API Key Visibility
-        const toggleApiKeyBtn = document.getElementById('toggleApiKeyBtn');
-        if (toggleApiKeyBtn) {
-            toggleApiKeyBtn.replaceWith(toggleApiKeyBtn.cloneNode(true));
-            document.getElementById('toggleApiKeyBtn').addEventListener('click', () => this.toggleApiKeyVisibility());
-        }
-
         // Test AI Connection
         const testAIBtn = document.getElementById('testAIConnectionBtn');
         if (testAIBtn) {
             testAIBtn.replaceWith(testAIBtn.cloneNode(true));
             document.getElementById('testAIConnectionBtn').addEventListener('click', () => this.testAIConnection());
+        }
+
+        // Track API key changes
+        const apiKeyInput = document.getElementById('aiApiKey');
+        if (apiKeyInput) {
+            apiKeyInput.addEventListener('input', () => {
+                this.apiKeyChanged = true;
+            });
         }
     },
 
@@ -589,6 +595,12 @@ export const settingsController = {
             if (result.success) {
                 this.app.showNotification('AI settings saved successfully!', 'success');
 
+                // Reset the API key changed flag
+                this.apiKeyChanged = false;
+
+                // Reload AI settings to get the masked key
+                await this.loadAISettings();
+
                 // Refresh AI chat status
                 if (window.wikiApp && window.wikiApp.aiChatController) {
                     await window.wikiApp.aiChatController.checkAIStatus();
@@ -602,27 +614,18 @@ export const settingsController = {
         }
     },
 
-    toggleApiKeyVisibility() {
-        const input = document.getElementById('aiApiKey');
-        const icon = document.querySelector('#toggleApiKeyBtn i');
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        }
-    },
-
     async testAIConnection() {
         const provider = document.getElementById('llmProvider').value;
         const apiKey = document.getElementById('aiApiKey').value;
 
-        if (!provider || !apiKey) {
-            this.app.showNotification('Please select a provider and enter an API key', 'error');
+        if (!provider) {
+            this.app.showNotification('Please select a provider', 'error');
+            return;
+        }
+
+        // Check if the API key is the masked version and hasn't been changed
+        if (!apiKey || (apiKey.startsWith('••••••••') && !this.apiKeyChanged)) {
+            this.app.showNotification('Please enter your full API key to test the connection', 'error');
             return;
         }
 

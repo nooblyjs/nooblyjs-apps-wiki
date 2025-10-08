@@ -239,6 +239,7 @@ class AIService {
         tokensUsed: response.tokensUsed
       };
     } catch (error) {
+      console.log(error)
       this.logger.error('AI connection test failed:', error);
       throw new Error(`Connection test failed: ${error.message}`);
     }

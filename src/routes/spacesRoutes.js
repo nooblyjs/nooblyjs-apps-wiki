@@ -22,12 +22,38 @@ async function loadSpacesTemplate() {
 }
 
 /**
+ * Check if a folder has existing content (non-hidden files/folders)
+ */
+async function folderHasContent(folderPath) {
+  try {
+    const files = await fs.readdir(folderPath);
+    // Filter out hidden files (starting with .) and check if there's any content
+    const visibleFiles = files.filter(file => !file.startsWith('.'));
+    return visibleFiles.length > 0;
+  } catch (err) {
+    // Folder doesn't exist, so it has no content
+    if (err.code === 'ENOENT') {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
  * Create folder structure and sample files for a space based on template
  */
 async function initializeSpaceFromTemplate(spaceTemplate, basePath, filing, logger, author) {
   // Normalize the space path to ensure consistency
   const spacePath = path.resolve(process.cwd(), basePath);
   const documents = [];
+
+  // Check if folder already has content
+  const hasContent = await folderHasContent(spacePath);
+
+  if (hasContent) {
+    logger.info(`Folder ${spacePath} already has content, skipping sample data creation`);
+    return documents;
+  }
 
   // Create .gitkeep in base directory
   const gitkeepPath = path.join(spacePath, '.gitkeep');
@@ -286,22 +312,13 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ success: false, error: `Invalid space type: ${type}` });
       }
 
-      // If path changed, check if new folder is empty and initialize if needed
+      // If path changed, check if new folder has content and initialize if needed
       if (pathChanged) {
         try {
-          const fs = require('fs').promises;
+          // Check if new folder has existing content
+          const hasContent = await folderHasContent(fullPath);
 
-          // Check if new folder exists and is empty
-          let isEmpty = false;
-          try {
-            const files = await fs.readdir(fullPath);
-            isEmpty = files.length === 0;
-          } catch (err) {
-            // Folder doesn't exist, will be created
-            isEmpty = true;
-          }
-
-          if (isEmpty) {
+          if (!hasContent) {
             logger.info(`Initializing new folder for space ${name}: ${fullPath}`);
             const sampleDocuments = await initializeSpaceFromTemplate(
               spaceTemplate,
@@ -314,6 +331,8 @@ module.exports = (options, eventEmitter, services) => {
             // Update document count
             currentSpace.documentCount = sampleDocuments.length;
             logger.info(`Initialized ${sampleDocuments.length} sample documents in new folder`);
+          } else {
+            logger.info(`Folder ${fullPath} already has content, skipping sample data creation`);
           }
         } catch (initError) {
           logger.error(`Error initializing new folder for space ${name}:`, initError);

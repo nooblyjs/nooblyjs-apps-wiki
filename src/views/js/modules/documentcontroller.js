@@ -12,6 +12,8 @@ import { userController } from "./usercontroller.js";
 
 export const documentController = {
     isReadOnlyMode: false,
+    autoSaveTimer: null,
+    lastSavedContent: null,
 
     init(app) {
         this.app = app;
@@ -734,6 +736,9 @@ export const documentController = {
 
         // Bind editor events
         this.bindEditorEvents(doc);
+
+        // Start auto-save timer
+        this.startAutoSave(doc);
     },
 
     /**
@@ -783,6 +788,9 @@ export const documentController = {
 
         // Bind editor events
         this.bindEditorEvents(doc);
+
+        // Start auto-save timer
+        this.startAutoSave(doc);
     },
 
     /**
@@ -1039,15 +1047,20 @@ export const documentController = {
     /**
      * Save document
      */
-    async saveDocument(doc) {
+    async saveDocument(doc, isAutoSave = false) {
         const textarea = document.getElementById('editorTextarea');
 
         if (!textarea) {
             console.error('Editor textarea not found');
-            return;
+            return false;
         }
 
         const content = textarea.value;
+
+        // Skip auto-save if content hasn't changed
+        if (isAutoSave && content === this.lastSavedContent) {
+            return true;
+        }
 
         try {
             const response = await fetch('/applications/wiki/api/documents/content', {
@@ -1069,21 +1082,86 @@ export const documentController = {
                     content: content
                 };
 
-                this.app.showNotification('Document saved successfully!', 'success');
+                // Store last saved content for auto-save comparison
+                this.lastSavedContent = content;
+
+                // Update last saved timestamp
+                this.updateLastSavedTime();
+
+                // Show notification only for manual saves
+                if (!isAutoSave) {
+                    this.app.showNotification('Document saved successfully!', 'success');
+                }
 
                 // Mark as saved to hide unsaved changes indicator
                 if (this.app.markAsSaved) {
                     this.app.markAsSaved();
                 }
 
-                // Update file tree and other views
-                await navigationController.loadFileTree();
+                // Update file tree and other views in background
+                navigationController.loadFileTree().catch(err => {
+                    console.warn('Failed to refresh file tree:', err);
+                });
+
+                return true;
             } else {
                 throw new Error(result.message || 'Failed to save document');
             }
         } catch (error) {
             console.error('Error saving document:', error);
-            this.app.showNotification('Failed to save document: ' + error.message, 'error');
+            if (!isAutoSave) {
+                this.app.showNotification('Failed to save document: ' + error.message, 'error');
+            }
+            return false;
+        }
+    },
+
+    /**
+     * Update last saved time indicator
+     */
+    updateLastSavedTime() {
+        const indicator = document.getElementById('lastSavedIndicator');
+        const timeElement = document.getElementById('lastSavedTime');
+
+        if (indicator && timeElement) {
+            indicator.style.display = 'inline';
+            const now = new Date();
+            timeElement.textContent = `Saved at ${now.toLocaleTimeString()}`;
+        }
+    },
+
+    /**
+     * Start auto-save timer
+     */
+    startAutoSave(doc) {
+        // Clear any existing timer
+        this.stopAutoSave();
+
+        // Set initial last saved content
+        const textarea = document.getElementById('editorTextarea');
+        if (textarea) {
+            this.lastSavedContent = textarea.value;
+        }
+
+        // Start auto-save timer (every 60 seconds = 1 minute)
+        this.autoSaveTimer = setInterval(async () => {
+            if (this.app.isEditing && this.app.currentDocument) {
+                await this.saveDocument(this.app.currentDocument, true);
+            }
+        }, 60000); // 60000 milliseconds = 1 minute
+
+        console.log('Auto-save enabled: saving every 1 minute');
+    },
+
+    /**
+     * Stop auto-save timer
+     */
+    stopAutoSave() {
+        if (this.autoSaveTimer) {
+            clearInterval(this.autoSaveTimer);
+            this.autoSaveTimer = null;
+            this.lastSavedContent = null;
+            console.log('Auto-save disabled');
         }
     },
 
@@ -1131,6 +1209,9 @@ export const documentController = {
         if (this.app.isEditing) {
             this.app.isEditing = false;
 
+            // Stop auto-save
+            this.stopAutoSave();
+
             // Remove event listeners
             document.removeEventListener('keydown', this.app.handleKeyDown);
 
@@ -1151,6 +1232,9 @@ export const documentController = {
      */
     closeEditor() {
         this.app.isEditing = false;
+
+        // Stop auto-save
+        this.stopAutoSave();
 
         // Remove event listeners
         document.removeEventListener('keydown', this.app.handleKeyDown);

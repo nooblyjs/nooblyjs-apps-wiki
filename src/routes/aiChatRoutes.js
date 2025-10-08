@@ -258,16 +258,27 @@ module.exports = (options, eventEmitter, services) => {
       let settings;
       try {
         settings = await dataManager.read(`aiSettings_${userId}`);
+        logger.info(`AI settings read for user ${userId}: ${JSON.stringify(settings)}`);
+
+        // Check if settings is an empty array (dataManager returns [] on error)
+        if (Array.isArray(settings) && settings.length === 0) {
+          logger.info(`AI settings returned empty array for user ${userId}, treating as not configured`);
+          settings = null;
+        }
       } catch (error) {
+        logger.error(`Error reading AI settings for user ${userId}:`, error);
         settings = null;
       }
 
-      const isConfigured = settings && settings.enabled && settings.provider && settings.apiKey;
+      // Consider configured if provider and API key exist, regardless of enabled flag
+      const isConfigured = settings && typeof settings === 'object' && !Array.isArray(settings) && settings.provider && settings.apiKey;
+
+      logger.info(`AI status check for user ${userId}: configured=${!!isConfigured}, enabled=${settings?.enabled}, provider=${settings?.provider}, settingsType=${typeof settings}, isArray=${Array.isArray(settings)}`);
 
       res.json({
         success: true,
         configured: !!isConfigured,
-        enabled: settings?.enabled || false,
+        enabled: settings?.enabled !== false, // Default to true if not explicitly disabled
         provider: settings?.provider || null,
         model: settings?.model || null
       });

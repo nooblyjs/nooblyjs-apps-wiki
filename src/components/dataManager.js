@@ -21,8 +21,14 @@ class DataManager {
       const data = await this.filer.read(filePath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
-      // File doesn't exist or is invalid, return empty array
-      return [];
+      // File doesn't exist or is invalid
+      // Return null for non-array data types (settings, user data, etc)
+      // Return empty array for known array types
+      const arrayTypes = ['spaces', 'documents', 'folders', 'users'];
+      if (arrayTypes.includes(type) || type.startsWith('chatHistory_')) {
+        return [];
+      }
+      return null;
     }
   }
 

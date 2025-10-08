@@ -23,16 +23,44 @@ async function loadSpacesTemplate() {
 }
 
 /**
+ * Check if a folder has existing content (non-hidden files/folders)
+ */
+async function folderHasContent(folderPath) {
+  try {
+    const files = await fs.readdir(folderPath);
+    // Filter out hidden files (starting with .) and check if there's any content
+    const visibleFiles = files.filter(file => !file.startsWith('.'));
+    return visibleFiles.length > 0;
+  } catch (err) {
+    // Folder doesn't exist, so it has no content
+    if (err.code === 'ENOENT') {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
  * Create folder structure and sample files for a space
  */
-async function initializeSpace(space, basePath, filing, dataManager, author) {
+async function initializeSpace(space, basePath, filing, dataManager, author, logger) {
   const spacePath = path.join(process.cwd(), basePath);
+  const documents = [];
+
+  // Check if folder already has content
+  const hasContent = await folderHasContent(spacePath);
+
+  if (hasContent) {
+    if (logger) {
+      logger.info(`Folder ${spacePath} already has content, skipping sample data creation`);
+    }
+    return documents;
+  }
 
   // Create space directory by creating .gitkeep file
   const gitkeepPath = path.join(spacePath, '.gitkeep');
   await filing.create(gitkeepPath, '# Keep this directory in git\n');
 
-  const documents = [];
   let documentId = Date.now();
 
   // Create folders and files
@@ -105,7 +133,7 @@ async function initializeUserWiki(userId, spaceConfigs, filing, dataManager, sea
       };
 
       // Initialize space folders and files
-      const documents = await initializeSpace(template, customPath, filing, dataManager, author);
+      const documents = await initializeSpace(template, customPath, filing, dataManager, author, logger);
 
       // Update space document count
       space.documentCount = documents.length;

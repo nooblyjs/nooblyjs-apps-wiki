@@ -412,7 +412,11 @@
                                 <span class="breadcrumb-separator">/</span>
                                 <span id="editorDocTitle" class="text-muted"></span>
                             </nav>
-                            <div class="editor-actions d-flex gap-2">
+                            <div class="editor-actions d-flex gap-2 align-items-center">
+                                <span id="lastSavedIndicator" class="text-muted small me-2" style="display: none;">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    <span id="lastSavedTime">Never saved</span>
+                                </span>
                                 <button id="saveDoc" class="btn btn-primary btn-sm">
                                     <i class="bi bi-check-lg me-1"></i>
                                     Save
@@ -1024,13 +1028,8 @@
 
                                                 <div class="col-12">
                                                     <label for="aiApiKey" class="form-label">API Key</label>
-                                                    <div class="input-group">
-                                                        <input type="password" class="form-control" id="aiApiKey" name="aiApiKey" placeholder="Enter your API key">
-                                                        <button class="btn btn-outline-secondary" type="button" id="toggleApiKeyBtn">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
-                                                    </div>
-                                                    <small class="form-text text-muted">Your API key is stored securely and encrypted.</small>
+                                                    <input type="text" class="form-control" id="aiApiKey" name="aiApiKey" placeholder="Enter your API key" autocomplete="off" spellcheck="false">
+                                                    <small class="form-text text-muted">Your API key is stored securely and encrypted. Shows last 4 characters when saved.</small>
                                                 </div>
 
                                                 <div class="col-12">
