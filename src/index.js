@@ -16,7 +16,8 @@ const DocumentRoutes = require('./routes/documentRoutes');
 const SearchRoutes = require('./routes/searchRoutes');
 const UserRoutes = require('./routes/userRoutes');
 const Views = require('./views');
-const { initializeDocumentFiles } = require('./activities/documentContent');
+const { initializeDocumentFiles } = require('./initialisation/documentContent');
+const { initializeWikiData } = require('./initialisation/initialiseWikiData');
 const { processTask } = require('./activities/taskProcessor');
 const DataManager = require('./components/dataManager');
 const AIService = require('./components/aiService');
@@ -51,7 +52,7 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   // Initialize wiki data if not exists
   (async () => {
     try {
-      await initializeWikiData(dataManager, filing, cache, logger, queue, search);
+      await initializeWikiData.run(dataManager, filing, cache, logger, queue, search);
     } catch (error) {
       logger.error('Failed to initialize wiki data:', error);
     }
@@ -68,64 +69,6 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
   SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
   UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
   Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-}
-
-/**
- * Initialize default wiki data
- */
-async function initializeWikiData(dataManager, filing, cache, logger, queue, search) {
-  try {
-    logger.info('Starting wiki data initialization check...');
-
-    // Check if we already have stored wiki data
-    const existingSpaces = await dataManager.read('spaces');
-    const existingDocuments = await dataManager.read('documents');
-
-    if (existingSpaces.length === 0 || existingDocuments.length === 0) {
-      logger.info('No existing wiki data found. User should complete setup wizard.');
-
-      // Initialize empty data structures (wizard will populate them)
-      if (existingSpaces.length === 0) {
-        await dataManager.write('spaces', []);
-        logger.info('Initialized empty spaces.json - waiting for wizard setup');
-      }
-
-      if (existingDocuments.length === 0) {
-        await dataManager.write('documents', []);
-        logger.info('Initialized empty documents.json - waiting for wizard setup');
-      }
-    } else {
-      logger.info('Wiki data already exists, skipping initialization');
-    }
-    
-    // Always initialize document files
-    try {
-      await initializeDocumentFiles({ filing, logger });
-    } catch (error) {
-      logger.error('Error initializing document files:', error);
-    }
-    
-    // Always populate search index
-    try {
-      const documents = await dataManager.read('documents');
-      documents.forEach(doc => {
-        search.add(doc.id.toString(), {
-          id: doc.id,
-          title: doc.title,
-          content: '', // Will be filled when files are read
-          tags: doc.tags || [],
-          spaceName: doc.spaceName,
-          excerpt: doc.excerpt
-        });
-      });
-      logger.info(`Populated search index with ${documents.length} documents`);
-    } catch (error) {
-      logger.error('Error populating search index:', error);
-    }
-  } catch (error) {
-    logger.error('Error initializing wiki data:', error.message);
-    logger.error('Stack trace:', error.stack);
-  }
 }
 
 /**

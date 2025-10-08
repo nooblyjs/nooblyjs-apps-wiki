@@ -1093,9 +1093,12 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <h5 class="mb-0 d-flex align-items-center">
                             <i class="bi bi-robot me-2"></i>
-                            AI Assistant
+                            <span id="aiChatHeaderTitle">AI Assistant</span>
                         </h5>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="aiContextViewToggleBtn" title="Toggle Context View">
+                                <i class="bi bi-folder-symlink"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary" id="aiChatClearBtn" title="Clear chat history">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -1116,6 +1119,52 @@
                         <div class="mt-3">
                             <small class="text-muted">Configure AI settings to get started</small>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Context View Area -->
+                <div id="aiContextView" class="ai-context-view hidden">
+                    <div class="ai-context-container">
+                        <div class="ai-context-toolbar p-2 border-bottom">
+                            <button class="btn btn-sm btn-primary" id="createContextBtn">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Create Context
+                            </button>
+                        </div>
+                        <div class="ai-context-list" id="aiContextList">
+                            <!-- Context files will be loaded here -->
+                            <div class="text-center text-muted p-4">
+                                <i class="bi bi-folder-symlink" style="font-size: 3rem;"></i>
+                                <p class="mt-3 mb-1"><strong>No context files found</strong></p>
+                                <p class="small">Create context for folders to help AI understand your documents</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context Editor Area -->
+                <div id="aiContextEditor" class="ai-context-editor hidden">
+                    <div class="ai-context-editor-header p-2 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" id="contextEditorBackBtn">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Back
+                            </button>
+                            <span class="ms-2 text-muted" id="contextEditorPath"></span>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="saveContextBtn">
+                            <i class="bi bi-save me-1"></i>
+                            Save
+                        </button>
+                    </div>
+                    <div class="ai-context-editor-body">
+                        <textarea id="contextEditorTextarea" class="form-control border-0" style="height: 100%; resize: none;" placeholder="Enter context information for this folder...
+
+Examples:
+- Purpose of this folder
+- What files are stored here
+- Important conventions or standards
+- Related documentation"></textarea>
                     </div>
                 </div>
 

@@ -1004,6 +1004,9 @@ ${documentPath}\
         } else if (ext === '.pptx' || ext === '.ppt') {
           processor = require('../processing/pptxprocessor');
           markdown = await processor.convertToMarkdown(absolutePath);
+        } else if (ext === '.pdf') {
+          processor = require('../processing/pdfprocessor');
+          markdown = await processor.convertToMarkdown(absolutePath);
         } else {
           return res.status(400).json({ success: false, error: 'Unsupported file type for conversion' });
         }

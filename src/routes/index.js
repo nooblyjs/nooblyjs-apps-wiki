@@ -43,6 +43,7 @@ module.exports = (options, eventEmitter, services) => {
   const wizardRoutes = require('./wizardRoutes');
   const settingsRoutes = require('./settingsRoutes');
   const aiChatRoutes = require('./aiChatRoutes');
+  const aiContextRoutes = require('./aiContextRoutes');
 
   // Register all routes
   documentRoutes(app, eventEmitter, services);
@@ -53,5 +54,9 @@ module.exports = (options, eventEmitter, services) => {
   wizardRoutes(app, eventEmitter, services);
   settingsRoutes(app, eventEmitter, services);
   aiChatRoutes(app, eventEmitter, services);
+
+  // Store dataManager in app for middleware access
+  app.set('dataManager', dataManager);
+  app.use('/applications/wiki/api/ai/context', aiContextRoutes);
 
 };

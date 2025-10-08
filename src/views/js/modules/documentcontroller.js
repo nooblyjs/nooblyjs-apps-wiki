@@ -553,9 +553,9 @@ export const documentController = {
         const convertBtn = document.getElementById('convertToMarkdownBtn');
         if (!convertBtn) return;
 
-        // Check if file is convertible (docx, pptx, xlsx)
+        // Check if file is convertible (docx, pptx, xlsx, pdf)
         const ext = documentData.metadata?.extension?.toLowerCase();
-        const isConvertible = ['.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls'].includes(ext);
+        const isConvertible = ['.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.pdf'].includes(ext);
 
         if (isConvertible) {
             convertBtn.style.display = 'inline-block';
@@ -814,7 +814,13 @@ export const documentController = {
         // Save button
         const saveBtn = document.getElementById('saveDoc');
         if (saveBtn) {
-            saveBtn.onclick = () => this.saveDocument(doc);
+            saveBtn.onclick = async () => {
+                const saved = await this.saveDocument(doc);
+                if (saved) {
+                    // Close editor and return to preview view
+                    this.closeEditor();
+                }
+            };
         }
 
         // Preview button (for markdown)
@@ -1148,7 +1154,7 @@ export const documentController = {
             if (this.app.isEditing && this.app.currentDocument) {
                 await this.saveDocument(this.app.currentDocument, true);
             }
-        }, 60000); // 60000 milliseconds = 1 minute
+        }, 10000); // 60000 milliseconds = 1 minute
 
         console.log('Auto-save enabled: saving every 1 minute');
     },
