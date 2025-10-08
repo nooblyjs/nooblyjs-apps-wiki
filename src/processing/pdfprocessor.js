@@ -1,11 +1,14 @@
-const fs = require('fs');
-const pdf = require('pdf-parse');
-
 /**
  * Convert a DOCX file to markdown
  * @param {string} filePath - Absolute path to the DOCX file
  * @returns {Promise<string>} Markdown content
  */
+
+'use strict';
+
+const fs = require('fs');
+const pdf = require('pdf-parse');
+
 async function convertToMarkdown(filePath) {
   try {
     const dataBuffer = fs.readFileSync(filePath);
