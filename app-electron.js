@@ -1,3 +1,13 @@
+/**
+ * @fileoverview The file define and instantiates the electron version of the noobly-wkik.
+ *
+ * @author NooblyJS Core Team
+ * @version 1.0.1
+ * @since 2025-08-24
+ */
+
+'use strict';
+
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
