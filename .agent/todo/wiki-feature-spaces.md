@@ -1,1 +1,1 @@
-![Spaces](../../docs/resources/confluence-spaces.png)
+![Spaces](./resources//confluence-spaces.png)

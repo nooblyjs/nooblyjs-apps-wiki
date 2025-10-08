@@ -1154,7 +1154,7 @@ export const documentController = {
             if (this.app.isEditing && this.app.currentDocument) {
                 await this.saveDocument(this.app.currentDocument, true);
             }
-        }, 10000); // 60000 milliseconds = 1 minute
+        }, 10000); // 10000 milliseconds = 10 seconds
 
         console.log('Auto-save enabled: saving every 1 minute');
     },

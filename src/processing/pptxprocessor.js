@@ -27,8 +27,7 @@ async function convertToMarkdown(pptxFilePath, outputMdPath) {
     });
     
     fs.writeFileSync(outputMdPath, markdown, 'utf8');
-    console.log('Conversion successful!');
-    
+
     return markdown;
   } catch (error) {
     console.error('Error:', error);

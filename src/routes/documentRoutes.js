@@ -210,8 +210,7 @@ module.exports = (options, eventEmitter, services) => {
   app.get('/applications/wiki/api/documents/content', async (req, res) => {
     try {
       const { path: documentPath, spaceName, metadata, download } = req.query;
-      console.log({ path: documentPath, spaceName, metadata, download });
-
+      
       if (!documentPath || !spaceName) {
         return res.status(400).json({ error: 'Document path and space name are required' });
       }

@@ -167,7 +167,6 @@ export const navigationController = {
         fileTree.querySelectorAll('.folder-item').forEach(folderItem => {
             folderItem.addEventListener('contextmenu', (e) => {
                 const folderPath = folderItem.dataset.folderPath;
-                console.log('Context menu triggered on folder item, folderPath:', folderPath);
                 this.showContextMenu(e, folderPath, 'folder');
             });
         });
@@ -1040,8 +1039,6 @@ export const navigationController = {
 
     // Folder Operations
     showCreateFolderModal(prefilledPath = null) {
-        console.log('showCreateFolderModal called with prefilledPath:', prefilledPath);
-        console.log('currentSpace:', this.app.currentSpace);
 
         // Auto-select first space if none is selected
         if (!this.app.currentSpace && this.app.data.spaces.length > 0) {
@@ -1067,8 +1064,6 @@ export const navigationController = {
             locationInfo.style.display = 'block';
             locationText.textContent = 'Root';
         }
-
-        console.log('Creating folder in path:', this.prefilledFolderPath || 'root');
 
         this.app.showModal('createFolderModal');
 
@@ -1099,8 +1094,6 @@ export const navigationController = {
 
             // Use the prefilled path that was set when modal was opened
             const parentPath = this.prefilledFolderPath || '';
-
-            console.log('Creating folder with parentPath:', parentPath, 'prefilledFolderPath:', this.prefilledFolderPath); // Debug log
 
             const response = await fetch('/applications/wiki/api/folders', {
                 method: 'POST',
@@ -1159,7 +1152,6 @@ export const navigationController = {
             }
             // Store the path for form submission
             this.prefilledFilePath = prefilledPath;
-            console.log('Creating file with prefilled path:', prefilledPath); // Debug log
         } else {
             // Show the location dropdown for normal creation
             const fileLocationSelect = document.getElementById('fileLocation');
@@ -2019,7 +2011,6 @@ export const navigationController = {
             window.currentDocuments = [];
         }
 
-        console.log('window.documents populated:', window.documents);
     },
 
     /**

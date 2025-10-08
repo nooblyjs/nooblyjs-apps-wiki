@@ -36,9 +36,7 @@ async function convertToMarkdown(filePath) {
     markdown = header + markdown;
     
     fs.writeFileSync(filePath.replace('.pdf', '.md'), markdown);
-    
-    console.log(`✓ Successfully converted PDF to Markdown`);
-    
+ 
     return markdown;
     
   } catch (error) {

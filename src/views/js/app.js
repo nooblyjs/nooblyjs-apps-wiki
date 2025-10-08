@@ -66,12 +66,6 @@ class WikiApp {
             return false;
         }
         const isReadOnly = this.currentSpace.permissions === 'read-only' || this.currentSpace.type === 'readonly';
-        console.log('isCurrentSpaceReadOnly check:', {
-            spaceName: this.currentSpace.name,
-            permissions: this.currentSpace.permissions,
-            type: this.currentSpace.type,
-            isReadOnly
-        });
         return isReadOnly;
     }
 
@@ -80,8 +74,6 @@ class WikiApp {
      */
     updateUIPermissions() {
         const isReadOnly = this.isCurrentSpaceReadOnly();
-
-        console.log('updateUIPermissions called, isReadOnly:', isReadOnly);
 
         // Hide/show create dropdown in header
         const createDropdown = document.getElementById('createDropdown');
@@ -97,26 +89,21 @@ class WikiApp {
 
         if (uploadBtn) {
             uploadBtn.style.display = isReadOnly ? 'none' : 'inline-block';
-            console.log('uploadBtn display:', uploadBtn.style.display);
         }
         if (createFolderBtn) {
             createFolderBtn.style.display = isReadOnly ? 'none' : 'inline-block';
-            console.log('createFolderBtn display:', createFolderBtn.style.display);
         }
         if (createFileBtn) {
             createFileBtn.style.display = isReadOnly ? 'none' : 'inline-block';
-            console.log('createFileBtn display:', createFileBtn.style.display);
         }
         if (publishBtn) {
             publishBtn.style.display = isReadOnly ? 'none' : 'inline-block';
-            console.log('publishBtn display:', publishBtn.style.display);
         }
 
         // Hide/show templates shortcut
         const shortcutTemplates = document.getElementById('shortcutTemplates');
         if (shortcutTemplates) {
             shortcutTemplates.style.display = isReadOnly ? 'none' : 'flex';
-            console.log('shortcutTemplates display:', shortcutTemplates.style.display);
         } else {
             console.warn('shortcutTemplates element not found!');
         }
@@ -446,11 +433,8 @@ class WikiApp {
             // Fetch updated spaces data
             const spacesResponse = await fetch('/applications/wiki/api/spaces');
             this.data.spaces = await spacesResponse.json();
-
-            // Re-render the spaces list in the navigation
             spacesController.renderSpacesList();
 
-            console.log('Spaces refreshed successfully');
         } catch (error) {
             console.error('Error loading spaces:', error);
         }
