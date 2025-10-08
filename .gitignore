@@ -5,6 +5,7 @@ documents-readonly/
 documents-shared/
 watch/
 .data/
+data/
 
 #nodent goes here...
 node_modules/
