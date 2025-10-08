@@ -8,7 +8,7 @@ const pdf = require('pdf-parse');
  */
 async function convertToMarkdown(filePath) {
   try {
-    const dataBuffer = fs.readFileSync(pdfPath);
+    const dataBuffer = fs.readFileSync(filePath);
     const data = await pdf(dataBuffer);
     
     let markdown = data.text;
@@ -26,19 +26,15 @@ async function convertToMarkdown(filePath) {
       .trim();
     
     // Add metadata
-    const title = pdfPath.split('/').pop().replace('.pdf', '');
+    const title = filePath.split('/').pop().replace('.pdf', '');
     const header = `# ${title}\n\n` +
-                   `**Pages:** ${data.numpages}\n\n` +
                    `---\n\n`;
     
     markdown = header + markdown;
     
-    fs.writeFileSync(outputPath, markdown);
+    fs.writeFileSync(filePath.replace('.pdf', '.md'), markdown);
     
     console.log(`✓ Successfully converted PDF to Markdown`);
-    console.log(`  Input: ${pdfPath}`);
-    console.log(`  Output: ${outputPath}`);
-    console.log(`  Pages: ${data.numpages}`);
     
     return markdown;
     
@@ -62,7 +58,3 @@ module.exports = {
     convertToMarkdown,
     isPDFFile
 };
-
-
-// Usage
-pdfToMarkdown('./document.pdf', './document.md');
