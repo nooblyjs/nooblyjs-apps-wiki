@@ -1,0 +1,13 @@
+[
+  {
+    "id": "1759929703210",
+    "email": "stephenrbooysen@gmail.com",
+    "password": "$2b$10$TRsBsEa4.8ugJ70U4d9vfu3aF19i6Xa29DQQ/tJz4SdNWtoKnfK4S",
+    "name": "Stephen Booysen",
+    "provider": "local",
+    "initialized": true,
+    "createdAt": "2025-10-08T13:21:43.210Z",
+    "initializedAt": "2025-10-08T13:21:46.257Z",
+    "avatar": "/applications/wiki/media/avatar-1759929703210.png"
+  }
+]

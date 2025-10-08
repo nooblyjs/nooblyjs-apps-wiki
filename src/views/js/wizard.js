@@ -184,7 +184,7 @@
 
         // Go to wiki button
         document.getElementById('goToWikiBtn').addEventListener('click', () => {
-            window.location.href = '/';
+            window.location.href = '/applications/wiki';
         });
     }
 
