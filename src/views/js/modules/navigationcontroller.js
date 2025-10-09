@@ -897,7 +897,8 @@ export const navigationController = {
                         break;
 
                     case 'pdf':
-                        previewHtml = `<i class="bi bi-file-pdf" style="font-size: 4rem; color: #dc3545;"></i>`;
+                        const pdfPreviewUrl = `/applications/wiki/api/documents/pdf-preview?path=${encodeURIComponent(filePath)}&spaceName=${encodeURIComponent(spaceName)}&page=1`;
+                        previewHtml = `<img src="${pdfPreviewUrl}" alt="PDF Preview" style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px;" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22%23dc3545%22%3EPDF%3C/text%3E%3C/svg%3E';" />`;
                         break;
 
                     default:

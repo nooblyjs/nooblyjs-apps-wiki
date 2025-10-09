@@ -231,8 +231,17 @@ export const aiChatController = {
 
         // Render all messages
         this.chatHistory.forEach(entry => {
-            this.appendMessage(entry.userMessage, 'user', false);
-            this.appendMessage(entry.aiResponse, 'ai', false, entry.formattedPrompt);
+            // Handle both old format (userMessage, aiResponse, formattedPrompt)
+            // and new format (chatContext, chatPrompt, aiResponse)
+            if (entry.chatPrompt !== undefined) {
+                // New format
+                this.appendMessage(entry.chatPrompt, 'user', entry.chatContext || null, false);
+                this.appendMessage(entry.aiResponse, 'ai', null, false);
+            } else {
+                // Old format (backwards compatibility)
+                this.appendMessage(entry.userMessage, 'user', null, false);
+                this.appendMessage(entry.aiResponse, 'ai', null, false);
+            }
         });
 
         // Scroll to bottom
@@ -367,9 +376,6 @@ export const aiChatController = {
         textarea.value = '';
         textarea.style.height = 'auto';
 
-        // Add user message to UI
-        this.appendMessage(message, 'user');
-
         // Show typing indicator
         this.showTypingIndicator();
 
@@ -377,9 +383,13 @@ export const aiChatController = {
         this.setStatus('Sending message...');
 
         try {
-            // Get context and build formatted prompt
+            // Get context and build context string separately
             const context = await this.getCurrentContext();
-            const formattedPrompt = await this.buildFormattedPrompt(message, context);
+            const chatContext = await this.buildContextString(context);
+            const chatPrompt = message;
+
+            // Combine context and prompt for sending to AI
+            const formattedPrompt = await this.buildFormattedPrompt(chatPrompt, context);
 
             const response = await fetch('/applications/wiki/api/ai/chat', {
                 method: 'POST',
@@ -398,16 +408,17 @@ export const aiChatController = {
             this.hideTypingIndicator();
 
             if (response.ok) {
-                // Add AI response to UI with the formatted prompt
-                this.appendMessage(data.response, 'ai', true, formattedPrompt);
+                // Add user message and AI response to UI
+                this.appendMessage(chatPrompt, 'user', chatContext);
+                this.appendMessage(data.response, 'ai', null);
 
-                // Update local history
+                // Update local history with three sections
                 this.chatHistory.push({
-                    userMessage: message,
+                    chatContext: chatContext,
+                    chatPrompt: chatPrompt,
                     aiResponse: data.response,
                     timestamp: data.timestamp,
-                    usage: data.usage,
-                    formattedPrompt: formattedPrompt
+                    usage: data.usage
                 });
 
                 // Update status
@@ -659,6 +670,54 @@ export const aiChatController = {
     },
 
     /**
+     * Build context string separately for storage
+     * Returns the Context section as a string (without the Question section)
+     */
+    async buildContextString(context) {
+        const parts = [];
+
+        // Check if we have any context to add
+        const hasFolderContext = context.folderContext && context.folderContext.trim();
+        const hasFileContext = context.fileContext && context.fileContext.trim();
+        const hasFileContent = context.documentContent && context.documentContent.trim();
+
+        // Get folder structure
+        const folderStructure = await this.getFolderStructure();
+        const hasFolderStructure = folderStructure && folderStructure.trim();
+
+        // Only add Context section if we have any context
+        if (!hasFolderContext && !hasFileContext && !hasFileContent && !hasFolderStructure) {
+            return ''; // No context available
+        }
+
+        parts.push('Context:');
+
+        // Add folder context if available
+        if (hasFolderContext) {
+            parts.push(`This folder is described as ${context.folderContext}`);
+        }
+
+        // Add file context if available
+        if (hasFileContext) {
+            parts.push(`The file is described as ${context.fileContext}`);
+        }
+
+        // Add file content if available
+        if (hasFileContent) {
+            parts.push(`The file content is ${context.documentContent}`);
+        }
+
+        // Add folder structure if available
+        if (hasFolderStructure) {
+            parts.push('');
+            parts.push('And just some more information for context here is the structure the user is in');
+            parts.push(folderStructure);
+        }
+
+        return parts.join('\n');
+    },
+
+    /**
      * Build formatted prompt with context
      * Format based on whether we have folder context, file context, and file content
      */
@@ -753,8 +812,10 @@ export const aiChatController = {
 
     /**
      * Append message to chat
+     * For user messages: content = chatPrompt, contextData = chatContext string
+     * For AI messages: content = aiResponse, contextData = null
      */
-    appendMessage(content, type, scroll = true, formattedPrompt = null) {
+    appendMessage(content, type, contextData = null, scroll = true) {
         const messagesContainer = document.getElementById('aiChatMessages');
         if (!messagesContainer) return;
 
@@ -764,40 +825,12 @@ export const aiChatController = {
             welcome.remove();
         }
 
-        // If this is an AI message with a formatted prompt, add the collapsible prompt viewer
-        if (type === 'ai' && formattedPrompt) {
-            const promptViewerDiv = document.createElement('div');
-            promptViewerDiv.className = 'prompt-viewer';
-
-            const promptHeader = document.createElement('div');
-            promptHeader.className = 'prompt-viewer-header';
-            promptHeader.innerHTML = `
-                <i class="bi bi-chevron-right prompt-chevron"></i>
-                <span class="prompt-viewer-title">View Prompt Sent to AI</span>
-                <span class="prompt-viewer-badge">Click to expand</span>
-            `;
-
-            const promptContent = document.createElement('div');
-            promptContent.className = 'prompt-viewer-content hidden';
-            promptContent.innerHTML = `<pre class="prompt-viewer-text">${this.escapeHtml(formattedPrompt)}</pre>`;
-
-            // Toggle functionality
-            promptHeader.addEventListener('click', () => {
-                const isExpanded = !promptContent.classList.contains('hidden');
-                if (isExpanded) {
-                    promptContent.classList.add('hidden');
-                    promptHeader.querySelector('.prompt-chevron').className = 'bi bi-chevron-right prompt-chevron';
-                    promptHeader.querySelector('.prompt-viewer-badge').textContent = 'Click to expand';
-                } else {
-                    promptContent.classList.remove('hidden');
-                    promptHeader.querySelector('.prompt-chevron').className = 'bi bi-chevron-down prompt-chevron';
-                    promptHeader.querySelector('.prompt-viewer-badge').textContent = 'Click to collapse';
-                }
-            });
-
-            promptViewerDiv.appendChild(promptHeader);
-            promptViewerDiv.appendChild(promptContent);
-            messagesContainer.appendChild(promptViewerDiv);
+        // If this is a user message with context, add the context bubble first
+        if (type === 'user' && contextData && contextData.trim()) {
+            const contextBubble = document.createElement('div');
+            contextBubble.className = 'context-bubble';
+            contextBubble.textContent = contextData;
+            messagesContainer.appendChild(contextBubble);
         }
 
         const messageDiv = document.createElement('div');

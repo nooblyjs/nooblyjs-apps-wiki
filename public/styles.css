@@ -62,8 +62,31 @@ body {
   background-color: var(--bs-light);
   border-right: 1px solid var(--bs-border-color);
   min-height: calc(100vh - var(--app-header-height));
+  height: calc(100vh - var(--app-header-height));
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sidebar sections layout */
+.sidebar-section-static {
+  flex-shrink: 0;
+}
+
+.sidebar-section-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.sidebar-section-bottom {
+  flex-shrink: 0;
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: 1rem;
+  margin-top: auto;
 }
 
 /* Sidebar resize handle */
@@ -427,8 +450,23 @@ body {
 }
 
 /* Folder View Styles */
+#folderView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100vh - var(--app-header-height));
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.folder-content {
+  flex: 1;
+  min-height: 300px;
+}
+
 .folder-header {
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .folder-header .breadcrumb {
@@ -1443,6 +1481,23 @@ body {
   margin-left: auto;
 }
 
+.context-bubble {
+  align-self: flex-end;
+  background-color: #fef9ed;
+  color: #5a4a2a;
+  border: 1px solid #f0e6d2;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  max-width: 85%;
+  margin-left: auto;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  animation: slideIn 0.2s ease;
+}
+
 .ai-message {
   align-self: flex-start;
   background-color: white;
@@ -1895,10 +1950,25 @@ body {
 
 .card-preview .markdown-preview-card {
   padding: 0.5rem;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   max-height: 150px;
   overflow: hidden;
   text-align: left;
+  line-height: 1.4;
+}
+
+.card-preview .markdown-preview-card h1,
+.card-preview .markdown-preview-card h2,
+.card-preview .markdown-preview-card h3,
+.card-preview .markdown-preview-card h4 {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.card-preview .markdown-preview-card p {
+  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
 }
 
 .card-preview pre {
