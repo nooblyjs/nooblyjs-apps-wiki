@@ -958,6 +958,108 @@ ${documentPath}\
     }
   });
 
+  // Toggle TODO checkbox in markdown files
+  app.post('/applications/wiki/api/documents/toggle-todo', async (req, res) => {
+    try {
+      const { path: documentPath, spaceName, lineNumber } = req.body;
+
+      if (!documentPath || !spaceName || lineNumber === undefined) {
+        return res.status(400).json({ success: false, error: 'Document path, space name, and line number are required' });
+      }
+
+      logger.info(`Toggling TODO at line ${lineNumber} in ${documentPath} (space: ${spaceName})`);
+
+      let documentsDir, absolutePath;
+      try {
+        ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
+      } catch (pathError) {
+        logger.warn(`Path resolution failed: ${pathError.message}`);
+        return res.status(pathError.message.includes('Space not found') ? 404 : 403).json({
+          success: false,
+          error: pathError.message
+        });
+      }
+
+      try {
+        const fs = require('fs').promises;
+
+        // Read the file content
+        const content = await fs.readFile(absolutePath, 'utf8');
+        const lines = content.split('\n');
+
+        // Validate line number
+        if (lineNumber < 0 || lineNumber >= lines.length) {
+          return res.status(400).json({ success: false, error: 'Invalid line number' });
+        }
+
+        const line = lines[lineNumber];
+
+        // Check if this line contains a TODO checkbox
+        const uncheckedMatch = line.match(/^(\s*[-*])\s+\[\s\]/);
+        const checkedMatch = line.match(/^(\s*[-*])\s+\[x\]/i);
+
+        if (!uncheckedMatch && !checkedMatch) {
+          return res.status(400).json({ success: false, error: 'Line does not contain a TODO checkbox' });
+        }
+
+        // Toggle the checkbox
+        if (uncheckedMatch) {
+          // Change [ ] to [x]
+          lines[lineNumber] = line.replace(/\[\s\]/, '[x]');
+        } else {
+          // Change [x] to [ ]
+          lines[lineNumber] = line.replace(/\[x\]/i, '[ ]');
+        }
+
+        // Write the updated content back to the file
+        const updatedContent = lines.join('\n');
+        await fs.writeFile(absolutePath, updatedContent, 'utf8');
+
+        logger.info(`Successfully toggled TODO at line ${lineNumber} in ${documentPath}`);
+
+        // Trigger search re-indexing asynchronously
+        setImmediate(() => {
+          try {
+            const SearchIndexer = require('../activities/searchIndexer');
+            const searchIndexer = new SearchIndexer(logger, dataManager);
+            searchIndexer.indexFile(absolutePath, {
+              name: path.basename(documentPath),
+              relativePath: documentPath,
+              spaceName: spaceName
+            });
+          } catch (indexError) {
+            logger.warn('Failed to update search index after TODO toggle:', indexError.message);
+          }
+        });
+
+        // Emit document change event for any listeners
+        eventEmitter.emit('document:changed', {
+          path: documentPath,
+          spaceName: spaceName,
+          absolutePath: absolutePath,
+          type: 'todo-toggle'
+        });
+
+        res.json({
+          success: true,
+          message: 'TODO toggled successfully',
+          lineNumber: lineNumber,
+          newContent: lines[lineNumber]
+        });
+
+      } catch (fileError) {
+        logger.error(`Failed to toggle TODO in ${documentPath}:`, fileError);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to toggle TODO: ' + fileError.message
+        });
+      }
+    } catch (error) {
+      logger.error('Error in toggle-todo endpoint:', error);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
+
   // Convert Office documents to Markdown
   app.post('/applications/wiki/api/documents/convert-to-markdown', async (req, res) => {
     try {

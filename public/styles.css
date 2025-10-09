@@ -82,11 +82,17 @@ body {
   min-height: 0;
 }
 
+.sidebar-section-scrollable .file-tree {
+  min-height: 100px;
+}
+
 .sidebar-section-bottom {
   flex-shrink: 0;
   border-top: 1px solid var(--bs-border-color);
   padding-top: 1rem;
   margin-top: auto;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 /* Sidebar resize handle */
@@ -116,10 +122,12 @@ body {
 /* Main content area */
 .app-main {
   flex: 1;
-  min-height: calc(100vh - var(--app-header-height));
+  height: calc(100vh - var(--app-header-height));
+  max-height: calc(100vh - var(--app-header-height));
   background-color: var(--bs-body-bg);
   min-width: 0; /* Allow flex item to shrink below content size */
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Card customizations */
@@ -331,10 +339,18 @@ body {
   .app-sidebar {
     width: 100%;
     min-height: auto;
+    height: auto;
+    max-height: 50vh;
   }
 
   .app-main {
-    min-height: auto;
+    height: auto;
+    max-height: none;
+    min-height: 50vh;
+  }
+
+  .sidebar-section-bottom {
+    max-height: 200px;
   }
 }
 
@@ -349,7 +365,7 @@ body {
 
 /* File Tree Styles */
 .file-tree {
-  font-size: 14px;
+  /* Font size now matches shortcuts and spaces navigation items */
 }
 
 .folder-item,
@@ -379,8 +395,7 @@ body {
 
 .folder-item i,
 .file-item i {
-  font-size: 14px;
-  width: 14px;
+  width: 16px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -454,7 +469,6 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: calc(100vh - var(--app-header-height));
   padding: 2rem;
   overflow-y: auto;
 }
@@ -768,6 +782,20 @@ body {
 
 .markdown-content li {
   margin-bottom: 0.25rem;
+}
+
+/* Task list checkbox styles - hide disabled checkboxes */
+.markdown-content input[type="checkbox"][disabled] {
+  display: none;
+}
+
+.markdown-content .task-list-item {
+  list-style-type: none;
+}
+
+.markdown-content .task-list-item input[type="checkbox"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
 }
 
 .markdown-content blockquote {

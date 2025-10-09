@@ -13,10 +13,83 @@ export const navigationController = {
     renameItemPath: null,
     renameItemType: null,
     isReadOnlyMode: false,
-    currentViewMode: 'grid', // 'grid', 'details', 'cards'
+    currentViewMode: 'grid', // 'grid', 'details', 'cards' - default/fallback view mode
+    folderViewPreferences: {}, // Stores view preferences per space and folder
+    lastGlobalViewMode: 'grid', // Tracks the last globally used view mode
 
-    init(app) {
+    async init(app) {
         this.app = app;
+        // Load folder view preferences from server
+        await this.loadFolderViewPreferences();
+    },
+
+    /**
+     * Load folder view preferences from the server
+     */
+    async loadFolderViewPreferences() {
+        try {
+            const response = await fetch('/applications/wiki/api/user/folder-view-preferences');
+            if (response.ok) {
+                const data = await response.json();
+                this.folderViewPreferences = data.folderViewPreferences || {};
+                console.log('Loaded folder view preferences:', this.folderViewPreferences);
+            }
+        } catch (error) {
+            console.error('Error loading folder view preferences:', error);
+            this.folderViewPreferences = {};
+        }
+    },
+
+    /**
+     * Get the preferred view mode for a specific folder
+     * @param {string} folderPath - The folder path (empty string for root)
+     * @returns {string|null} - The preferred view mode or null if no preference set
+     */
+    getFolderViewPreference(folderPath) {
+        if (!this.app.currentSpace) return null;
+
+        const spaceId = this.app.currentSpace.id;
+        const key = folderPath || '';
+
+        if (this.folderViewPreferences[spaceId] && this.folderViewPreferences[spaceId][key]) {
+            return this.folderViewPreferences[spaceId][key];
+        }
+
+        return null;
+    },
+
+    /**
+     * Save the view mode preference for a specific folder
+     * @param {string} folderPath - The folder path (empty string for root)
+     * @param {string} viewMode - The view mode to save
+     */
+    async saveFolderViewPreference(folderPath, viewMode) {
+        if (!this.app.currentSpace) return;
+
+        const spaceId = this.app.currentSpace.id;
+        const key = folderPath || '';
+
+        try {
+            const response = await fetch('/applications/wiki/api/user/folder-view-preference', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceId: spaceId,
+                    folderPath: key,
+                    viewMode: viewMode
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.folderViewPreferences = data.folderViewPreferences || {};
+                console.log('Saved folder view preference:', viewMode, 'for', key || 'root');
+            }
+        } catch (error) {
+            console.error('Error saving folder view preference:', error);
+        }
     },
 
     /**
@@ -418,6 +491,19 @@ export const navigationController = {
         const folder = this.findFolderInTree(this.fullFileTree, folderPath);
         if (!folder) return;
 
+        // Determine which view mode to use:
+        // 1. First priority: folder-specific preference
+        // 2. Second priority: last used global view mode
+        // 3. Third priority: default (grid)
+        const folderPreference = this.getFolderViewPreference(folderPath);
+        if (folderPreference) {
+            this.currentViewMode = folderPreference;
+            console.log(`Using folder-specific preference: ${folderPreference} for ${folderPath || 'root'}`);
+        } else {
+            // Use the last global view mode (already set in currentViewMode)
+            console.log(`Using last global view mode: ${this.currentViewMode} for ${folderPath || 'root'}`);
+        }
+
         // Create a folder overview view
         const folderContent = this.createFolderOverview(folder);
         this.showFolderView(folderContent);
@@ -712,11 +798,16 @@ export const navigationController = {
 
         // View mode switcher buttons
         document.querySelectorAll('.view-mode-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const newMode = btn.dataset.view;
                 if (newMode !== this.currentViewMode) {
                     this.currentViewMode = newMode;
+                    this.lastGlobalViewMode = newMode; // Track the last globally used mode
+
+                    // Save this preference for the current folder
+                    await this.saveFolderViewPreference(this.app.currentFolder, newMode);
+
                     // Reload the current folder with new view mode
                     this.loadFolderContent(this.app.currentFolder);
                 }

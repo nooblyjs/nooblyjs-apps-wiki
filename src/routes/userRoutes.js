@@ -553,6 +553,102 @@ module.exports = (options, eventEmitter, services) => {
     }
   });
 
+  // Folder view preferences endpoints
+  app.get('/applications/wiki/api/user/folder-view-preferences', async (req, res) => {
+    try {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const userId = req.user.id;
+
+      // Try to get user preferences from dataServe
+      let userPreferences = await dataManager.read(`userPreferences_${userId}`);
+
+      // If no preferences exist or folderViewPreferences is not set, return empty object
+      if (!userPreferences || !userPreferences.folderViewPreferences) {
+        return res.json({ folderViewPreferences: {} });
+      }
+
+      res.json({ folderViewPreferences: userPreferences.folderViewPreferences });
+    } catch (error) {
+      logger.error('Error fetching folder view preferences:', error);
+      res.status(500).json({ error: 'Failed to fetch folder view preferences' });
+    }
+  });
+
+  app.post('/applications/wiki/api/user/folder-view-preference', async (req, res) => {
+    try {
+      // Check if user is authenticated with Passport
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { spaceId, folderPath, viewMode } = req.body;
+
+      if (!spaceId || viewMode === undefined || viewMode === null) {
+        return res.status(400).json({ error: 'spaceId and viewMode are required' });
+      }
+
+      // Validate viewMode
+      const validViewModes = ['grid', 'details', 'cards'];
+      if (!validViewModes.includes(viewMode)) {
+        return res.status(400).json({ error: 'Invalid view mode' });
+      }
+
+      const userId = req.user.id;
+
+      // Get current user preferences
+      let userPreferences = await dataManager.read(`userPreferences_${userId}`);
+
+      // If no preferences exist, create default structure
+      if (!userPreferences) {
+        userPreferences = {
+          userId: userId,
+          bio: '',
+          location: '',
+          timezone: 'UTC',
+          emailNotifications: true,
+          darkMode: false,
+          defaultLanguage: 'en',
+          folderViewPreferences: {},
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      // Ensure folderViewPreferences exists
+      if (!userPreferences.folderViewPreferences) {
+        userPreferences.folderViewPreferences = {};
+      }
+
+      // Ensure space-specific preferences exist
+      if (!userPreferences.folderViewPreferences[spaceId]) {
+        userPreferences.folderViewPreferences[spaceId] = {};
+      }
+
+      // Use empty string for root folder, otherwise use the provided path
+      const key = folderPath || '';
+      userPreferences.folderViewPreferences[spaceId][key] = viewMode;
+      userPreferences.updatedAt = new Date().toISOString();
+
+      // Save updated preferences
+      await dataManager.write(`userPreferences_${userId}`, userPreferences);
+
+      logger.info(`Folder view preference saved: ${viewMode} for space ${spaceId}, folder '${key}' by user ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Folder view preference saved successfully',
+        folderViewPreferences: userPreferences.folderViewPreferences
+      });
+    } catch (error) {
+      logger.error('Error saving folder view preference:', error);
+      res.status(500).json({ error: 'Failed to save folder view preference' });
+    }
+  });
+
   // Legacy activity tracking endpoints (for backward compatibility)
   app.get('/applications/wiki/api/activity', async (req, res) => {
     try {

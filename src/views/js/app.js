@@ -6,6 +6,7 @@ import { userController } from "./modules/usercontroller.js";
 import { templatesController } from "./modules/templatescontroller.js";
 import { settingsController } from "./modules/settingscontroller.js";
 import { aiChatController } from "./modules/aichatcontroller.js";
+import todoScanner from "./services/todoScanner.js";
 
 /**
  * @fileoverview Updated Wiki Application with new layout
@@ -369,7 +370,24 @@ class WikiApp {
 
     initMarkdown() {
         if (typeof marked !== 'undefined') {
+            // Configure marked with custom renderer for task lists
+            const renderer = new marked.Renderer();
+
+            // Override listitem rendering to make checkboxes NOT disabled
+            const originalListitem = renderer.listitem.bind(renderer);
+            renderer.listitem = function(text, task, checked) {
+                if (task) {
+                    // Remove the disabled attribute that marked adds by default
+                    const checkbox = checked
+                        ? '<input type="checkbox" checked>'
+                        : '<input type="checkbox">';
+                    return `<li class="task-list-item">${checkbox} ${text}</li>\n`;
+                }
+                return originalListitem(text, task, checked);
+            };
+
             marked.setOptions({
+                renderer: renderer,
                 highlight: function(code, lang) {
                     if (typeof Prism !== 'undefined' && lang && Prism.languages[lang]) {
                         return Prism.highlight(code, Prism.languages[lang], lang);
@@ -422,6 +440,9 @@ class WikiApp {
 
             spacesController.renderSpacesList();
             navigationController.loadFileTree();
+
+            // Initialize TODO scanner
+            todoScanner.init();
 
         } catch (error) {
             console.error('Error loading initial data:', error);

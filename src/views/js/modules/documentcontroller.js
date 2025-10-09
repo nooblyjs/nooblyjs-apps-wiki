@@ -450,6 +450,9 @@ export const documentController = {
         // Track document visit
         this.trackDocumentVisit(doc, 'viewed');
 
+        // Setup TODO checkbox click handlers
+        this.setupTodoCheckboxHandlers(doc);
+
         this.bindDocumentViewEvents();
     },
 
@@ -625,6 +628,205 @@ export const documentController = {
                 this.toggleDocumentStar(documentData);
             };
         }
+    },
+
+    /**
+     * Setup TODO checkbox click handlers in markdown content
+     * This also works for wiki-code rendered content
+     */
+    setupTodoCheckboxHandlers(doc) {
+        // Setup handlers for markdown-rendered content
+        const markdownContent = document.querySelector('.markdown-content');
+        if (markdownContent) {
+            this.bindTodoCheckboxes(markdownContent, doc);
+        }
+
+        // Also setup global delegated event handler for wiki-code rendered TODOs
+        this.setupWikiCodeTodoHandlers();
+    },
+
+    /**
+     * Bind TODO checkboxes in a container
+     */
+    bindTodoCheckboxes(container, doc) {
+        // Find all task list items (rendered checkboxes)
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+
+        checkboxes.forEach((checkbox, index) => {
+            // Find the parent list item
+            const listItem = checkbox.closest('li');
+            if (!listItem) return;
+
+            // Get the text content to help identify the line in the source
+            const taskText = listItem.textContent.trim();
+
+            // Add click handler
+            checkbox.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent default checkbox behavior
+
+                // Show loading state
+                const originalDisabled = checkbox.disabled;
+                checkbox.disabled = true;
+
+                try {
+                    // Find the line number in the original content
+                    const lineNumber = this.findTodoLineNumber(doc.content, taskText, checkbox.checked);
+
+                    if (lineNumber === -1) {
+                        console.error('Could not find TODO item in source');
+                        this.app.showNotification('Failed to locate TODO item', 'error');
+                        checkbox.disabled = originalDisabled;
+                        return;
+                    }
+
+                    // Call the API to toggle the TODO
+                    const response = await fetch('/applications/wiki/api/documents/toggle-todo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            path: doc.path,
+                            spaceName: doc.spaceName,
+                            lineNumber: lineNumber
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Toggle the checkbox visually
+                        checkbox.checked = !checkbox.checked;
+
+                        // Update the document content in memory
+                        doc.content = await this.fetchUpdatedContent(doc.path, doc.spaceName);
+
+                        // Trigger window.todos update if it exists
+                        if (window.todoScanner) {
+                            window.todoScanner.scanAllSpaces();
+                        }
+                    } else {
+                        throw new Error(result.error || 'Failed to toggle TODO');
+                    }
+                } catch (error) {
+                    console.error('Error toggling TODO:', error);
+                    this.app.showNotification('Failed to toggle TODO: ' + error.message, 'error');
+                } finally {
+                    checkbox.disabled = originalDisabled;
+                }
+            });
+        });
+    },
+
+    /**
+     * Find the line number of a TODO item in the source content
+     */
+    findTodoLineNumber(content, taskText, currentlyChecked) {
+        const lines = content.split('\n');
+
+        // Remove common markdown formatting from task text for matching
+        const cleanTaskText = taskText
+            .replace(/^\s*[-*]\s*\[[ x]\]\s*/i, '')
+            .trim()
+            .toLowerCase();
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // Check if this line contains a TODO checkbox
+            const isTodoLine = /^\s*[-*]\s+\[[ x]\]/i.test(line);
+            if (!isTodoLine) continue;
+
+            // Extract the task text from the line
+            const lineTaskText = line
+                .replace(/^\s*[-*]\s*\[[ x]\]\s*/i, '')
+                .trim()
+                .toLowerCase();
+
+            // Match the task text
+            if (lineTaskText === cleanTaskText) {
+                return i;
+            }
+        }
+
+        return -1; // Not found
+    },
+
+    /**
+     * Fetch updated content from server
+     */
+    async fetchUpdatedContent(documentPath, spaceName) {
+        try {
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(documentPath)}&spaceName=${encodeURIComponent(spaceName)}&enhanced=true`);
+            if (!response.ok) throw new Error('Failed to fetch content');
+            const data = await response.json();
+            return data.content;
+        } catch (error) {
+            console.error('Error fetching updated content:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Setup global wiki-code TODO handlers
+     * Uses event delegation for dynamically rendered content
+     */
+    setupWikiCodeTodoHandlers() {
+        // Only setup once
+        if (this.wikiCodeTodoHandlerSetup) return;
+        this.wikiCodeTodoHandlerSetup = true;
+
+        // Use delegated event on document body
+        document.body.addEventListener('click', async (e) => {
+            const checkbox = e.target;
+
+            // Check if clicked element is a checkbox
+            if (checkbox.tagName !== 'INPUT' || checkbox.type !== 'checkbox') return;
+
+            // Check if it has wiki-code data attributes
+            const todoPath = checkbox.dataset.todoPath;
+            const todoSpace = checkbox.dataset.todoSpace;
+            const todoLine = checkbox.dataset.todoLine;
+
+            if (!todoPath || !todoSpace || todoLine === undefined) return;
+
+            // This is a wiki-code TODO checkbox
+            e.preventDefault();
+
+            // Show loading state
+            const originalDisabled = checkbox.disabled;
+            checkbox.disabled = true;
+
+            try {
+                // Call the API to toggle the TODO
+                const response = await fetch('/applications/wiki/api/documents/toggle-todo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: todoPath,
+                        spaceName: todoSpace,
+                        lineNumber: parseInt(todoLine)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Toggle the checkbox visually
+                    checkbox.checked = !checkbox.checked;
+
+                    // Trigger window.todos update
+                    if (window.todoScanner) {
+                        window.todoScanner.scanSingleFile(todoPath, todoSpace);
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to toggle TODO');
+                }
+            } catch (error) {
+                console.error('Error toggling wiki-code TODO:', error);
+                this.app.showNotification('Failed to toggle TODO: ' + error.message, 'error');
+            } finally {
+                checkbox.disabled = originalDisabled;
+            }
+        });
     },
 
     /**
