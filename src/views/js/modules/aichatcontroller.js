@@ -132,6 +132,21 @@ export const aiChatController = {
         document.getElementById('saveContextBtn')?.addEventListener('click', () => {
             this.saveContext();
         });
+
+        // Listen for navigation events to update context view
+        window.addEventListener('spaceChanged', (e) => {
+            // If context view is open, reload context files for new space
+            if (this.currentView === 'context') {
+                this.loadContextFiles();
+            }
+        });
+
+        window.addEventListener('folderChanged', (e) => {
+            // If context view is open, reload context files for new folder
+            if (this.currentView === 'context') {
+                this.loadContextFiles();
+            }
+        });
     },
 
     /**
@@ -408,16 +423,10 @@ export const aiChatController = {
     },
 
     /**
-     * Get current context for AI
+     * Get current context for AI - includes folder and file context
      */
-    getCurrentContext() {
+    async getCurrentContext() {
         const context = {};
-
-        // Add current document if viewing one
-        if (this.app.currentDocument) {
-            context.documentTitle = this.app.currentDocument.title;
-            context.includeDocumentContext = true;
-        }
 
         // Add current space
         if (this.app.currentSpace) {
@@ -425,7 +434,120 @@ export const aiChatController = {
             context.includeSpaceContext = true;
         }
 
+        // Determine current folder
+        let currentFolderPath = '';
+        if (this.app.currentFolder) {
+            currentFolderPath = this.app.currentFolder;
+        } else if (this.app.currentDocument && this.app.currentDocument.path) {
+            const docPath = this.app.currentDocument.path;
+            const lastSlash = docPath.lastIndexOf('/');
+            if (lastSlash > 0) {
+                currentFolderPath = docPath.substring(0, lastSlash);
+            }
+        }
+
+        // Load folder context if available
+        if (currentFolderPath || currentFolderPath === '') {
+            const folderContextContent = await this.loadFolderContextContent(currentFolderPath);
+            if (folderContextContent) {
+                context.folderContext = folderContextContent;
+                context.folderPath = currentFolderPath || '/';
+            }
+        }
+
+        // Add current document context if viewing one
+        if (this.app.currentDocument) {
+            context.documentTitle = this.app.currentDocument.title;
+            context.documentPath = this.app.currentDocument.path;
+
+            // Load file-specific context if available
+            const fileContextContent = await this.loadFileContextContent(this.app.currentDocument.path);
+            if (fileContextContent) {
+                context.fileContext = fileContextContent;
+            }
+
+            // Add document content (for preview or editing)
+            if (this.app.currentDocument.content) {
+                context.documentContent = this.truncateToTokenLimit(this.app.currentDocument.content, 2000);
+            }
+        }
+
         return context;
+    },
+
+    /**
+     * Load folder context content from folder-context.md
+     */
+    async loadFolderContextContent(folderPath) {
+        if (!this.app.currentSpace) return null;
+
+        try {
+            const aiContextFolder = folderPath ? `${folderPath}/.aicontext` : '.aicontext';
+            const contextFilePath = `${aiContextFolder}/folder-context.md`;
+            const spaceName = this.app.currentSpace.name;
+
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(contextFilePath)}&spaceName=${encodeURIComponent(spaceName)}`);
+
+            if (response.ok) {
+                const content = await response.text();
+                return content.trim() || null;
+            }
+        } catch (error) {
+            // Context file doesn't exist or error loading it
+            console.log('No folder context found for', folderPath);
+        }
+
+        return null;
+    },
+
+    /**
+     * Load file-specific context content from {filename}-context.md
+     */
+    async loadFileContextContent(filePath) {
+        if (!this.app.currentSpace || !filePath) return null;
+
+        try {
+            // Extract filename without extension
+            const fileName = filePath.split('/').pop();
+            const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+
+            // Extract folder path from file path
+            const lastSlash = filePath.lastIndexOf('/');
+            const folderPath = lastSlash > 0 ? filePath.substring(0, lastSlash) : '';
+
+            // Build path to file-specific context file
+            const aiContextFolder = folderPath ? `${folderPath}/.aicontext` : '.aicontext';
+            const contextFilePath = `${aiContextFolder}/${fileNameWithoutExt}-context.md`;
+            const spaceName = this.app.currentSpace.name;
+
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(contextFilePath)}&spaceName=${encodeURIComponent(spaceName)}`);
+
+            if (response.ok) {
+                const content = await response.text();
+                return content.trim() || null;
+            }
+        } catch (error) {
+            // Context file doesn't exist or error loading it
+            console.log('No file context found for', filePath);
+        }
+
+        return null;
+    },
+
+    /**
+     * Truncate text to approximate token limit
+     * Rough approximation: 1 token ≈ 4 characters
+     */
+    truncateToTokenLimit(text, maxTokens) {
+        if (!text) return '';
+
+        const maxChars = maxTokens * 4; // Rough approximation
+        if (text.length <= maxChars) {
+            return text;
+        }
+
+        // Truncate and add ellipsis
+        return text.substring(0, maxChars) + '\n\n[... content truncated due to length ...]';
     },
 
     /**
@@ -627,7 +749,11 @@ export const aiChatController = {
         document.getElementById('aiChatForm').parentElement.classList.remove('hidden');
 
         document.getElementById('aiChatHeaderTitle').textContent = 'AI Assistant';
-        document.getElementById('aiContextViewToggleBtn').classList.remove('active');
+
+        const toggleBtn = document.getElementById('aiContextViewToggleBtn');
+        toggleBtn.classList.remove('active');
+        // Change icon to folder when in chat view
+        toggleBtn.querySelector('i').className = 'bi bi-folder-symlink';
     },
 
     /**
@@ -642,36 +768,119 @@ export const aiChatController = {
         document.getElementById('aiChatForm').parentElement.classList.add('hidden');
 
         document.getElementById('aiChatHeaderTitle').textContent = 'AI Context Manager';
-        document.getElementById('aiContextViewToggleBtn').classList.add('active');
+
+        const toggleBtn = document.getElementById('aiContextViewToggleBtn');
+        toggleBtn.classList.add('active');
+        // Change icon to robot when in context view
+        toggleBtn.querySelector('i').className = 'bi bi-robot';
 
         await this.loadContextFiles();
     },
 
     /**
-     * Load context files for current space
+     * Load context files for current space filtered by current folder
      */
     async loadContextFiles() {
-        const spaceName = this.app.currentSpace?.name;
+        const space = this.app.currentSpace;
 
-        if (!spaceName) {
+        if (!space) {
             this.showContextError('No space selected');
             return;
         }
 
         try {
-            const response = await fetch(`/applications/wiki/api/ai/context/list?spaceName=${encodeURIComponent(spaceName)}`);
+            // Determine the current folder context
+            // Priority: 1) currentFolder from navigation, 2) currentDocument's folder, 3) root
+            let currentFolderPath = '';
+
+            if (this.app.currentFolder) {
+                // User is viewing a folder in navigation
+                currentFolderPath = this.app.currentFolder;
+            } else if (this.app.currentDocument && this.app.currentDocument.path) {
+                // User is viewing a document - extract folder from document path
+                const docPath = this.app.currentDocument.path;
+                const lastSlash = docPath.lastIndexOf('/');
+                if (lastSlash > 0) {
+                    currentFolderPath = docPath.substring(0, lastSlash);
+                }
+            }
+            // If neither is set, currentFolderPath remains '' (root)
+
+            // Use the existing folder tree API
+            const response = await fetch(`/applications/wiki/api/spaces/${space.id}/folders`);
 
             if (!response.ok) {
-                throw new Error('Failed to load context files');
+                throw new Error('Failed to load folder tree');
             }
 
-            const data = await response.json();
-            this.contextFiles = data.contextFiles || [];
+            const tree = await response.json();
+
+            // Recursively find all .aicontext folders, filtered by current folder
+            this.contextFiles = this.findAiContextFolders(tree, '', currentFolderPath);
             this.renderContextFiles();
         } catch (error) {
             console.error('Error loading context files:', error);
             this.showContextError('Failed to load context files');
         }
+    },
+
+    /**
+     * Recursively find all .aicontext folders in the tree, filtered by current folder
+     */
+    findAiContextFolders(tree, parentPath, currentFolderPath) {
+        const contextFiles = [];
+
+        for (const item of tree) {
+            const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+
+            if (item.type === 'folder') {
+                if (item.name === '.aicontext') {
+                    // Found an .aicontext folder
+                    // Only add if this .aicontext folder is in the current folder
+                    if (parentPath === currentFolderPath) {
+                        // Check if it has a folder-context.md file
+                        const hasContextMd = item.children?.some(child =>
+                            child.type === 'document' && child.name === 'folder-context.md'
+                        );
+
+                        // Add folder context
+                        contextFiles.push({
+                            folder: parentPath || '/',
+                            contextPath: currentPath,
+                            contextFile: `${currentPath}/folder-context.md`,
+                            exists: hasContextMd,
+                            type: 'folder'
+                        });
+
+                        // Also find all file-specific context files (ending with -context.md but not folder-context.md)
+                        if (item.children) {
+                            for (const child of item.children) {
+                                if (child.type === 'document' &&
+                                    child.name.endsWith('-context.md') &&
+                                    child.name !== 'folder-context.md') {
+                                    // Extract the base filename without -context.md
+                                    const baseName = child.name.replace(/-context\.md$/, '');
+                                    contextFiles.push({
+                                        folder: parentPath || '/',
+                                        contextPath: currentPath,
+                                        contextFile: `${currentPath}/${child.name}`,
+                                        exists: true,
+                                        type: 'file',
+                                        fileName: baseName
+                                    });
+                                }
+                            }
+                        }
+                    }
+                } else if (item.children && item.children.length > 0) {
+                    // Recursively search in subdirectories
+                    const subContexts = this.findAiContextFolders(item.children, currentPath, currentFolderPath);
+                    contextFiles.push(...subContexts);
+                }
+            }
+        }
+
+        return contextFiles;
     },
 
     /**
@@ -693,20 +902,26 @@ export const aiChatController = {
 
         listContainer.innerHTML = `
             <div class="list-group list-group-flush">
-                ${this.contextFiles.map(ctx => `
-                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                         data-context-path="${ctx.contextFile}"
-                         data-folder="${ctx.folder}">
-                        <div>
-                            <i class="bi bi-folder me-2"></i>
-                            <strong>${ctx.folder || '/'}</strong>
-                            <div class="small text-muted">${ctx.contextFile}</div>
+                ${this.contextFiles.map(ctx => {
+                    const icon = ctx.type === 'file' ? 'bi-file-text' : 'bi-folder';
+                    const label = ctx.type === 'file' ? `${ctx.fileName} (file)` : ctx.folder || '/';
+                    const subLabel = ctx.type === 'file' ? `${ctx.folder || '/'}` : ctx.contextFile;
+
+                    return `
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                             data-context-path="${ctx.contextFile}"
+                             data-folder="${ctx.folder}">
+                            <div>
+                                <i class="bi ${icon} me-2"></i>
+                                <strong>${label}</strong>
+                                <div class="small text-muted">${subLabel}</div>
+                            </div>
+                            <div>
+                                ${ctx.exists ? '<span class="badge bg-success">Exists</span>' : '<span class="badge bg-secondary">New</span>'}
+                            </div>
                         </div>
-                        <div>
-                            ${ctx.exists ? '<span class="badge bg-success">Exists</span>' : '<span class="badge bg-secondary">New</span>'}
-                        </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
 
@@ -724,21 +939,78 @@ export const aiChatController = {
      * Show create context dialog
      */
     async showCreateContextDialog() {
-        const spaceName = this.app.currentSpace?.name;
+        const space = this.app.currentSpace;
 
-        if (!spaceName) {
+        if (!space) {
             alert('Please select a space first');
             return;
         }
 
-        const folderPath = prompt('Enter folder path (leave empty for root):', '');
+        // Automatically detect current folder from app state
+        // Priority: 1) currentFolder from navigation, 2) currentDocument's folder, 3) root
+        let folderPath = '';
 
-        if (folderPath === null) return; // User cancelled
+        if (this.app.currentFolder) {
+            // User is viewing a folder in navigation
+            folderPath = this.app.currentFolder;
+        } else if (this.app.currentDocument && this.app.currentDocument.path) {
+            // User is viewing a document - extract folder from document path
+            const docPath = this.app.currentDocument.path;
+            const lastSlash = docPath.lastIndexOf('/');
+            if (lastSlash > 0) {
+                folderPath = docPath.substring(0, lastSlash);
+            }
+        }
+        // If neither is set, folderPath remains '' (root)
+
+        // Show confirmation with detected folder
+        const displayPath = folderPath || '/ (root)';
+        const confirmed = confirm(`Create AI context for folder:\n${displayPath}\n\nClick OK to continue or Cancel to abort.`);
+
+        if (!confirmed) return;
 
         this.currentContextFolder = folderPath;
         this.currentContextPath = null;
 
         this.openContextEditor(null, folderPath);
+    },
+
+    /**
+     * Open file-specific context editor
+     * Called when user clicks "Add Context" on a file
+     */
+    async openFileContext(filePath) {
+        if (!filePath) {
+            console.error('No file path provided');
+            return;
+        }
+
+        // Show AI panel if not already shown
+        if (!this.isOpen) {
+            this.openPanel();
+        }
+
+        // Switch to context view
+        await this.showContextView();
+
+        // Extract filename without extension
+        const fileName = filePath.split('/').pop();
+        const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+
+        // Extract folder path from file path
+        const lastSlash = filePath.lastIndexOf('/');
+        const folderPath = lastSlash > 0 ? filePath.substring(0, lastSlash) : '';
+
+        // Build path to file-specific context file
+        const aiContextFolder = folderPath ? `${folderPath}/.aicontext` : '.aicontext';
+        const contextFilePath = `${aiContextFolder}/${fileNameWithoutExt}-context.md`;
+
+        // Open the context editor with the file-specific context path
+        this.currentContextFolder = folderPath;
+        this.currentContextPath = contextFilePath;
+
+        // Switch to editor view
+        await this.openContextEditor(contextFilePath, folderPath);
     },
 
     /**
@@ -757,14 +1029,14 @@ export const aiChatController = {
         const textarea = document.getElementById('contextEditorTextarea');
 
         if (contextPath) {
-            // Load existing context
+            // Load existing context using document content API
             try {
                 const spaceName = this.app.currentSpace?.name;
-                const response = await fetch(`/applications/wiki/api/ai/context/content?spaceName=${encodeURIComponent(spaceName)}&contextPath=${encodeURIComponent(contextPath)}`);
+                const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(contextPath)}&spaceName=${encodeURIComponent(spaceName)}`);
 
                 if (response.ok) {
-                    const data = await response.json();
-                    textarea.value = data.content || '';
+                    const content = await response.text();
+                    textarea.value = content || '';
                 } else {
                     textarea.value = '';
                 }
@@ -781,9 +1053,9 @@ export const aiChatController = {
      * Save context file
      */
     async saveContext() {
-        const spaceName = this.app.currentSpace?.name;
+        const space = this.app.currentSpace;
 
-        if (!spaceName) {
+        if (!space) {
             alert('No space selected');
             return;
         }
@@ -791,14 +1063,46 @@ export const aiChatController = {
         const content = document.getElementById('contextEditorTextarea').value;
 
         try {
-            const response = await fetch('/applications/wiki/api/ai/context/save', {
-                method: 'POST',
+            // Use currentContextPath if set (for file-specific contexts), otherwise build folder context path
+            let contextFilePath;
+            if (this.currentContextPath) {
+                contextFilePath = this.currentContextPath;
+            } else {
+                // Build the path to the folder-context.md file
+                const folderPath = this.currentContextFolder || '';
+                const aiContextFolderPath = folderPath ? `${folderPath}/.aicontext` : '.aicontext';
+                contextFilePath = `${aiContextFolderPath}/folder-context.md`;
+            }
+
+            // First, ensure .aicontext folder exists
+            const folderPath = this.currentContextFolder || '';
+            try {
+                await fetch('/applications/wiki/api/folders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: '.aicontext',
+                        spaceId: space.id,
+                        parentPath: folderPath
+                    })
+                });
+                // Folder created or already exists, continue
+            } catch (folderError) {
+                // Folder might already exist, that's OK
+                console.log('Folder creation response (may already exist):', folderError);
+            }
+
+            // Now save the context file using document save API
+            const response = await fetch('/applications/wiki/api/documents/content', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    spaceName: spaceName,
-                    folderPath: this.currentContextFolder,
+                    spaceName: space.name,
+                    path: contextFilePath,
                     content: content
                 })
             });
@@ -807,11 +1111,12 @@ export const aiChatController = {
                 this.app.showNotification('Context saved successfully', 'success');
                 this.showContextView();
             } else {
-                throw new Error('Failed to save context');
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to save context');
             }
         } catch (error) {
             console.error('Error saving context:', error);
-            this.app.showNotification('Failed to save context', 'error');
+            this.app.showNotification('Failed to save context: ' + error.message, 'error');
         }
     },
 

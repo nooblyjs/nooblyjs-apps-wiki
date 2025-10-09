@@ -1,12 +1,13 @@
 [
   {
-    "id": "1759955385342",
+    "id": "1759988832778",
     "email": "srbooysen@shoprite.co.za",
-    "password": "$2b$10$HZeSPscql70B00mW0q7H9.Z.ADbY4ATr.32ajJ6/IG8bemNMlokUO",
+    "password": "$2b$10$FmqCvZxXVlevXxNB0O5KYuwXIVEz7i142tkS5soJFmudQwBprE3Qy",
     "name": "Stephen Booysen",
     "provider": "local",
     "initialized": true,
-    "createdAt": "2025-10-08T20:29:45.342Z",
-    "initializedAt": "2025-10-08T20:29:53.232Z"
+    "createdAt": "2025-10-09T05:47:12.778Z",
+    "initializedAt": "2025-10-09T05:47:16.258Z",
+    "avatar": "/applications/wiki/media/avatar-1759988832778.png"
   }
 ]

@@ -1,6 +1,16 @@
 /**
  * AI Context Routes
- * Handles .aicontext folder and context.md file management
+ * Handles .aicontext folder and folder-context.md file management
+ *
+ * @deprecated This file is deprecated as of 2025-10-09.
+ * The AI context functionality now uses existing document and navigation APIs:
+ * - List context files: GET /applications/wiki/api/spaces/:spaceId/folders (filter for .aicontext)
+ * - Read context: GET /applications/wiki/api/documents/content?path=...&spaceName=...
+ * - Save context: PUT /applications/wiki/api/documents/content + POST /applications/wiki/api/folders
+ *
+ * Note: Context files are now named 'folder-context.md' instead of 'context.md'
+ *
+ * This file is kept for reference but is no longer registered in routes/index.js
  *
  * @author NooblyJS Team
  * @version 1.0.0

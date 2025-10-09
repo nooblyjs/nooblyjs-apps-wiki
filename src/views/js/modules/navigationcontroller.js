@@ -376,6 +376,11 @@ export const navigationController = {
         document.querySelectorAll('.folder-item').forEach(item => {
             item.classList.toggle('selected', item.dataset.folderPath === folderPath);
         });
+
+        // Dispatch folder change event
+        window.dispatchEvent(new CustomEvent('folderChanged', {
+            detail: { folderPath: folderPath }
+        }));
     },
 
     toggleFolder(folderId) {
@@ -433,7 +438,8 @@ export const navigationController = {
 
     createFolderOverview(folder) {
         const childFiles = folder.children ? folder.children.filter(c => c.type === 'document') : [];
-        const childFolders = folder.children ? folder.children.filter(c => c.type === 'folder') : [];
+        // Filter out system folders (those starting with .)
+        const childFolders = folder.children ? folder.children.filter(c => c.type === 'folder' && !c.name.startsWith('.')) : [];
 
         // Add child count to each folder for display
         const foldersWithCounts = childFolders.map(childFolder => ({
@@ -954,6 +960,21 @@ export const navigationController = {
             this.showUploadDialog(targetPath);
         });
 
+        document.getElementById('contextAddFileContext')?.addEventListener('click', () => {
+            // Save the values before hiding the menu, as hideContextMenu() resets them
+            const targetPath = this.contextMenuTargetPath;
+            const targetType = this.contextMenuTargetType;
+            this.hideContextMenu();
+
+            // Only allow file context for files
+            if (targetType === 'file' && targetPath) {
+                // Import aiChatController and call the method
+                import('./aichatcontroller.js').then(module => {
+                    module.aiChatController.openFileContext(targetPath);
+                });
+            }
+        });
+
         document.getElementById('contextRename')?.addEventListener('click', () => {
             // Save the values before hiding the menu, as hideContextMenu() resets them
             const targetPath = this.contextMenuTargetPath;
@@ -1002,6 +1023,16 @@ export const navigationController = {
         }
 
         this.contextMenuTargetType = targetType;
+
+        // Show/hide the "Add Context" menu item based on whether it's a file or folder
+        const addContextMenuItem = document.getElementById('contextAddFileContext');
+        if (addContextMenuItem) {
+            if (targetType === 'file') {
+                addContextMenuItem.classList.remove('hidden');
+            } else {
+                addContextMenuItem.classList.add('hidden');
+            }
+        }
 
         // Position the context menu using clientX/clientY for viewport positioning
         const x = e.clientX;

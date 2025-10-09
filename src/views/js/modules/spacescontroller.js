@@ -75,6 +75,11 @@ export const spacesController = {
 
         await navigationController.loadFileTree();
 
+        // Dispatch space change event
+        window.dispatchEvent(new CustomEvent('spaceChanged', {
+            detail: { space: space }
+        }));
+
         // Load the space's home page
         await this.app.showHome();
     },

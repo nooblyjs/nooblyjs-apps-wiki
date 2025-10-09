@@ -43,7 +43,7 @@ module.exports = (options, eventEmitter, services) => {
   const wizardRoutes = require('./wizardRoutes');
   const settingsRoutes = require('./settingsRoutes');
   const aiChatRoutes = require('./aiChatRoutes');
-  const aiContextRoutes = require('./aiContextRoutes');
+  // const aiContextRoutes = require('./aiContextRoutes'); // DEPRECATED: Now using existing document/navigation APIs
 
   // Register all routes
   documentRoutes(app, eventEmitter, services);
@@ -57,6 +57,6 @@ module.exports = (options, eventEmitter, services) => {
 
   // Store dataManager in app for middleware access
   app.set('dataManager', dataManager);
-  app.use('/applications/wiki/api/ai/context', aiContextRoutes);
+  // app.use('/applications/wiki/api/ai/context', aiContextRoutes); // DEPRECATED: Now using existing document/navigation APIs
 
 };
