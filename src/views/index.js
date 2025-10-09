@@ -34,6 +34,4 @@ module.exports = (options, eventEmitter, services) => {
   // Serve static files for the wiki application
   app.use('/applications/wiki', express.static(path.join(__dirname)));
   
-  // Log that wiki views are registered
-  logger.info('Wiki views registered successfully');
 };

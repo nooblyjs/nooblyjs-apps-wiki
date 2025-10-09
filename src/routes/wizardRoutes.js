@@ -296,6 +296,4 @@ module.exports = (app, eventEmitter, services) => {
       res.status(500).json({ error: 'Failed to skip wizard' });
     }
   });
-
-  logger.info('Wizard routes registered');
 };

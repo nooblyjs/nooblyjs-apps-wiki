@@ -232,7 +232,7 @@ export const aiChatController = {
         // Render all messages
         this.chatHistory.forEach(entry => {
             this.appendMessage(entry.userMessage, 'user', false);
-            this.appendMessage(entry.aiResponse, 'ai', false);
+            this.appendMessage(entry.aiResponse, 'ai', false, entry.formattedPrompt);
         });
 
         // Scroll to bottom
@@ -377,14 +377,18 @@ export const aiChatController = {
         this.setStatus('Sending message...');
 
         try {
+            // Get context and build formatted prompt
+            const context = await this.getCurrentContext();
+            const formattedPrompt = await this.buildFormattedPrompt(message, context);
+
             const response = await fetch('/applications/wiki/api/ai/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: message,
-                    context: this.getCurrentContext()
+                    message: formattedPrompt,
+                    context: context
                 })
             });
 
@@ -394,15 +398,16 @@ export const aiChatController = {
             this.hideTypingIndicator();
 
             if (response.ok) {
-                // Add AI response to UI
-                this.appendMessage(data.response, 'ai');
+                // Add AI response to UI with the formatted prompt
+                this.appendMessage(data.response, 'ai', true, formattedPrompt);
 
                 // Update local history
                 this.chatHistory.push({
                     userMessage: message,
                     aiResponse: data.response,
                     timestamp: data.timestamp,
-                    usage: data.usage
+                    usage: data.usage,
+                    formattedPrompt: formattedPrompt
                 });
 
                 // Update status
@@ -551,9 +556,205 @@ export const aiChatController = {
     },
 
     /**
+     * Get folder structure for current location
+     * Returns a formatted tree structure showing folders and files
+     */
+    async getFolderStructure() {
+        if (!this.app.currentSpace) return null;
+
+        try {
+            // Determine current folder path
+            let currentFolderPath = '';
+            if (this.app.currentFolder) {
+                currentFolderPath = this.app.currentFolder;
+            } else if (this.app.currentDocument && this.app.currentDocument.path) {
+                const docPath = this.app.currentDocument.path;
+                const lastSlash = docPath.lastIndexOf('/');
+                if (lastSlash > 0) {
+                    currentFolderPath = docPath.substring(0, lastSlash);
+                }
+            }
+
+            // Fetch folder tree
+            const response = await fetch(`/applications/wiki/api/spaces/${this.app.currentSpace.id}/folders`);
+            if (!response.ok) return null;
+
+            const tree = await response.json();
+
+            // Find the current folder in the tree
+            const currentFolder = this.findFolderInTree(tree, currentFolderPath);
+
+            if (!currentFolder) {
+                // If we're at root, use the whole tree
+                return this.formatFolderStructure(tree, 0);
+            }
+
+            // Format the structure for the current folder
+            const folderName = currentFolderPath ? currentFolderPath.split('/').pop() : '/';
+            let structure = `- ${folderName}\n`;
+            if (currentFolder.children && currentFolder.children.length > 0) {
+                structure += this.formatFolderStructure(currentFolder.children, 1);
+            }
+
+            return structure;
+        } catch (error) {
+            console.error('Error getting folder structure:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Find a specific folder in the tree by path
+     */
+    findFolderInTree(tree, targetPath) {
+        if (!targetPath) return null;
+
+        const pathParts = targetPath.split('/');
+        let current = tree;
+
+        for (const part of pathParts) {
+            const found = current.find(item => item.name === part && item.type === 'folder');
+            if (!found || !found.children) return null;
+            current = found.children;
+        }
+
+        // Return the folder object (reconstruct it)
+        return {
+            name: pathParts[pathParts.length - 1],
+            type: 'folder',
+            children: current
+        };
+    },
+
+    /**
+     * Format folder structure as indented tree
+     */
+    formatFolderStructure(items, level) {
+        if (!items || items.length === 0) return '';
+
+        const indent = '  '.repeat(level);
+        const lines = [];
+
+        // Filter out .aicontext folders
+        const filteredItems = items.filter(item => item.name !== '.aicontext');
+
+        // Sort: folders first, then files
+        filteredItems.sort((a, b) => {
+            if (a.type === b.type) return a.name.localeCompare(b.name);
+            return a.type === 'folder' ? -1 : 1;
+        });
+
+        for (const item of filteredItems) {
+            if (item.type === 'folder') {
+                lines.push(`${indent}- ${item.name}/`);
+                if (item.children && item.children.length > 0) {
+                    lines.push(this.formatFolderStructure(item.children, level + 1));
+                }
+            } else if (item.type === 'document') {
+                lines.push(`${indent}- ${item.name}`);
+            }
+        }
+
+        return lines.join('\n');
+    },
+
+    /**
+     * Build formatted prompt with context
+     * Format based on whether we have folder context, file context, and file content
+     */
+    async buildFormattedPrompt(userQuestion, context) {
+        const parts = [];
+
+        // Check if we have any context to add
+        const hasFolderContext = context.folderContext && context.folderContext.trim();
+        const hasFileContext = context.fileContext && context.fileContext.trim();
+        const hasFileContent = context.documentContent && context.documentContent.trim();
+
+        // Get folder structure
+        const folderStructure = await this.getFolderStructure();
+        const hasFolderStructure = folderStructure && folderStructure.trim();
+
+        // Only add Context section if we have any context
+        if (hasFolderContext || hasFileContext || hasFileContent || hasFolderStructure) {
+            parts.push('Context:');
+
+            // Add folder context if available
+            if (hasFolderContext) {
+                parts.push(`This folder is described as ${context.folderContext}`);
+            }
+
+            // Add file context if available
+            if (hasFileContext) {
+                parts.push(`The file is described as ${context.fileContext}`);
+            }
+
+            // Add file content if available
+            if (hasFileContent) {
+                parts.push(`The file content is ${context.documentContent}`);
+            }
+
+            // Add folder structure if available
+            if (hasFolderStructure) {
+                parts.push('');
+                parts.push('And just some more information for context here is the structure the user is in');
+                parts.push(folderStructure);
+            }
+
+            parts.push(''); // Empty line before Question section
+        }
+
+        // Add the question
+        parts.push('Question:');
+        parts.push(userQuestion);
+
+        const fullPrompt = parts.join('\n');
+
+        // Check if we exceed 4k token limit (approximately 16k characters)
+        const estimatedTokens = Math.ceil(fullPrompt.length / 4);
+
+        if (estimatedTokens > 4000) {
+            // Need to truncate - prioritize keeping the question and reduce context
+            const maxContextTokens = 3500; // Leave 500 tokens for question and formatting
+
+            // Recalculate with truncation
+            const truncatedParts = [];
+
+            if (hasFolderContext || hasFileContext || hasFileContent) {
+                truncatedParts.push('Context:');
+
+                if (hasFolderContext) {
+                    const truncatedFolderContext = this.truncateToTokenLimit(context.folderContext, 500);
+                    truncatedParts.push(`This folder is described as ${truncatedFolderContext}`);
+                }
+
+                if (hasFileContext) {
+                    const truncatedFileContext = this.truncateToTokenLimit(context.fileContext, 500);
+                    truncatedParts.push(`The file is described as ${truncatedFileContext}`);
+                }
+
+                if (hasFileContent) {
+                    // Allocate remaining tokens to file content
+                    const remainingTokens = maxContextTokens - (hasFolderContext ? 500 : 0) - (hasFileContext ? 500 : 0);
+                    const truncatedFileContent = this.truncateToTokenLimit(context.documentContent, remainingTokens);
+                    truncatedParts.push(`The file content is ${truncatedFileContent}`);
+                }
+
+                truncatedParts.push('');
+            }
+
+            truncatedParts.push('Question:');
+            truncatedParts.push(userQuestion);
+
+            return truncatedParts.join('\n');
+        }
+
+        return fullPrompt;
+    },
+
+    /**
      * Append message to chat
      */
-    appendMessage(content, type, scroll = true) {
+    appendMessage(content, type, scroll = true, formattedPrompt = null) {
         const messagesContainer = document.getElementById('aiChatMessages');
         if (!messagesContainer) return;
 
@@ -561,6 +762,42 @@ export const aiChatController = {
         const welcome = messagesContainer.querySelector('.ai-chat-welcome');
         if (welcome) {
             welcome.remove();
+        }
+
+        // If this is an AI message with a formatted prompt, add the collapsible prompt viewer
+        if (type === 'ai' && formattedPrompt) {
+            const promptViewerDiv = document.createElement('div');
+            promptViewerDiv.className = 'prompt-viewer';
+
+            const promptHeader = document.createElement('div');
+            promptHeader.className = 'prompt-viewer-header';
+            promptHeader.innerHTML = `
+                <i class="bi bi-chevron-right prompt-chevron"></i>
+                <span class="prompt-viewer-title">View Prompt Sent to AI</span>
+                <span class="prompt-viewer-badge">Click to expand</span>
+            `;
+
+            const promptContent = document.createElement('div');
+            promptContent.className = 'prompt-viewer-content hidden';
+            promptContent.innerHTML = `<pre class="prompt-viewer-text">${this.escapeHtml(formattedPrompt)}</pre>`;
+
+            // Toggle functionality
+            promptHeader.addEventListener('click', () => {
+                const isExpanded = !promptContent.classList.contains('hidden');
+                if (isExpanded) {
+                    promptContent.classList.add('hidden');
+                    promptHeader.querySelector('.prompt-chevron').className = 'bi bi-chevron-right prompt-chevron';
+                    promptHeader.querySelector('.prompt-viewer-badge').textContent = 'Click to expand';
+                } else {
+                    promptContent.classList.remove('hidden');
+                    promptHeader.querySelector('.prompt-chevron').className = 'bi bi-chevron-down prompt-chevron';
+                    promptHeader.querySelector('.prompt-viewer-badge').textContent = 'Click to collapse';
+                }
+            });
+
+            promptViewerDiv.appendChild(promptHeader);
+            promptViewerDiv.appendChild(promptContent);
+            messagesContainer.appendChild(promptViewerDiv);
         }
 
         const messageDiv = document.createElement('div');
@@ -578,6 +815,15 @@ export const aiChatController = {
         if (scroll) {
             this.scrollToBottom();
         }
+    },
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     },
 
     /**

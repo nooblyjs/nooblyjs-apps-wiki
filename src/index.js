@@ -91,5 +91,4 @@ function startQueueWorker(services) {
     }
   }, 5000);
   
-  logger.info('Wiki queue worker started');
 }
