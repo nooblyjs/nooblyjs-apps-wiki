@@ -273,12 +273,24 @@ module.exports = (options, eventEmitter, services) => {
       // Consider configured if provider and API key exist, regardless of enabled flag
       const isConfigured = settings && typeof settings === 'object' && !Array.isArray(settings) && settings.provider && settings.apiKey;
 
-      logger.info(`AI status check for user ${userId}: configured=${!!isConfigured}, enabled=${settings?.enabled}, provider=${settings?.provider}, settingsType=${typeof settings}, isArray=${Array.isArray(settings)}`);
+      // If configured and enabled, try to initialize the AI service
+      let isInitialized = false;
+      if (isConfigured && settings.enabled !== false) {
+        try {
+          isInitialized = await aiService.initialize(userId);
+          logger.info(`AI service initialization for user ${userId}: ${isInitialized ? 'success' : 'failed'}`);
+        } catch (error) {
+          logger.error(`Error initializing AI service for user ${userId}:`, error);
+          isInitialized = false;
+        }
+      }
+
+      logger.info(`AI status check for user ${userId}: configured=${!!isConfigured}, enabled=${settings?.enabled}, initialized=${isInitialized}, provider=${settings?.provider}, settingsType=${typeof settings}, isArray=${Array.isArray(settings)}`);
 
       res.json({
         success: true,
         configured: !!isConfigured,
-        enabled: settings?.enabled !== false, // Default to true if not explicitly disabled
+        enabled: settings?.enabled !== false && isInitialized, // Only enabled if initialized successfully
         provider: settings?.provider || null,
         model: settings?.model || null
       });
