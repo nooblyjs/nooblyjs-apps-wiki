@@ -1455,6 +1455,39 @@ body {
   margin-bottom: 0;
 }
 
+
+.ai-message h1 {
+  align-self: flex-start;
+  background-color: white;
+  color: var(--bs-dark);
+  font-size: large;
+  font-weight: bold;
+}
+
+.ai-message h2 {
+  align-self: flex-start;
+  background-color: white;
+  color: var(--bs-dark);
+  font-size: medium;
+  font-weight: bold;
+}
+
+.ai-message h3 {
+  align-self: flex-start;
+  background-color: white;
+  color: var(--bs-dark);
+  font-size: medium;
+  text-decoration: underline;
+}
+
+.ai-message h4 {
+  align-self: flex-start;
+  background-color: white;
+  color: var(--bs-dark);
+  font-size: small;
+  font-weight: bold;
+}
+
 /* Message Metadata */
 .message-meta {
   font-size: 0.75rem;
