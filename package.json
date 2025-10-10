@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "Application the exposes a fully featured wiki",
   "author": "NooblyJS Team <info@nooblyjs.com>",
-  "main": "app-electron.js",
+  "main": "index.js",
   "scripts": {
     "start": "node app.js",
     "dev:web": "nodemon --watch src app.js",

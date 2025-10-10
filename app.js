@@ -65,8 +65,12 @@ const notifying = serviceRegistry.notifying('memory');
 const worker = serviceRegistry.working('memory');
 const workflow = serviceRegistry.workflow('memory');
 
+// Load the wiki application
 const wiki = require('./index.js');
 wiki(app, server, eventEmitter, serviceRegistry,{});
+
+// Launch the application public folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 server.listen(PORT, () => {
   log.info(`Nooblyjs Content Server running on port ${PORT}`);

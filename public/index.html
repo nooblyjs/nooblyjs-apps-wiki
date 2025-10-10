@@ -511,7 +511,7 @@
             `;
 
             try {
-                const response = await fetch('/README.md');
+                const response = await fetch('/applications/wiki/README.md');
 
                 if (!response.ok) {
                     throw new Error(`Failed to load README: ${response.status}`);

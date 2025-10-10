@@ -110,8 +110,6 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   const authRoutes = require('./src/auth/routes');
   app.use('/api/auth', authRoutes);
 
-  // Launch the application manager
-  app.use(express.static(path.join(__dirname, 'public')));
 
   // Serve wizard page
   app.get('/wizard', (req, res) => {
@@ -124,7 +122,7 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   });
 
   // Serve README.md from root directory
-  app.get('/README.md', (req, res) => {
+  app.get('/applications/wiki/README.md', (req, res) => {
     res.sendFile(path.join(__dirname, 'README.md'));
   });
 
