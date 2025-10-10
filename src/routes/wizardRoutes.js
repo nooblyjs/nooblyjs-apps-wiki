@@ -180,7 +180,9 @@ async function initializeUserWiki(userId, spaceConfigs, filing, dataManager, sea
 /**
  * Configure wizard routes
  */
-module.exports = (app, eventEmitter, services) => {
+module.exports = (options, eventEmitter, services) => {
+
+  const app = options.app;
   const { dataManager, filing, cache, logger, queue, search } = services;
 
   // Check if user needs wizard

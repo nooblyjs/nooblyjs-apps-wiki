@@ -24,7 +24,8 @@ const fs = require('fs').promises;
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  const app = options;
+  
+  const app = options.app;
   const { dataManager, filing, cache, logger, queue, search } = services;
 
   // Configure multer for avatar uploads

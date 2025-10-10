@@ -18,7 +18,8 @@
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  const app = options;
+  
+  const app = options.app;
   const { dataManager, cache, logger, aiService } = services;
 
   /**

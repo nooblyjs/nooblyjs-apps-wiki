@@ -21,7 +21,7 @@
  */
 module.exports = (options, eventEmitter, services) => {
 
-  const app = options;
+  const app = options.app;
   const { dataManager, filing, cache, logger, queue, search } = services;
 
   // Application status endpoint
@@ -46,14 +46,14 @@ module.exports = (options, eventEmitter, services) => {
   // const aiContextRoutes = require('./aiContextRoutes'); // DEPRECATED: Now using existing document/navigation APIs
 
   // Register all routes
-  documentRoutes(app, eventEmitter, services);
-  spacesRoutes(app, eventEmitter, services);
-  searchRoutes(app, eventEmitter, services);
-  navigationRoutes(app, eventEmitter, services);
-  userRoutes(app, eventEmitter, services);
-  wizardRoutes(app, eventEmitter, services);
-  settingsRoutes(app, eventEmitter, services);
-  aiChatRoutes(app, eventEmitter, services);
+  documentRoutes(options, eventEmitter, services);
+  spacesRoutes(options, eventEmitter, services);
+  searchRoutes(options, eventEmitter, services);
+  navigationRoutes(options, eventEmitter, services);
+  userRoutes(options, eventEmitter, services);
+  wizardRoutes(options, eventEmitter, services);
+  settingsRoutes(options, eventEmitter, services);
+  aiChatRoutes(options, eventEmitter, services);
 
   // Store dataManager in app for middleware access
   app.set('dataManager', dataManager);

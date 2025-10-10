@@ -7,9 +7,9 @@
  */
 
 'use strict';
+
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('passport');
@@ -19,12 +19,6 @@ const { EventEmitter } = require('events');
 // Iniitiate the Web and Api Interface
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
 const PORT = process.env.PORT || 3002;
 app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
 app.use(bodyParser.json({ limit: '100mb' }));
@@ -71,45 +65,8 @@ const notifying = serviceRegistry.notifying('memory');
 const worker = serviceRegistry.working('memory');
 const workflow = serviceRegistry.workflow('memory');
 
-const wiki = require('./src/index');
-wiki(app,eventEmitter,serviceRegistry,io);
-
-// Authentication routes
-const authRoutes = require('./src/auth/routes');
-app.use('/api/auth', authRoutes);
-
-// Launch the application manager
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve wizard page
-app.get('/wizard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/views/wizard.html'));
-});
-
-// Serve wizard JavaScript
-app.get('/wizard.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/views/js/wizard.js'));
-});
-
-// Serve README.md from root directory
-app.get('/README.md', (req, res) => {
-  res.sendFile(path.join(__dirname, 'README.md'));
-});
-
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  log.info(`Client connected: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    log.info(`Client disconnected: ${socket.id}`);
-  });
-
-  // Send initial connection acknowledgment
-  socket.emit('connected', { message: 'Connected to wiki server' });
-});
-
-// Make io available globally for other modules
-global.io = io;
+const wiki = require('./index.js');
+wiki(app, server, eventEmitter, serviceRegistry,{});
 
 server.listen(PORT, () => {
   log.info(`Nooblyjs Content Server running on port ${PORT}`);

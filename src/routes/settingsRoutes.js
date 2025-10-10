@@ -18,7 +18,8 @@
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  const app = options;
+
+  const app = options.app;
   const { dataManager, filing, cache, logger, queue, search, aiService } = services;
 
   // Get AI settings

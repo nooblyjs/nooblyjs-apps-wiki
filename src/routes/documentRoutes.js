@@ -20,7 +20,8 @@ const mime = require('mime-types');
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  const app = options;
+  
+  const app = options.app;
   const { dataManager, filing, cache, logger, queue, search } = services;
 
   // Helper function to resolve document paths using space configuration

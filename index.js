@@ -1,117 +1,153 @@
 /**
- * @fileoverview The file define and instantiates the various NooblyJS applications.
- *
- * @author NooblyJS Core Team
- * @version 1.0.1
- * @since 2025-08-24
+ * @fileoverview Wiki Application
+ * Factory module for creating a Wiki application instance.
+ * 
+ * @author NooblyJS Team
+ * @version 1.0.14
+ * @since 2025-08-22
  */
 
 'use strict';
-const express = require('express');
-const http = require('http');
+
+const Routes = require('./src/routes');
+const SpacesRoutes = require('./src/routes/spacesRoutes');
+const NavigationRoutes = require('./src/routes/navigationRoutes');
+const DocumentRoutes = require('./src/routes/documentRoutes');
+const SearchRoutes = require('./src/routes/searchRoutes');
+const UserRoutes = require('./src/routes/userRoutes');
+const Views = require('./src/views');
+
+const { initializeDocumentFiles } = require('./src/initialisation/documentContent');
+const { initializeWikiData } = require('./src/initialisation/initialiseWikiData');
+const { processTask } = require('./src/activities/taskProcessor');
+const { startFileWatcher } = require('./src/activities/fileWatcher');
+const DataManager = require('./src/components/dataManager');
+const AIService = require('./src/components/aiService');
+
 const { Server } = require('socket.io');
-const bodyParser = require('body-parser');
-const session = require('express-session');
-const passport = require('passport');
-const path = require('path');
-const { EventEmitter } = require('events');
 
-// Iniitiate the Web and Api Interface
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
-const PORT = process.env.PORT || 3002;
-app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
-app.use(bodyParser.json({ limit: '100mb' }));
+/**
+ * Creates the wiki service
+ * Automatically configures routes and views for the wiki service.
+ * Integrates with noobly-core services for data persistence, file storage, caching, etc.
+ * @param {Object} app - The Express application instance
+ * @param {EventEmitter} eventEmitter - Global event emitter for inter-service communication
+ * @param {Object} serviceRegistry - NooblyJS Core service registry
+ * @param {Object} options - Configuration options
+ * @return {void}
+ */
+module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
+  
+  const express = require('express');
+  const path = require('path');
 
-// Configure session middleware before application initialization
-app.use(session({
-  secret: 'admin-dashboard-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false }
-}));
+  const dataDirectory = options.dataDirectory || './.application/'
+  const filesDir = options.filesDir || './.application/wiki-files'
+  const cacheProvider = options.filesDir || 'memory'
+  const filerProvider = options.filesDir || 'local'
+  const loggerProvider = options.filesDir || 'console'
+  const queueProvider = options.filesDir || 'memory'
+  const searchProvider = options.filesDir || 'memory'
+  
+  const filing = serviceRegistry.filing(filerProvider, { baseDir: filesDir});
+  const dataManager = new DataManager(dataDirectory, filing);
+  const cache = serviceRegistry.cache(cacheProvider);
+  const logger = serviceRegistry.logger(loggerProvider);
+  const queue = serviceRegistry.queue(queueProvider);
+  const search = serviceRegistry.searching(searchProvider);
+  const aiService = new AIService(serviceRegistry, dataManager, logger);
 
-// Configure Passport
-const { configurePassport } = require('./src/auth/passport-config');
-configurePassport(passport);
-app.use(passport.initialize());
-app.use(passport.session());
+  // Socket.IO connection handling
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  io.on('connection', (socket) => {
+    logger.info(`Client connected: ${socket.id}`);
 
-// initiate the event mechanism
-const eventEmitter = new EventEmitter()
-function patchEmitter(eventEmitter) {
-  const originalEmit = eventEmitter.emit;
-  eventEmitter.emit = function () {
-    const eventName = arguments[0];
-    const args = Array.from(arguments).slice(1);
-    console.log(`Caught event: "${eventName}" with arguments:`, args);
-    return originalEmit.apply(this, arguments);
-  };
-}(eventEmitter);
+    socket.on('disconnect', () => {
+      logger.info(`Client disconnected: ${socket.id}`);
+    });
 
-// Initiate the service Registry
-const serviceRegistry = require('nooblyjs-core');
-serviceRegistry.initialize(app,eventEmitter);
-
-const log = serviceRegistry.logger('console');
-const cache = serviceRegistry.cache('memory');
-const dataserve = serviceRegistry.dataServe('memory');
-const filing = serviceRegistry.filing('local');
-const queue = serviceRegistry.queue('memory');
-const scheduling = serviceRegistry.scheduling('memory');
-const searching = serviceRegistry.searching('memory');
-const measuring = serviceRegistry.measuring('memory');
-const notifying = serviceRegistry.notifying('memory');
-const worker = serviceRegistry.working('memory');
-const workflow = serviceRegistry.workflow('memory');
-
-const wiki = require('./src/index');
-wiki(app,eventEmitter,serviceRegistry,io);
-
-// Authentication routes
-const authRoutes = require('./src/auth/routes');
-app.use('/api/auth', authRoutes);
-
-// Launch the application manager
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve wizard page
-app.get('/wizard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/views/wizard.html'));A
-});
-
-// Serve wizard JavaScript
-app.get('/wizard.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/views/js/wizard.js'));
-});
-
-// Serve README.md from root directory
-app.get('/README.md', (req, res) => {
-  res.sendFile(path.join(__dirname, 'README.md'));
-});
-
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  log.info(`Client connected: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    log.info(`Client disconnected: ${socket.id}`);
+    // Send initial connection acknowledgment
+    socket.emit('connected', { message: 'Connected to wiki server' });
   });
 
-  // Send initial connection acknowledgment
-  socket.emit('connected', { message: 'Connected to wiki server' });
-});
+  // Make io available globally for other modules
+  global.io = io;
+  
+  // Initialize wiki data if not exists
+  (async () => {
+    try {
+      await initializeWikiData.run(dataManager, filing, cache, logger, queue, search);
+    } catch (error) {
+      logger.error('Failed to initialize wiki data:', error);
+    }
+  })();
 
-// Make io available globally for other modules
-global.io = io;
+  // Start background queue worker
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search, aiService });
 
-server.listen(PORT, () => {
-  log.info(`Nooblyjs Content Server running on port ${PORT}`);
-  log.info(`Socket.IO server initialized`);
-});
+  // Start file watcher for real-time updates
+  if (io) {
+    startFileWatcher({ dataManager, filing, cache, logger, queue, search, aiService, io });
+  }
+
+
+  // Register routes and views
+  options.app = app
+  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+
+  // Authentication routes
+  const authRoutes = require('./src/auth/routes');
+  app.use('/api/auth', authRoutes);
+
+  // Launch the application manager
+  app.use(express.static(path.join(__dirname, 'public')));
+
+  // Serve wizard page
+  app.get('/wizard', (req, res) => {
+    res.sendFile(path.join(__dirname, './src/views/wizard.html'));
+  });
+
+  // Serve wizard JavaScript
+  app.get('/wizard.js', (req, res) => {
+    res.sendFile(path.join(__dirname, './src/views/js/wizard.js'));
+  });
+
+  // Serve README.md from root directory
+  app.get('/README.md', (req, res) => {
+    res.sendFile(path.join(__dirname, 'README.md'));
+  });
+
+}
+
+/**
+ * Start background queue worker for processing tasks
+ */
+function startQueueWorker(services) {
+  const { queue, logger } = services;
+  
+  // Process queue every 5 seconds
+  setInterval(async () => {
+    try {
+      const task = queue.dequeue();
+      if (task && task.type) {
+        logger.info(`Processing task: ${task.type}`);
+        await processTask(services, task);
+        logger.info(`Completed task: ${task.type}`);
+      }
+    } catch (error) {
+      logger.error('Error processing queue task:', error);
+    }
+  }, 5000);
+  
+}
