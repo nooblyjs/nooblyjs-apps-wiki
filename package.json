@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "Application the exposes a fully featured wiki",
   "author": "NooblyJS Team <info@nooblyjs.com>",
-  "main": "./src/app-electron.js",
+  "main": "app-electron.js",
   "scripts": {
     "start": "node app.js",
     "dev:web": "nodemon --watch src app.js",
@@ -66,9 +66,20 @@
     ],
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": [

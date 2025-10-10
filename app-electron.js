@@ -40,7 +40,9 @@ function startServer() {
   // Start the Express server
   serverProcess = spawn('node', ['app.js'], {
     cwd: __dirname,
-    env: { ...process.env, PORT: '3002' }
+    env: { ...process.env, PORT: '3002' },
+    windowsHide: true, // Hide console window on Windows
+    stdio: 'pipe' // Pipe output to prevent console from showing
   });
 
   serverProcess.stdout.on('data', (data) => {
