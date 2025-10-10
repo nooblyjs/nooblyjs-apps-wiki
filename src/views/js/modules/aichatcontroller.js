@@ -829,7 +829,32 @@ export const aiChatController = {
         if (type === 'user' && contextData && contextData.trim()) {
             const contextBubble = document.createElement('div');
             contextBubble.className = 'context-bubble';
-            contextBubble.textContent = contextData;
+
+            // Create collapsible structure
+            const contextHeader = document.createElement('div');
+            contextHeader.className = 'context-header';
+            contextHeader.innerHTML = `
+                <span class="context-heading">Context</span>
+                <button class="context-toggle-btn" aria-label="Toggle context">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            `;
+
+            const contextContent = document.createElement('div');
+            contextContent.className = 'context-content collapsed';
+            contextContent.textContent = contextData;
+
+            contextBubble.appendChild(contextHeader);
+            contextBubble.appendChild(contextContent);
+
+            // Add click event to toggle collapse
+            contextHeader.addEventListener('click', () => {
+                const isCollapsed = contextContent.classList.contains('collapsed');
+                contextContent.classList.toggle('collapsed');
+                const icon = contextHeader.querySelector('.context-toggle-btn i');
+                icon.className = isCollapsed ? 'bi bi-dash-lg' : 'bi bi-plus-lg';
+            });
+
             messagesContainer.appendChild(contextBubble);
         }
 

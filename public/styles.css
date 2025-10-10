@@ -1521,9 +1521,58 @@ body {
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
   line-height: 1.4;
+  animation: slideIn 0.2s ease;
+}
+
+.context-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0;
+}
+
+.context-heading {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #5a4a2a;
+}
+
+.context-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a4a2a;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.context-toggle-btn:hover {
+  background-color: rgba(90, 74, 42, 0.1);
+}
+
+.context-toggle-btn i {
+  font-size: 0.7rem;
+}
+
+.context-content {
   white-space: pre-wrap;
   word-wrap: break-word;
-  animation: slideIn 0.2s ease;
+  overflow: hidden;
+  transition: max-height 0.3s ease, margin-top 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.context-content.collapsed {
+  max-height: 0;
+  margin-top: 0;
 }
 
 .ai-message {
