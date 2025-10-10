@@ -1,6 +1,6 @@
 {
   "name": "nooblyjs-app-wiki",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Application the exposes a fully featured wiki",
   "author": "NooblyJS Team <info@nooblyjs.com>",
   "main": "app-electron.js",
