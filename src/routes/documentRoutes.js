@@ -215,8 +215,6 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(400).json({ error: 'Document path and space name are required' });
       }
 
-      logger.info(`Reading document content from path: ${documentPath} in space: ${spaceName}`);
-
       let documentsDir, absolutePath;
       try {
         ({ documentsDir, absolutePath } = await getDocumentAbsolutePath(spaceName, documentPath));
@@ -256,8 +254,6 @@ module.exports = (options, eventEmitter, services) => {
 
         // Read the file content
         const content = await fs.readFile(absolutePath, { encoding });
-
-        logger.info(`Successfully read document from ${documentPath}`);
 
         // Return enhanced response with metadata
         if (req.query.enhanced === 'true') {

@@ -19,6 +19,7 @@ const Views = require('./views');
 const { initializeDocumentFiles } = require('./initialisation/documentContent');
 const { initializeWikiData } = require('./initialisation/initialiseWikiData');
 const { processTask } = require('./activities/taskProcessor');
+const { startFileWatcher } = require('./activities/fileWatcher');
 const DataManager = require('./components/dataManager');
 const AIService = require('./components/aiService');
 
@@ -29,9 +30,10 @@ const AIService = require('./components/aiService');
  * @param {Object} options - Configuration options
  * @param {EventEmitter} eventEmitter - Global event emitter for inter-service communication
  * @param {Object} serviceRegistry - NooblyJS Core service registry
+ * @param {Object} io - Socket.IO server instance
  * @return {void}
  */
-module.exports = (options, eventEmitter, serviceRegistry) => {
+module.exports = (options, eventEmitter, serviceRegistry, io) => {
   
   const dataDirectory = options.dataDirectory || './.application/'
   const filesDir = options.filesDir || './.application/wiki-files'
@@ -60,6 +62,11 @@ module.exports = (options, eventEmitter, serviceRegistry) => {
 
   // Start background queue worker
   startQueueWorker({ dataManager, filing, cache, logger, queue, search, aiService });
+
+  // Start file watcher for real-time updates
+  if (io) {
+    startFileWatcher({ dataManager, filing, cache, logger, queue, search, aiService, io });
+  }
 
   // Register routes and views
   Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });

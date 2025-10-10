@@ -7,6 +7,7 @@ import { templatesController } from "./modules/templatescontroller.js";
 import { settingsController } from "./modules/settingscontroller.js";
 import { aiChatController } from "./modules/aichatcontroller.js";
 import todoScanner from "./services/todoScanner.js";
+import socketService from "./services/socketService.js";
 
 /**
  * @fileoverview Updated Wiki Application with new layout
@@ -56,6 +57,9 @@ class WikiApp {
         this.initMarkdown();
         this.initSidebar();
         this.initSidebarResize();
+
+        // Initialize Socket.IO for real-time updates
+        socketService.init();
     }
 
     /**
