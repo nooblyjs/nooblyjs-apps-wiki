@@ -55,7 +55,7 @@ serviceRegistry.initialize(app,eventEmitter);
 
 const log = serviceRegistry.logger('console');
 const cache = serviceRegistry.cache('memory');
-const dataserve = serviceRegistry.dataServe('memory');
+const dataservice = serviceRegistry.dataService('memory');
 const filing = serviceRegistry.filing('local');
 const queue = serviceRegistry.queue('memory');
 const scheduling = serviceRegistry.scheduling('memory');
@@ -64,6 +64,7 @@ const measuring = serviceRegistry.measuring('memory');
 const notifying = serviceRegistry.notifying('memory');
 const worker = serviceRegistry.working('memory');
 const workflow = serviceRegistry.workflow('memory');
+const authservice = serviceRegistry.authservice('memory');
 
 // Load the wiki application
 const wiki = require('./index.js');
