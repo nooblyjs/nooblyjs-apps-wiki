@@ -12,6 +12,7 @@
 const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs').promises;
+const { isTextFile, generateCacheKey } = require('../utils/fileTypeUtils');
 
 /**
  * File change event debouncer to prevent duplicate events
@@ -156,7 +157,7 @@ function startFileWatcher(services) {
  * Handle file added event
  */
 async function handleFileAdded(filePath, watchedPaths, services) {
-  const { logger, io } = services;
+  const { logger, io, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) {
@@ -172,6 +173,18 @@ async function handleFileAdded(filePath, watchedPaths, services) {
 
   // Get file stats
   const stats = await getFileStats(filePath);
+
+  // Pre-cache text-based files
+  if (isTextFile(filePath)) {
+    try {
+      const content = await fs.readFile(filePath, 'utf8');
+      const cacheKey = generateCacheKey(space.name, relativePath);
+      await cache.put(cacheKey, content, 1800);
+      logger.info(`Pre-cached new file: ${cacheKey}`);
+    } catch (error) {
+      logger.warn(`Failed to pre-cache ${relativePath}:`, error.message);
+    }
+  }
 
   // Emit Socket.IO event
   io.emit('file:added', {
@@ -233,7 +246,7 @@ async function handleFolderAdded(dirPath, watchedPaths, services) {
  * Handle file changed event
  */
 async function handleFileChanged(filePath, watchedPaths, services) {
-  const { logger, io } = services;
+  const { logger, io, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) return;
@@ -245,6 +258,18 @@ async function handleFileChanged(filePath, watchedPaths, services) {
 
   // Get file stats
   const stats = await getFileStats(filePath);
+
+  // Update cache for text-based files
+  if (isTextFile(filePath)) {
+    try {
+      const content = await fs.readFile(filePath, 'utf8');
+      const cacheKey = generateCacheKey(space.name, relativePath);
+      await cache.put(cacheKey, content, 1800);
+      logger.info(`Updated cache for changed file: ${cacheKey}`);
+    } catch (error) {
+      logger.warn(`Failed to update cache for ${relativePath}:`, error.message);
+    }
+  }
 
   // Emit Socket.IO event
   io.emit('file:changed', {
@@ -265,7 +290,7 @@ async function handleFileChanged(filePath, watchedPaths, services) {
  * Handle file deleted event
  */
 async function handleFileDeleted(filePath, watchedPaths, services) {
-  const { logger, io } = services;
+  const { logger, io, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) return;
@@ -274,6 +299,17 @@ async function handleFileDeleted(filePath, watchedPaths, services) {
   const relativePath = getRelativePath(filePath, space.path);
 
   logger.info(`File deleted: ${fileName} from ${space.name}`);
+
+  // Invalidate cache for text-based files
+  if (isTextFile(filePath)) {
+    try {
+      const cacheKey = generateCacheKey(space.name, relativePath);
+      await cache.delete(cacheKey);
+      logger.info(`Invalidated cache for deleted file: ${cacheKey}`);
+    } catch (error) {
+      logger.warn(`Failed to invalidate cache for ${relativePath}:`, error.message);
+    }
+  }
 
   // Emit Socket.IO event
   io.emit('file:deleted', {

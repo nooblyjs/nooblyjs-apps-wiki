@@ -211,7 +211,7 @@ module.exports = (options, eventEmitter, services) => {
   app.get('/applications/wiki/api/documents/content', async (req, res) => {
     try {
       const { path: documentPath, spaceName, metadata, download } = req.query;
-      
+
       if (!documentPath || !spaceName) {
         return res.status(400).json({ error: 'Document path and space name are required' });
       }
@@ -246,15 +246,36 @@ module.exports = (options, eventEmitter, services) => {
 
         // Determine encoding based on file category
         let encoding = null;
-        if (['text', 'markdown', 'code', 'web', 'data'].includes(fileTypeInfo.category) ||
+        const isTextBased = ['text', 'markdown', 'code', 'web', 'data'].includes(fileTypeInfo.category) ||
             contentType.startsWith('text/') ||
             contentType === 'application/json' ||
-            contentType === 'application/xml') {
+            contentType === 'application/xml';
+
+        if (isTextBased) {
           encoding = 'utf8';
         }
 
-        // Read the file content
-        const content = await fs.readFile(absolutePath, { encoding });
+        // Check cache for text-based files
+        const cacheKey = `${spaceName}-${documentPath}`;
+        let content = null;
+
+        if (isTextBased && !download) {
+          content = await cache.get(cacheKey);
+          if (content) {
+            logger.info(`Loaded file content from cache: ${cacheKey}`);
+          }
+        }
+
+        // If not in cache, read from file system
+        if (!content) {
+          content = await fs.readFile(absolutePath, { encoding });
+
+          // Cache text-based files for 30 minutes
+          if (isTextBased && encoding) {
+            await cache.put(cacheKey, content, 1800);
+            logger.info(`Cached file content: ${cacheKey}`);
+          }
+        }
 
         // Return enhanced response with metadata
         if (req.query.enhanced === 'true') {
@@ -593,14 +614,23 @@ ${documentPath}\
         // Write the file content
         await fs.writeFile(absolutePath, content, 'utf8');
 
+        // Update cache for text-based files
+        const fileTypeInfo = getFileTypeInfo(documentPath, mime.lookup(absolutePath) || 'text/plain');
+        const isTextBased = ['text', 'markdown', 'code', 'web', 'data'].includes(fileTypeInfo.category);
+
+        if (isTextBased) {
+          const cacheKey = `${spaceName}-${documentPath}`;
+          await cache.put(cacheKey, content, 1800);
+          logger.info(`Updated cache after save: ${cacheKey}`);
+        }
+
         // Get file stats for response
         const stats = await fs.stat(absolutePath);
 
         logger.info(`Successfully saved document to ${documentPath}`);
 
         // Update search index for searchable files
-        const fileTypeInfo = getFileTypeInfo(documentPath, mime.lookup(absolutePath) || 'text/plain');
-        if (['text', 'markdown', 'code', 'web', 'data'].includes(fileTypeInfo.category)) {
+        if (isTextBased) {
           // Clear search cache to refresh results
           await cache.delete('wiki:search:*');
 
@@ -811,7 +841,22 @@ ${documentPath}\
 
       try {
         const fs = require('fs').promises;
-        const content = await fs.readFile(absolutePath, 'utf8');
+
+        // Check cache first
+        const cacheKey = `${spaceName}-${documentPath}`;
+        let content = await cache.get(cacheKey);
+
+        if (content) {
+          logger.info(`Loaded file content from cache: ${cacheKey}`);
+        } else {
+          // Read from file system
+          content = await fs.readFile(absolutePath, 'utf8');
+
+          // Cache for 30 minutes
+          await cache.put(cacheKey, content, 1800);
+          logger.info(`Cached file content: ${cacheKey}`);
+        }
+
         const stats = await fs.stat(absolutePath);
 
         // Extract title from first line if it's a markdown heading
@@ -1011,6 +1056,11 @@ ${documentPath}\
         // Write the updated content back to the file
         const updatedContent = lines.join('\n');
         await fs.writeFile(absolutePath, updatedContent, 'utf8');
+
+        // Update cache for text-based files
+        const cacheKey = `${spaceName}-${documentPath}`;
+        await cache.put(cacheKey, updatedContent, 1800);
+        logger.info(`Updated cache after TODO toggle: ${cacheKey}`);
 
         logger.info(`Successfully toggled TODO at line ${lineNumber} in ${documentPath}`);
 

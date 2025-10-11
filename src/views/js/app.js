@@ -448,6 +448,11 @@ class WikiApp {
             // Initialize TODO scanner
             todoScanner.init();
 
+            // Load AI chat data after authentication
+            if (aiChatController && aiChatController.loadAfterAuth) {
+                await aiChatController.loadAfterAuth();
+            }
+
         } catch (error) {
             console.error('Error loading initial data:', error);
         }

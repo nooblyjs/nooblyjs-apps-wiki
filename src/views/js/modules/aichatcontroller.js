@@ -27,8 +27,7 @@ export const aiChatController = {
         this.app.aiChatController = this;
         this.loadSavedState();
         this.bindEventListeners();
-        this.checkAIStatus();
-        this.loadChatHistory();
+        // Note: checkAIStatus() and loadChatHistory() are now called after authentication in loadAfterAuth()
     },
 
     /**
@@ -147,6 +146,15 @@ export const aiChatController = {
                 this.loadContextFiles();
             }
         });
+    },
+
+    /**
+     * Load data that requires authentication
+     * Called after user is authenticated from loadInitialData()
+     */
+    async loadAfterAuth() {
+        await this.checkAIStatus();
+        await this.loadChatHistory();
     },
 
     /**

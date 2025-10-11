@@ -1,13 +1,13 @@
-# NooblyJS Core - AI Code Generation Usage Guide
+# NooblyJS Core - Usage Guide
 
-## Package Installation
+## Quick Start
 
+### Installation
 ```bash
 npm install noobly-core
 ```
 
-## Core Pattern
-
+### Basic Setup
 ```javascript
 const express = require('express');
 const serviceRegistry = require('noobly-core');
@@ -15,345 +15,504 @@ const serviceRegistry = require('noobly-core');
 const app = express();
 app.use(express.json());
 
-// Initialize first (required before using any services)
+// Initialize registry
 serviceRegistry.initialize(app);
 
-// Get services (singleton pattern)
-const ai = serviceRegistry.ai('claude', { apiKey: process.env.CLAUDE_API_KEY });
-const auth = serviceRegistry.auth('memory');
+// Get services
 const cache = serviceRegistry.cache('memory');
-const dataServe = serviceRegistry.dataServe('memory');
-const filing = serviceRegistry.filing('local');
 const logger = serviceRegistry.logger('console');
-const measuring = serviceRegistry.measuring('memory');
-const notifying = serviceRegistry.notifying('memory');
-const queueing = serviceRegistry.queueing('memory');
-const scheduling = serviceRegistry.scheduling('memory');
-const searching = serviceRegistry.searching('memory');
-const workflow = serviceRegistry.workflow('memory');
-const working = serviceRegistry.working('memory');
+const dataService = serviceRegistry.dataService('memory');
 
 app.listen(3000);
 ```
 
-## Service Overview
-
-| Service | Purpose | Providers |
-|---------|---------|-----------|
-| **ai** | AI/LLM integration with token tracking | claude, chatgpt, ollama |
-| **auth** | User authentication and authorization | memory, file, passport, google |
-| **cache** | High-performance caching with TTL | memory, redis, memcached |
-| **dataServe** | JSON document storage with UUIDs and search | memory, simpledb, file |
-| **filing** | File upload/download/management | local, ftp, s3, git, sync |
-| **logger** | Application logging | console, file |
-| **measuring** | Time-series metrics collection | memory |
-| **notifying** | Pub/sub messaging system | memory |
-| **queueing** | FIFO task queue | memory |
-| **scheduling** | Delayed/recurring task execution | memory |
-| **searching** | Full-text search and indexing | memory |
-| **workflow** | Multi-step workflow orchestration | memory |
-| **working** | Background script execution | memory |
-
-## AI Service
-
-### Basic Usage (Claude)
+### With API Keys
 ```javascript
-const ai = serviceRegistry.ai('claude', {
-  apiKey: process.env.CLAUDE_API_KEY,
-  model: 'claude-3-5-sonnet-20241022'
+const apiKey = serviceRegistry.generateApiKey();
+serviceRegistry.initialize(app, {
+  apiKeys: [apiKey],
+  requireApiKey: true,
+  excludePaths: ['/services/*/status', '/services/', '/services/*/views/*']
 });
-
-// Send prompt
-const response = await ai.prompt('Explain Node.js in 50 words', {
-  maxTokens: 200,
-  temperature: 0.7
-});
-
-console.log(response.content);
-console.log('Tokens used:', response.usage.totalTokens);
 ```
 
-### OpenAI/ChatGPT Provider
+## Service Registry Architecture
+
+**Core Principles:**
+- Singleton Pattern: One instance per service type/provider
+- Provider Pattern: Multiple backends (memory, redis, s3, etc.)
+- Event-Driven: Global EventEmitter for inter-service communication
+- RESTful APIs: Consistent HTTP endpoints
+- Dependency Injection: Services automatically receive their dependencies
+
+### Available Services
+
+| Service | Providers | Purpose |
+|---------|-----------|---------|
+| **aiservice** | claude, chatgpt, ollama, api | LLM integration with token tracking |
+| **authservice** | file, memory, passport, google, api | Authentication & user management |
+| **caching** | memory, redis, memcached, file, api | High-performance caching |
+| **dataservice** | memory, simpledb, file, mongodb, documentdb, api | JSON document storage with UUIDs |
+| **filing** | local, ftp, s3, git, gcp, sync, api | File management |
+| **logging** | console, file, api | Application logging |
+| **measuring** | memory, api | Metrics collection |
+| **notifying** | memory, api | Pub/sub messaging |
+| **queueing** | memory, api | Task queueing |
+| **scheduling** | memory | Task scheduling with worker threads |
+| **searching** | memory, api | Full-text search |
+| **workflow** | memory, api | Multi-step workflows |
+| **working** | memory, api | Background tasks with worker threads |
+
+## API Usage
+
+### Authentication
+Five methods supported:
+```bash
+# 1. x-api-key header
+curl -H "x-api-key: YOUR_KEY" ...
+
+# 2. Authorization Bearer
+curl -H "Authorization: Bearer YOUR_KEY" ...
+
+# 3. Authorization ApiKey
+curl -H "Authorization: ApiKey YOUR_KEY" ...
+
+# 4. Query parameter
+curl "...?api_key=YOUR_KEY"
+
+# 5. api-key header
+curl -H "api-key: YOUR_KEY" ...
+```
+
+### Caching API
+```bash
+# Store data
+POST /services/caching/api/put/:key
+{"value": {...}}
+
+# Retrieve data
+GET /services/caching/api/get/:key
+
+# Delete data
+DELETE /services/caching/api/delete/:key
+
+# List keys with analytics
+GET /services/caching/api/list
+
+# Status (no auth)
+GET /services/caching/api/status
+```
+
+### DataService API
+
+Database-style storage with UUIDs and JSON search.
+
+```bash
+# Insert into container (returns UUID)
+POST /services/dataservice/api/:container
+{"name": "John", "status": "active"}
+# Response: {"id": "uuid-here"}
+
+# Retrieve by UUID
+GET /services/dataservice/api/:container/:uuid
+
+# Delete by UUID
+DELETE /services/dataservice/api/:container/:uuid
+
+# JSON Search - Custom predicate
+POST /services/dataservice/api/jsonFind/:container
+{"predicate": "obj.status === 'active'"}
+
+# JSON Search - By path
+GET /services/dataservice/api/jsonFindByPath/:container/:path/:value
+
+# JSON Search - Multi-criteria
+POST /services/dataservice/api/jsonFindByCriteria/:container
+{"status": "active", "profile.role": "developer"}
+```
+
+### Filing API
+```bash
+# Upload
+POST /services/filing/api/upload/:path
+[multipart file data]
+
+# Download
+GET /services/filing/api/download/:path
+
+# Delete
+DELETE /services/filing/api/remove/:path
+```
+
+### Scheduling API
+```bash
+# Schedule task with interval
+POST /services/scheduling/api/schedule
+{"task": "taskName", "scriptPath": "path/to/script.js", "intervalSeconds": 60}
+
+# Stop task
+DELETE /services/scheduling/api/cancel/:taskName
+
+# Get analytics
+GET /services/scheduling/api/analytics
+
+# Status
+GET /services/scheduling/api/status
+```
+
+### Workflow API
+```bash
+# Define workflow
+POST /services/workflow/api/defineworkflow
+{"name": "myWorkflow", "steps": ["/path/step1.js", "/path/step2.js"]}
+
+# Start execution
+POST /services/workflow/api/start
+{"name": "myWorkflow", "data": {...}}
+```
+
+### Queue API
+```bash
+# Enqueue task
+POST /services/queueing/api/enqueue/:queueName
+{"task": {...}}
+
+# Dequeue task
+GET /services/queueing/api/dequeue/:queueName
+
+# Queue size
+GET /services/queueing/api/size/:queueName
+
+# List all queues
+GET /services/queueing/api/queues
+```
+
+### AI Service API
+
+**Configuration**: Requires API keys/connection info in constructor.
+
 ```javascript
-const ai = serviceRegistry.ai('chatgpt', {
+// Initialize with credentials
+const claudeAI = serviceRegistry.aiservice('claude', {
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  model: 'claude-3-5-sonnet-20241022',
+  tokensStorePath: './.data/ai-tokens-claude.json'
+});
+
+const chatGPT = serviceRegistry.aiservice('chatgpt', {
   apiKey: process.env.OPENAI_API_KEY,
   model: 'gpt-4'
 });
 
-const response = await ai.prompt('Write a hello world function');
-```
-
-### Ollama Provider (Local)
-```javascript
-const ai = serviceRegistry.ai('ollama', {
+const ollama = serviceRegistry.aiservice('ollama', {
   baseUrl: 'http://localhost:11434',
-  model: 'llama2'
+  model: 'llama3.2'
 });
 
-const response = await ai.prompt('Explain microservices');
+// Send prompt
+const response = await claudeAI.prompt('Your prompt here', {
+  maxTokens: 1000,
+  temperature: 0.7
+});
+// Returns: {content, usage: {promptTokens, completionTokens, totalTokens, estimatedCost}}
+
+// Get analytics
+const analytics = claudeAI.getAnalytics();
+// Returns: {modelUsage, totalSessions, totalCost, totalTokens}
 ```
 
-### AI with Service Dependencies
-```javascript
-// Initialize AI with logging and caching
-const ai = serviceRegistry.ai('claude', {
-  apiKey: process.env.CLAUDE_API_KEY,
-  dependencies: {
-    logging: logger,
-    caching: cache,
-    workflow: workflow,
-    queueing: queue
-  }
-});
+**API Endpoints:**
+```bash
+# Send prompt
+POST /services/ai/api/prompt
+{"prompt": "...", "maxTokens": 500, "temperature": 0.7}
 
-// Response caching is automatic if cache is injected
-const result = await ai.prompt('Explain REST APIs');
+# Get analytics
+GET /services/ai/api/analytics
+
+# Status
+GET /services/ai/api/status
 ```
 
-## Auth Service
+## Programmatic Usage
 
-### Basic Usage (Memory)
+### Service Configuration
 ```javascript
-const auth = serviceRegistry.auth('memory');
-
-// Create user
-const user = await auth.createUser({
-  username: 'john',
-  email: 'john@example.com',
-  password: 'secure123',
-  role: 'user'
-});
-
-// Authenticate
-const { user, session } = await auth.authenticateUser('john', 'secure123');
-console.log('Session token:', session.token);
-
-// Validate session
-const validSession = await auth.validateSession(session.token);
-
-// Logout
-await auth.logout(session.token);
-```
-
-### User Management
-```javascript
-// Get user
-const user = await auth.getUser('john');
-
-// Update user
-await auth.updateUser('john', {
-  email: 'newemail@example.com',
-  password: 'newpassword123'
-});
-
-// Delete user
-await auth.deleteUser('john');
-
-// List all users
-const users = await auth.listUsers();
-```
-
-### Role-Based Access Control
-```javascript
-// Check user role
-const hasRole = await auth.checkRole('john', 'admin');
-
-// Update user role
-await auth.updateUser('john', { role: 'admin' });
-
-// Get users by role
-const admins = await auth.getUsersByRole('admin');
-```
-
-### File Provider (Persistent Storage)
-```javascript
-const auth = serviceRegistry.auth('file', {
-  baseDir: './data/auth'
-});
-
-// User data persists to disk
-await auth.createUser({
-  username: 'admin',
-  email: 'admin@example.com',
-  password: 'admin123',
-  role: 'admin'
-});
-```
-
-### Express Middleware Integration
-```javascript
-// Protect routes with auth middleware
-app.use('/api/protected', async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const session = await auth.validateSession(token);
-    req.user = session;
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-});
-
-// Role-based middleware
-app.use('/api/admin', async (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  next();
-});
-```
-
-## Caching Service
-
-### Basic Usage
-```javascript
+// Memory providers (dev/testing)
 const cache = serviceRegistry.cache('memory');
+const dataService = serviceRegistry.dataService('memory');
 
-// Store with optional TTL (seconds)
-await cache.put('key', { data: 'value' }, 3600);
-
-// Retrieve
-const data = await cache.get('key');
-
-// Delete
-await cache.delete('key');
-
-// Analytics
-const analytics = cache.getAnalytics();
-```
-
-### Redis Provider
-```javascript
+// Production providers
 const cache = serviceRegistry.cache('redis', {
-  host: 'localhost',
+  host: 'redis.example.com',
   port: 6379,
-  password: 'secret',
-  keyPrefix: 'myapp:',
-  enableAnalytics: true
-});
-```
-
-## DataServe Service
-
-### Basic Usage (Database-Style with UUIDs)
-```javascript
-const dataServe = serviceRegistry.dataServe('memory');
-
-// Create container
-await dataServe.createContainer('users');
-
-// Insert data, get UUID
-const uuid = await dataServe.add('users', {
-  name: 'John',
-  email: 'john@example.com',
-  profile: { department: 'engineering' }
+  password: 'password',
+  keyPrefix: 'myapp:'
 });
 
-// Retrieve by UUID
-const user = await dataServe.getByUuid('users', uuid);
-
-// Delete by UUID
-await dataServe.remove('users', uuid);
-```
-
-### JSON Search
-```javascript
-// Custom predicate
-const results = await dataServe.jsonFind('users',
-  user => user.profile.department === 'engineering'
-);
-
-// Path-based search
-const engineers = await dataServe.jsonFindByPath('users',
-  'profile.department', 'engineering'
-);
-
-// Multi-criteria search
-const active = await dataServe.jsonFindByCriteria('users', {
-  'status': 'active',
-  'profile.department': 'engineering'
-});
-```
-
-### File Provider
-```javascript
-const dataServe = serviceRegistry.dataServe('file', {
-  baseDir: './data/containers'
-});
-```
-
-## Filing Service
-
-### Basic Usage
-```javascript
-const filing = serviceRegistry.filing('local', {
-  baseDir: '/app/uploads'
+const dataService = serviceRegistry.dataService('simpledb', {
+  domain: 'myapp-data',
+  region: 'us-east-1'
 });
 
-// Upload file
-const fileStream = fs.createReadStream('./document.pdf');
-await filing.create('documents/report.pdf', fileStream);
-
-// Download file
-const downloadStream = await filing.read('documents/report.pdf');
-
-// Check existence
-const exists = await filing.exists('documents/report.pdf');
-
-// Get metadata
-const metadata = await filing.getMetadata('documents/report.pdf');
-
-// Delete file
-await filing.delete('documents/report.pdf');
-```
-
-### S3 Provider
-```javascript
 const filing = serviceRegistry.filing('s3', {
   bucket: 'myapp-files',
-  region: 'us-east-1',
+  region: 'us-west-2',
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 ```
 
-## Logging Service
+### Caching Patterns
 
+**Basic Operations:**
 ```javascript
-const logger = serviceRegistry.logger('console');
+// Store with TTL
+await cache.put('session:123', userData, 3600); // 1 hour
 
-// Log levels
-logger.info('Application started', { port: 3000 });
-logger.warn('Rate limit approaching', { userId: '123' });
-logger.error('Database error', { error: err.message });
-logger.debug('Cache hit', { key: 'user:123' });
+// Retrieve
+const userData = await cache.get('session:123');
+
+// Delete
+await cache.delete('session:123');
+
+// Analytics
+const analytics = cache.getAnalytics();
 ```
 
-### File Provider
+**Session Management:**
 ```javascript
-const logger = serviceRegistry.logger('file', {
-  filename: './logs/app.log',
-  maxFiles: 5,
-  maxSize: '10m'
+const sessionData = {userId: '123', roles: ['admin']};
+await cache.put(`session:${token}`, sessionData, 86400); // 24h
+
+const session = await cache.get(`session:${token}`);
+if (session) {
+  session.lastActivity = new Date().toISOString();
+  await cache.put(`session:${token}`, session, 86400);
+}
+```
+
+**Rate Limiting:**
+```javascript
+async function checkRateLimit(clientId, limit = 100, windowSec = 3600) {
+  const key = `rate:${clientId}`;
+  const current = await cache.get(key) || 0;
+
+  if (current >= limit) throw new Error('Rate limit exceeded');
+
+  await cache.put(key, current + 1, windowSec);
+  return {remaining: limit - current - 1};
+}
+```
+
+### DataService Patterns
+
+**Database-Style Operations:**
+```javascript
+// Insert and get UUID
+const userUuid = await dataService.add('users', {
+  name: 'John',
+  email: 'john@example.com',
+  profile: {department: 'engineering', role: 'developer'}
+});
+
+// Retrieve by UUID
+const user = await dataService.getByUuid('users', userUuid);
+
+// Delete by UUID
+await dataService.remove('users', userUuid);
+```
+
+**JSON Search:**
+```javascript
+// Custom predicate
+const activeEngineers = await dataService.jsonFind('users',
+  user => user.status === 'active' && user.profile.department === 'engineering'
+);
+
+// Path-based
+const developers = await dataService.jsonFindByPath('users', 'profile.role', 'developer');
+
+// Multi-criteria
+const results = await dataService.jsonFindByCriteria('users', {
+  'status': 'active',
+  'profile.department': 'engineering'
 });
 ```
 
-## Measuring Service
-
+**User Management Example:**
 ```javascript
-const measuring = serviceRegistry.measuring('memory');
+async function createUser(userData) {
+  // Check existing
+  const existing = await dataService.jsonFindByPath('users', 'email', userData.email);
+  if (existing.length > 0) throw new Error('User exists');
 
-// Record metrics
-measuring.add('api.response.time', 145);
-measuring.add('api.request.count', 1);
+  // Create user
+  const user = {
+    ...userData,
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    status: 'active'
+  };
 
-// Query metrics
-const metrics = measuring.list('api.response.time', startDate, endDate);
-const total = measuring.total('api.request.count', startDate, endDate);
-const avg = measuring.average('api.response.time', startDate, endDate);
+  const uuid = await dataService.add('users', user);
+  return {uuid, user};
+}
+
+async function findUsersByDepartment(dept) {
+  return await dataService.jsonFindByPath('users', 'profile.department', dept);
+}
 ```
 
-## Notifying Service (Pub/Sub)
+### Filing Patterns
+
+**Document Upload/Download:**
+```javascript
+const fs = require('fs');
+
+// Upload
+const fileStream = fs.createReadStream('./document.pdf');
+await filing.create('documents/report.pdf', fileStream);
+
+// Download
+const downloadStream = await filing.read('documents/report.pdf');
+
+// Check exists
+const exists = await filing.exists('documents/report.pdf');
+
+// Get metadata
+const metadata = await filing.getMetadata('documents/report.pdf');
+
+// Delete
+await filing.delete('documents/report.pdf');
+```
+
+**Document Manager:**
+```javascript
+async function uploadDocument(userId, file, metadata = {}) {
+  const filename = `${Date.now()}_${file.originalname}`;
+  const filePath = `users/${userId}/documents/${filename}`;
+
+  const fileStream = require('stream').Readable.from(file.buffer);
+  await filing.create(filePath, fileStream);
+
+  const record = {
+    userId, filename, filePath,
+    size: file.size,
+    mimeType: file.mimetype,
+    uploadedAt: new Date().toISOString(),
+    metadata
+  };
+
+  const uuid = await dataService.add('documents', record);
+  return {uuid, filePath, document: record};
+}
+
+async function downloadDocument(docUuid) {
+  const doc = await dataService.getByUuid('documents', docUuid);
+  if (!doc) throw new Error('Document not found');
+
+  const stream = await filing.read(doc.filePath);
+  const metadata = await filing.getMetadata(doc.filePath);
+
+  return {stream, document: doc, metadata};
+}
+```
+
+### AI Service Integration
+
+```javascript
+// Content generation
+async function generateBlogPost(topic, keywords) {
+  const prompt = `Write a blog post about ${topic}. Include: ${keywords.join(', ')}`;
+
+  const response = await claudeAI.prompt(prompt, {
+    maxTokens: 2000,
+    temperature: 0.8
+  });
+
+  return {
+    content: response.content,
+    tokensUsed: response.usage.totalTokens,
+    cost: response.usage.estimatedCost
+  };
+}
+
+// Code review
+async function reviewCode(code, language) {
+  const prompt = `Review this ${language} code:\n\n${code}`;
+  const response = await chatGPT.prompt(prompt, {maxTokens: 1500});
+  return response.content;
+}
+
+// Batch processing with local LLM
+async function summarizeDocuments(documents) {
+  const summaries = [];
+  for (const doc of documents) {
+    const response = await ollama.prompt(`Summarize:\n${doc.content}`, {
+      maxTokens: 500
+    });
+    summaries.push({documentId: doc.id, summary: response.content});
+  }
+  return summaries;
+}
+```
+
+### Scheduling
+
+```javascript
+const scheduling = serviceRegistry.scheduling('memory', {
+  dependencies: {
+    working: serviceRegistry.working('memory') // Required dependency
+  }
+});
+
+// Schedule task to run every N seconds
+await scheduling.start(
+  'backupTask',              // Task name
+  'scripts/backup.js',       // Script path
+  { config: 'production' },  // Data passed to script
+  3600,                      // Interval in seconds (1 hour)
+  (status, result) => {      // Callback on each execution
+    if (status === 'completed') {
+      console.log('Backup completed:', result);
+    } else {
+      console.error('Backup failed:', result);
+    }
+  }
+);
+
+// Stop a specific task
+await scheduling.stop('backupTask');
+
+// Check if task is running
+const isRunning = await scheduling.isRunning('backupTask');
+
+// Stop all tasks
+await scheduling.stop();
+```
+
+### Workflow Orchestration
+
+```javascript
+const workflow = serviceRegistry.workflow('memory');
+
+// Define steps
+const steps = [
+  path.resolve(__dirname, './steps/validateInput.js'),
+  path.resolve(__dirname, './steps/processData.js'),
+  path.resolve(__dirname, './steps/saveResults.js')
+];
+
+await workflow.defineWorkflow('dataProcessing', steps);
+
+// Execute
+workflow.runWorkflow('dataProcessing', {inputData: rawData}, (result) => {
+  console.log('Workflow completed:', result);
+});
+```
+
+### Pub/Sub Messaging
 
 ```javascript
 const notifying = serviceRegistry.notifying('memory');
@@ -364,6 +523,11 @@ notifying.createTopic('user-events');
 // Subscribe
 notifying.subscribe('user-events', (message) => {
   console.log('Event:', message);
+  // Handle event
+});
+
+notifying.subscribe('user-events', (message) => {
+  analyticsService.track(message);
 });
 
 // Publish
@@ -372,381 +536,285 @@ notifying.notify('user-events', {
   userId: '123',
   timestamp: new Date().toISOString()
 });
-
-// Unsubscribe
-notifying.unsubscribe('user-events', callback);
 ```
 
-## Queueing Service
+**Event System Example:**
+```javascript
+// Setup subscribers for e-commerce
+notifying.createTopic('orders');
+notifying.createTopic('inventory');
+notifying.createTopic('payments');
+
+notifying.subscribe('orders', async (event) => {
+  switch (event.type) {
+    case 'order_placed':
+      await processOrder(event.data);
+      break;
+    case 'order_shipped':
+      await sendShippingNotification(event.data);
+      break;
+  }
+});
+
+notifying.subscribe('payments', async (event) => {
+  if (event.type === 'payment_completed') {
+    notifying.notify('orders', {
+      type: 'payment_confirmed',
+      orderId: event.data.orderId
+    });
+  }
+});
+
+// Publish events
+notifying.notify('orders', {type: 'order_placed', data: orderData});
+```
+
+### Queue Processing
 
 ```javascript
-const queue = serviceRegistry.queueing('memory');
+const queueing = serviceRegistry.queueing('memory');
 
-// Add task
-queue.enqueue({
-  type: 'sendEmail',
+// Add tasks
+await queueing.enqueue('emailQueue', {
+  taskType: 'sendEmail',
   recipient: 'user@example.com',
   template: 'welcome'
 });
 
-// Get next task
-const task = queue.dequeue();
-
-// Queue size
-const size = queue.size();
-
-// Clear queue
-queue.clear();
+// Process tasks
+async function processQueue() {
+  while (await queueing.size('emailQueue') > 0) {
+    const task = await queueing.dequeue('emailQueue');
+    await handleTask(task);
+  }
+}
 ```
 
-## Scheduling Service
+## Web Interface
 
+NooblyJS includes built-in web UIs for service management:
+
+- **Service Registry Dashboard**: `/services/` - Overview of all services
+- **Individual Service Dashboards**:
+  - `/services/caching/` - Cache management and analytics
+  - `/services/dataservice/` - Data operations and search
+  - `/services/filing/` - File management
+  - `/services/logging/` - Log viewer and analytics
+  - `/services/queueing/` - Queue monitoring
+  - `/services/scheduling/` - Task scheduler
+  - `/services/searching/` - Search interface
+  - `/services/workflow/` - Workflow management
+  - `/services/authservice/` - User authentication
+  - `/services/ai/` - AI service management
+
+Each dashboard includes:
+- Analytics with real-time metrics
+- Interactive API testing
+- Swagger/OpenAPI documentation
+- Operation forms
+
+## Configuration
+
+### Initialize Options
 ```javascript
-const scheduling = serviceRegistry.scheduling('memory');
+serviceRegistry.initialize(app, {
+  // Security
+  apiKeys: ['key1', 'key2'],
+  requireApiKey: true,
+  excludePaths: ['/services/*/status', '/public/*'],
 
-// Schedule delayed task
-const taskId = scheduling.schedule(
-  'sendReminder',
-  './tasks/reminder.js',
-  { userId: '123' },
-  5000, // delay in ms
-  (result) => console.log('Task completed:', result)
-);
-
-// Cancel task
-scheduling.cancel(taskId);
-```
-
-## Searching Service
-
-```javascript
-const searching = serviceRegistry.searching('memory');
-
-// Index objects
-searching.add('user123', {
-  name: 'John Doe',
-  email: 'john@example.com',
-  bio: 'Software engineer'
-});
-
-// Search
-const results = searching.search('engineer');
-
-// Delete from index
-searching.delete('user123');
-```
-
-## Workflow Service
-
-```javascript
-const workflow = serviceRegistry.workflow('memory');
-
-// Define workflow steps
-await workflow.defineWorkflow('userOnboarding', [
-  './steps/validateUser.js',
-  './steps/createAccount.js',
-  './steps/sendWelcome.js'
-]);
-
-// Execute workflow
-workflow.runWorkflow('userOnboarding', {
-  email: 'user@example.com',
-  name: 'John'
-}, (result) => {
-  console.log('Workflow completed:', result);
+  // Event system (optional)
+  eventEmitter: customEventEmitter
 });
 ```
 
-## Working Service
+### Service-Specific Options
 
+**Redis Cache:**
 ```javascript
-const worker = serviceRegistry.working('memory');
+{host: 'localhost', port: 6379, password: 'secret', keyPrefix: 'app:'}
+```
 
-// Start background worker
-worker.start('./workers/processor.js', (result) => {
-  console.log('Worker result:', result);
-});
+**S3 Filing:**
+```javascript
+{bucket: 'my-bucket', region: 'us-east-1', accessKeyId: '...', secretAccessKey: '...'}
+```
 
-// Stop worker
-worker.stop();
+**AI Services:**
+```javascript
+{apiKey: 'sk-...', model: 'claude-3-5-sonnet-20241022', tokensStorePath: './tokens.json'}
+```
 
-// Worker status
-const status = worker.status;
+**File Logging:**
+```javascript
+{filename: './app.log', maxFiles: 5, maxSize: '10m'}
+```
+
+**Working Service (Background Tasks):**
+```javascript
+{maxThreads: 4, activitiesFolder: './activities'}
 ```
 
 ## Event System
 
+Global EventEmitter for inter-service communication:
+
 ```javascript
-// Get global event emitter
 const eventEmitter = serviceRegistry.getEventEmitter();
 
-// Listen for events
-eventEmitter.on('cache-hit', (data) => {
-  console.log('Cache hit:', data);
+// Listen to service events
+eventEmitter.on('cache:put', (data) => {
+  console.log('Cache updated:', data.key);
 });
 
-eventEmitter.on('workflow-completed', (data) => {
-  console.log('Workflow finished:', data);
+eventEmitter.on('ai:usage', (data) => {
+  console.log('AI tokens used:', data.tokens);
+});
+
+eventEmitter.on('workflow:complete', (data) => {
+  console.log('Workflow done:', data.name);
 });
 
 // Emit custom events
-eventEmitter.emit('custom-event', { data: 'value' });
+eventEmitter.emit('custom:event', {data: 'value'});
 ```
 
-## API Key Security
+## Best Practices
 
+### 1. Service Selection
+- Use **memory** providers for development/testing
+- Use **redis/memcached** for distributed caching in production
+- Use **s3** for cloud file storage at scale
+- Use **file** provider for simple persistent storage
+
+### 2. Error Handling
 ```javascript
-// Generate API key
-const apiKey = serviceRegistry.generateApiKey(32);
-
-// Initialize with security
-serviceRegistry.initialize(app, {
-  apiKeys: [apiKey],
-  requireApiKey: true,
-  excludePaths: [
-    '/services/*/status',
-    '/services/',
-    '/services/*/views/*'
-  ]
-});
-```
-
-## Production Configuration
-
-```javascript
-const express = require('express');
-const serviceRegistry = require('noobly-core');
-
-const app = express();
-app.use(express.json());
-
-// Initialize
-serviceRegistry.initialize(app, {
-  apiKeys: [process.env.API_KEY],
-  requireApiKey: true
-});
-
-// Redis cache
-const cache = serviceRegistry.cache('redis', {
-  host: process.env.REDIS_HOST,
-  port: 6379,
-  password: process.env.REDIS_PASSWORD
-});
-
-// File-based data storage
-const dataServe = serviceRegistry.dataServe('file', {
-  baseDir: './data/containers'
-});
-
-// S3 file storage
-const filing = serviceRegistry.filing('s3', {
-  bucket: process.env.S3_BUCKET,
-  region: 'us-east-1'
-});
-
-// File logging
-const logger = serviceRegistry.logger('file', {
-  filename: './logs/app.log',
-  maxFiles: 5,
-  maxSize: '10m'
-});
-
-app.listen(3000);
-```
-
-## Common Patterns
-
-### Cache-Aside Pattern
-```javascript
-async function getUser(userId) {
-  const cacheKey = `user:${userId}`;
-
-  // Try cache first
-  let user = await cache.get(cacheKey);
-  if (user) return user;
-
-  // Fallback to database
-  user = await db.users.findById(userId);
-
-  // Cache for next time
-  await cache.put(cacheKey, user, 3600);
-  return user;
+try {
+  const data = await cache.get('key');
+  if (!data) {
+    // Handle cache miss
+  }
+} catch (error) {
+  logger.error('Cache error:', error);
+  // Fallback logic
 }
 ```
 
-### Event-Driven Data Flow
+### 3. API Key Management
 ```javascript
-// Subscribe to events
-notifying.subscribe('user-registered', async (data) => {
-  const uuid = await dataServe.add('users', data);
-  await cache.put(`user:${data.id}`, data);
-  queue.enqueue({ type: 'sendWelcome', userId: data.id });
-});
+// Generate secure keys
+const apiKey = serviceRegistry.generateApiKey();
 
-// Publish event
-notifying.notify('user-registered', {
-  id: '123',
-  email: 'user@example.com'
-});
+// Store in environment variables
+process.env.API_KEY = apiKey;
+
+// Exclude public paths
+excludePaths: ['/health', '/services/*/status', '/docs']
 ```
 
-### Background Processing
-```javascript
-// Queue tasks
-queue.enqueue({ type: 'processImage', imageId: '456' });
-queue.enqueue({ type: 'sendEmail', userId: '123' });
+### 4. Performance
+- Set appropriate TTLs for cached data
+- Use connection pooling for Redis
+- Implement rate limiting for APIs
+- Monitor service metrics via measuring service
 
-// Process queue
-setInterval(async () => {
-  const task = queue.dequeue();
-  if (task) {
-    await processTask(task);
-  }
-}, 1000);
+### 5. Security
+- Always use API keys in production
+- Validate input data before storage
+- Sanitize file paths to prevent directory traversal
+- Use environment variables for credentials
+
+## Testing
+
+### Unit Tests
+```bash
+npm test
 ```
 
-### Metrics Tracking
-```javascript
-app.use(async (req, res, next) => {
-  const start = Date.now();
-
-  res.on('finish', () => {
-    measuring.add('api.response.time', Date.now() - start);
-    measuring.add('api.requests', 1);
-    if (res.statusCode >= 400) {
-      measuring.add('api.errors', 1);
-    }
-  });
-
-  next();
-});
+### Load Tests
+```bash
+npm run test-load
 ```
 
-### AI-Powered API with Authentication
-```javascript
-// Protected AI endpoint with authentication
-app.post('/api/ai/generate', async (req, res) => {
-  try {
-    // Authenticate user
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const session = await auth.validateSession(token);
+### Manual API Tests
+Use `.http` files in `tests/api/` directory with REST clients.
 
-    // Check rate limiting using cache
-    const rateLimitKey = `ratelimit:${session.userId}`;
-    const requests = await cache.get(rateLimitKey) || 0;
+## Deployment
 
-    if (requests >= 10) {
-      return res.status(429).json({ error: 'Rate limit exceeded' });
-    }
-
-    // Increment rate limit
-    await cache.put(rateLimitKey, requests + 1, 3600);
-
-    // Generate AI response
-    const response = await ai.prompt(req.body.prompt, {
-      maxTokens: req.body.maxTokens || 500,
-      temperature: 0.7
-    });
-
-    // Track metrics
-    measuring.add('ai.requests', 1);
-    measuring.add('ai.tokens', response.usage.totalTokens);
-
-    // Log request
-    logger.info('AI request processed', {
-      user: session.username,
-      tokens: response.usage.totalTokens
-    });
-
-    res.json(response);
-  } catch (error) {
-    logger.error('AI request failed', { error: error.message });
-    res.status(500).json({ error: error.message });
-  }
-});
+### Docker
+```dockerfile
+FROM node:18
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --production
+COPY . .
+EXPOSE 3000
+CMD ["node", "index.js"]
 ```
 
-## Service Method Reference
+### Environment Variables
+```bash
+NODE_ENV=production
+PORT=3000
+REDIS_HOST=redis.example.com
+REDIS_PORT=6379
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+ANTHROPIC_API_KEY=...
+```
 
-### ai
-- `prompt(text, options?)` - Send prompt to AI, returns { content, usage, model, provider }
-- `options.maxTokens` - Maximum tokens in response
-- `options.temperature` - Response temperature (0-1)
-- Providers: claude, chatgpt, ollama
+## Troubleshooting
 
-### auth
-- `createUser(userData)` - Create new user account
-- `authenticateUser(username, password)` - Login, returns { user, session }
-- `validateSession(token)` - Validate session token
-- `logout(token)` - Invalidate session
-- `getUser(username)` - Get user by username
-- `updateUser(username, updates)` - Update user info
-- `deleteUser(username)` - Delete user
-- `listUsers()` - Get all users
-- `checkRole(username, role)` - Check if user has role
-- `getUsersByRole(role)` - Get users by role
-- Providers: memory, file, passport, google
+### Service Not Initializing
+- Ensure `serviceRegistry.initialize(app)` is called before accessing services
+- Check provider name is valid (e.g., 'memory', 'redis', not 'Memory')
 
-### cache
-- `put(key, value, ttl?)` - Store with optional TTL
-- `get(key)` - Retrieve value
-- `delete(key)` - Remove entry
-- `getAnalytics()` - Get performance metrics
+### Cache Not Working
+- Verify Redis connection if using redis provider
+- Check if data exceeds size limits
+- Confirm TTL is set appropriately
 
-### dataServe
-- `createContainer(name)` - Create container
-- `add(container, data)` - Insert, returns UUID
-- `getByUuid(container, uuid)` - Retrieve by UUID
-- `remove(container, uuid)` - Delete by UUID
-- `jsonFind(container, predicate)` - Custom search
-- `jsonFindByPath(container, path, value)` - Path search
-- `jsonFindByCriteria(container, criteria)` - Multi-criteria search
+### File Upload Fails
+- Ensure base directory exists for local provider
+- Check S3 credentials and permissions
+- Verify file size limits
 
-### filing
-- `create(path, stream)` - Upload file
-- `read(path)` - Download file
-- `exists(path)` - Check existence
-- `getMetadata(path)` - Get file info
-- `delete(path)` - Remove file
+### AI Service Errors
+- Confirm API keys are set in constructor options
+- Check token limits aren't exceeded
+- Verify network connectivity to AI provider
 
-### logger
-- `info(msg, ...args)` - Info level
-- `warn(msg, ...args)` - Warning level
-- `error(msg, ...args)` - Error level
-- `debug(msg, ...args)` - Debug level
+### API Key Issues
+- Ensure key is passed in correct header/parameter
+- Check path isn't excluded from auth
+- Verify key is in apiKeys array
 
-### measuring
-- `add(metric, value, timestamp?)` - Record measurement
-- `list(metric, start, end)` - Query range
-- `total(metric, start, end)` - Sum values
-- `average(metric, start, end)` - Calculate average
+### Scheduling Issues
+- Ensure working service is initialized before scheduling service
+- Check script paths are absolute
+- Verify worker thread limits aren't exceeded
 
-### notifying
-- `createTopic(name)` - Create topic
-- `subscribe(topic, callback)` - Add subscriber
-- `notify(topic, message)` - Publish message
-- `unsubscribe(topic, callback)` - Remove subscriber
+## Error Response Format
 
-### queueing
-- `enqueue(task)` - Add task
-- `dequeue()` - Get next task
-- `size()` - Queue size
-- `clear()` - Empty queue
+All APIs return consistent error responses:
 
-### scheduling
-- `schedule(name, script, data, delay, callback)` - Schedule task
-- `cancel(taskId)` - Cancel task
+```json
+{
+  "error": "Error Type",
+  "message": "Detailed error message",
+  "code": "ERROR_CODE"
+}
+```
 
-### searching
-- `add(id, object)` - Index object
-- `search(term)` - Search indexed data
-- `delete(id)` - Remove from index
+Common error codes:
+- `MISSING_API_KEY` - API key required but not provided
+- `INVALID_API_KEY` - API key invalid
+- `KEY_NOT_FOUND` - Cache/data key doesn't exist
+- `FILE_NOT_FOUND` - File doesn't exist
+- `VALIDATION_ERROR` - Input validation failed
 
-### workflow
-- `defineWorkflow(name, steps)` - Define workflow
-- `runWorkflow(name, data, callback)` - Execute workflow
+## Additional Resources
 
-### working
-- `start(scriptPath, callback)` - Start worker
-- `stop()` - Stop worker
-- `status` - Worker status
+- GitHub: https://github.com/StephenBooysen/nooblyjs-core
+- NPM: https://www.npmjs.com/package/noobly-core
+- Documentation: Generated via JSDoc in `docs/` directory

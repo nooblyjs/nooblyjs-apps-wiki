@@ -662,7 +662,17 @@ export const documentController = {
 
             // Add click handler
             checkbox.addEventListener('click', async (e) => {
-                e.preventDefault(); // Prevent default checkbox behavior
+                console.log('🔵 [TODO] Checkbox clicked');
+
+                // Prevent default to control the checkbox state ourselves
+                e.preventDefault();
+
+                // Store the current state (BEFORE the would-be toggle)
+                const wasChecked = checkbox.checked;
+                console.log('🔵 [TODO] Checkbox wasChecked:', wasChecked);
+                console.log('🔵 [TODO] Task text:', taskText);
+                console.log('🔵 [TODO] Document path:', doc.path);
+                console.log('🔵 [TODO] Space name:', doc.spaceName);
 
                 // Show loading state
                 const originalDisabled = checkbox.disabled;
@@ -670,14 +680,19 @@ export const documentController = {
 
                 try {
                     // Find the line number in the original content
-                    const lineNumber = this.findTodoLineNumber(doc.content, taskText, checkbox.checked);
+                    // Use wasChecked (current state) to find the right line
+                    const lineNumber = this.findTodoLineNumber(doc.content, taskText, wasChecked);
+                    console.log('🔵 [TODO] Found line number:', lineNumber);
 
                     if (lineNumber === -1) {
-                        console.error('Could not find TODO item in source');
+                        console.error('❌ [TODO] Could not find TODO item in source');
+                        console.log('🔵 [TODO] Document content:', doc.content);
                         this.app.showNotification('Failed to locate TODO item', 'error');
                         checkbox.disabled = originalDisabled;
                         return;
                     }
+
+                    console.log('🔵 [TODO] Calling API to toggle TODO at line', lineNumber);
 
                     // Call the API to toggle the TODO
                     const response = await fetch('/applications/wiki/api/documents/toggle-todo', {
@@ -690,27 +705,35 @@ export const documentController = {
                         })
                     });
 
+                    console.log('🔵 [TODO] API response status:', response.status);
                     const result = await response.json();
+                    console.log('🔵 [TODO] API response:', result);
 
                     if (result.success) {
-                        // Toggle the checkbox visually
-                        checkbox.checked = !checkbox.checked;
+                        console.log('✅ [TODO] Successfully toggled TODO');
+
+                        // Toggle the checkbox visually on success
+                        checkbox.checked = !wasChecked;
+                        console.log('🔵 [TODO] Checkbox now checked:', checkbox.checked);
 
                         // Update the document content in memory
                         doc.content = await this.fetchUpdatedContent(doc.path, doc.spaceName);
+                        console.log('🔵 [TODO] Updated document content in memory');
 
                         // Trigger window.todos update if it exists
                         if (window.todoScanner) {
                             window.todoScanner.scanAllSpaces();
+                            console.log('🔵 [TODO] Triggered TODO scanner update');
                         }
                     } else {
                         throw new Error(result.error || 'Failed to toggle TODO');
                     }
                 } catch (error) {
-                    console.error('Error toggling TODO:', error);
+                    console.error('❌ [TODO] Error toggling TODO:', error);
                     this.app.showNotification('Failed to toggle TODO: ' + error.message, 'error');
                 } finally {
                     checkbox.disabled = originalDisabled;
+                    console.log('🔵 [TODO] Checkbox click handler completed');
                 }
             });
         });
@@ -791,6 +814,9 @@ export const documentController = {
             // This is a wiki-code TODO checkbox
             e.preventDefault();
 
+            // Store the current state (BEFORE the would-be toggle)
+            const wasChecked = checkbox.checked;
+
             // Show loading state
             const originalDisabled = checkbox.disabled;
             checkbox.disabled = true;
@@ -811,7 +837,7 @@ export const documentController = {
 
                 if (result.success) {
                     // Toggle the checkbox visually
-                    checkbox.checked = !checkbox.checked;
+                    checkbox.checked = !wasChecked;
 
                     // Trigger window.todos update
                     if (window.todoScanner) {

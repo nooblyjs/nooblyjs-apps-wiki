@@ -1,24 +1,13 @@
 [
   {
-    "id": "1760067714134",
-    "email": "srbooysen@shoprite.co.za",
-    "password": "$2b$10$XbqcKz0ssbsryKE61TJhneSnzr5gsqhvBY.ePuummgvexrwxqat/y",
-    "name": "Stephen Booysen",
-    "provider": "local",
-    "initialized": true,
-    "createdAt": "2025-10-10T03:41:54.134Z",
-    "initializedAt": "2025-10-10T03:41:57.677Z",
-    "avatar": "/applications/wiki/media/avatar-1760067714134.png"
-  },
-  {
-    "id": "1760114235280",
+    "id": "1760162398053",
     "email": "stephenrbooysen@gmail.com",
-    "password": "$2b$10$vfpdEmH.7w/Pou4I68rYg./kGZ1gqfYP/ZOm1ooc08mGlwvRP24JS",
+    "password": "$2b$10$Ptur4SVQ0/p1IHVYdtRPFOChbvEnck8mVNHRW2KwE8pTz5fdG/bzm",
     "name": "Stephen Booysen",
     "provider": "local",
     "initialized": true,
-    "createdAt": "2025-10-10T16:37:15.280Z",
-    "initializedAt": "2025-10-10T16:37:18.753Z",
-    "avatar": "/applications/wiki/media/avatar-1760114235280.png"
+    "createdAt": "2025-10-11T05:59:58.053Z",
+    "initializedAt": "2025-10-11T06:00:01.219Z",
+    "avatar": "/applications/wiki/media/avatar-1760162398053.png"
   }
 ]
