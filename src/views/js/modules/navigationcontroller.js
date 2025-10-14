@@ -19,8 +19,7 @@ export const navigationController = {
 
     async init(app) {
         this.app = app;
-        // Load folder view preferences from server
-        await this.loadFolderViewPreferences();
+        // Preferences load after authentication during initial data fetch
     },
 
     /**
@@ -506,7 +505,8 @@ export const navigationController = {
 
         // Create a folder overview view
         const folderContent = this.createFolderOverview(folder);
-        this.showFolderView(folderContent);
+        const folderHomeHtml = await this.loadFolderHomeContent(folderPath);
+        this.showFolderView(folderContent, folderHomeHtml);
     },
 
     findFolderInTree(nodes, targetPath) {
@@ -546,7 +546,73 @@ export const navigationController = {
         };
     },
 
-    showFolderView(folderContent) {
+    async loadFolderHomeContent(folderPath) {
+        // Only folders (non-root) should attempt to load a home.md intro
+        if (!folderPath || !this.app?.currentSpace) {
+            return null;
+        }
+
+        const normalizedPath = folderPath.replace(/^\/+|\/+$/g, '');
+        if (!normalizedPath) return null;
+
+        const documentPath = `${normalizedPath}/home.md`;
+
+        try {
+            // Check if a home.md file exists for this folder
+            const existsResponse = await fetch('/applications/wiki/api/documents/exists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceName: this.app.currentSpace.name,
+                    path: documentPath
+                })
+            });
+
+            if (!existsResponse.ok) {
+                return null;
+            }
+
+            const existsData = await existsResponse.json();
+            if (!existsData.exists) {
+                return null;
+            }
+
+            // Load the markdown content for rendering
+            const contentResponse = await fetch('/applications/wiki/api/documents/content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    spaceName: this.app.currentSpace.name,
+                    path: documentPath
+                })
+            });
+
+            if (!contentResponse.ok) {
+                return null;
+            }
+
+            const data = await contentResponse.json();
+            if (!data.content) {
+                return null;
+            }
+
+            // Render markdown if available, fallback to raw text
+            if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                return marked.parse(data.content);
+            }
+
+            return data.content;
+        } catch (error) {
+            // Silently ignore errors; folder home content is optional
+            return null;
+        }
+    },
+
+    showFolderView(folderContent, folderHomeHtml = null) {
         // Switch to a custom folder view
         this.app.setActiveView('folder');
 
@@ -593,6 +659,14 @@ export const navigationController = {
                         </div>
                     </div>
                 </div>
+
+                ${folderHomeHtml ? `
+                    <div class="folder-home-content card mb-3">
+                        <div class="card-body markdown-body">
+                            ${folderHomeHtml}
+                        </div>
+                    </div>
+                ` : ''}
 
                 <div class="folder-content">
                     ${folderContent.folders.length === 0 && folderContent.files.length === 0 ? `

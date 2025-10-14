@@ -442,6 +442,9 @@ class WikiApp {
             const documentsResponse = await fetch('/applications/wiki/api/documents');
             this.data.documents = await documentsResponse.json();
 
+            // Load folder view preferences now that the user is authenticated
+            await navigationController.loadFolderViewPreferences();
+
             spacesController.renderSpacesList();
             navigationController.loadFileTree();
 
