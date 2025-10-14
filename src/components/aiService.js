@@ -1,6 +1,6 @@
 /**
  * @fileoverview AI Service Helper
- * Direct AI provider integration (Claude, ChatGPT, Ollama)
+ * Integrates with the NooblyJS service registry for AI providers.
  *
  * @author NooblyJS Team
  * @version 1.0.0
@@ -9,8 +9,8 @@
 
 'use strict';
 
-const Anthropic = require('@anthropic-ai/sdk');
-const OpenAI = require('openai');
+const fs = require('fs').promises;
+const path = require('path');
 
 /**
  * AI Service Helper Class
@@ -28,6 +28,7 @@ class AIService {
     this.logger = logger;
     this.aiClient = null;
     this.userSettings = null;
+    this.providerClients = new Map();
   }
 
   /**
@@ -37,7 +38,6 @@ class AIService {
    */
   async initialize(userId) {
     try {
-      // Load user AI settings
       const settings = await this.dataManager.read(`aiSettings_${userId}`);
 
       if (!settings || !settings.enabled || !settings.provider || !settings.apiKey) {
@@ -45,8 +45,7 @@ class AIService {
         return false;
       }
 
-      // Initialize AI client based on provider
-      this.aiClient = this.createClient(settings);
+      this.aiClient = await this.createClient(settings, userId);
       this.userSettings = settings;
 
       this.logger.info(`AI service initialized for user ${userId} with provider ${settings.provider}`);
@@ -62,28 +61,29 @@ class AIService {
    * @param {Object} settings - AI settings
    * @returns {Object} AI client instance
    */
-  createClient(settings) {
-    const { provider, apiKey, endpoint } = settings;
+  async createClient(settings, userId, options = {}) {
+    const provider = settings?.provider;
 
-    switch (provider) {
-      case 'claude':
-        return new Anthropic({ apiKey });
-
-      case 'chatgpt':
-        return new OpenAI({
-          apiKey,
-          ...(endpoint && { baseURL: endpoint })
-        });
-
-      case 'ollama':
-        return new OpenAI({
-          apiKey: 'ollama', // Ollama doesn't need a real API key
-          baseURL: endpoint || 'http://localhost:11434/v1'
-        });
-
-      default:
-        throw new Error(`Unsupported AI provider: ${provider}`);
+    if (!provider) {
+      throw new Error('AI provider not specified');
     }
+
+    const cacheKey = userId || 'default';
+    const temporary = options.temporary === true;
+    const providerClientKey = `${provider}:${cacheKey}`;
+
+    if (!temporary && this.providerClients.has(providerClientKey)) {
+      return this.providerClients.get(providerClientKey);
+    }
+
+    const client = await this.getProviderService(provider, settings);
+
+    if (!temporary) {
+      this.providerClients.set(providerClientKey, client);
+      this.providerClients.set(`${provider}:latest`, client);
+    }
+
+    return client;
   }
 
   /**
@@ -93,9 +93,9 @@ class AIService {
    */
   getDefaultModel(provider) {
     const defaults = {
-      'claude': 'claude-3-5-sonnet-20241022',
-      'chatgpt': 'gpt-4',
-      'ollama': 'llama2'
+      claude: 'claude-3-5-sonnet-20241022',
+      chatgpt: 'gpt-4',
+      ollama: 'llama2'
     };
     return defaults[provider] || 'claude-3-5-sonnet-20241022';
   }
@@ -112,7 +112,6 @@ class AIService {
     }
 
     try {
-      // Build context-aware prompt
       let fullPrompt = userMessage;
 
       if (context.includeDocumentContext && context.documentContent) {
@@ -125,52 +124,19 @@ class AIService {
       const maxTokens = this.userSettings.maxTokens || 4096;
       const temperature = this.userSettings.temperature || 0.7;
 
-      let response;
+      const result = await this.aiClient.prompt(fullPrompt, {
+        maxTokens,
+        temperature
+      });
 
-      // Call appropriate AI provider
-      if (this.userSettings.provider === 'claude') {
-        const result = await this.aiClient.messages.create({
-          model: model,
-          max_tokens: maxTokens,
-          temperature: temperature,
-          messages: [{ role: 'user', content: fullPrompt }]
-        });
-
-        response = {
-          content: result.content[0].text,
-          usage: {
-            inputTokens: result.usage.input_tokens,
-            outputTokens: result.usage.output_tokens,
-            totalTokens: result.usage.input_tokens + result.usage.output_tokens
-          },
-          model: result.model
-        };
-      } else {
-        // ChatGPT and Ollama use OpenAI-compatible API
-        const result = await this.aiClient.chat.completions.create({
-          model: model,
-          max_tokens: maxTokens,
-          temperature: temperature,
-          messages: [{ role: 'user', content: fullPrompt }]
-        });
-
-        response = {
-          content: result.choices[0].message.content,
-          usage: {
-            inputTokens: result.usage.prompt_tokens,
-            outputTokens: result.usage.completion_tokens,
-            totalTokens: result.usage.total_tokens
-          },
-          model: result.model
-        };
-      }
+      const usage = this.normalizeUsage(result.usage);
 
       return {
         success: true,
-        content: response.content,
-        usage: response.usage,
-        model: response.model,
-        provider: this.userSettings.provider
+        content: result.content,
+        usage,
+        model: result.model || model,
+        provider: result.provider || this.userSettings.provider
       };
     } catch (error) {
       this.logger.error('Error calling AI service:', error);
@@ -178,17 +144,83 @@ class AIService {
     }
   }
 
+  async getProviderService(provider, settings) {
+    const serviceOptions = await this.buildServiceOptions(provider, settings);
+    return this.serviceRegistry.aiservice(provider, serviceOptions);
+  }
+
+  async buildServiceOptions(provider, settings) {
+    const model = settings.model || this.getDefaultModel(provider);
+    const tokensStorePath = this.getTokensStorePath(provider);
+
+    await this.ensureDirectory(tokensStorePath);
+
+    const dependencies = { logging: this.logger };
+    const options = {
+      model,
+      tokensStorePath,
+      dependencies
+    };
+
+    if (settings.apiKey) {
+      options.apiKey = settings.apiKey;
+    }
+
+    if (provider === 'ollama') {
+      options.baseUrl = settings.endpoint || settings.baseUrl || 'http://localhost:11434';
+    } else if (settings.endpoint) {
+      options.endpoint = settings.endpoint;
+    }
+
+    if (settings.organization) {
+      options.organization = settings.organization;
+    }
+
+    if (settings.additionalOptions && typeof settings.additionalOptions === 'object') {
+      options.additionalOptions = { ...settings.additionalOptions };
+    }
+
+    return options;
+  }
+
+  getTokensStorePath(provider) {
+    const dataDir = this.dataManager?.dataDir || './.application/';
+    return path.resolve(dataDir, 'ai-tokens', `${provider}-service.json`);
+  }
+
+  async ensureDirectory(filePath) {
+    const dir = path.dirname(filePath);
+    try {
+      await fs.mkdir(dir, { recursive: true });
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
+    }
+  }
+
+  normalizeUsage(usage = {}) {
+    const promptTokens =
+      usage.promptTokens ?? usage.inputTokens ?? usage.prompt_tokens ?? usage.input_tokens ?? 0;
+    const completionTokens =
+      usage.completionTokens ?? usage.outputTokens ?? usage.completion_tokens ?? usage.output_tokens ?? 0;
+    const totalTokens =
+      usage.totalTokens ?? usage.total_tokens ?? promptTokens + completionTokens;
+
+    return {
+      inputTokens: promptTokens,
+      outputTokens: completionTokens,
+      totalTokens,
+      promptTokens,
+      completionTokens
+    };
+  }
+
   /**
    * Test AI connection
-   * @param {string} provider - Provider name
-   * @param {string} apiKey - API key
-   * @param {string} model - Model name
-   * @param {string} endpoint - Optional endpoint URL
-   * @returns {Promise<Object>} Test result
    */
   async testConnection(provider, apiKey, model, endpoint) {
     try {
-      // Create temporary settings for testing
       const testSettings = {
         provider,
         apiKey,
@@ -198,48 +230,23 @@ class AIService {
         temperature: 0.1
       };
 
-      // Create test client
-      const testClient = this.createClient(testSettings);
+      const testClient = await this.createClient(testSettings, 'test', { temporary: true });
 
-      let response;
+      const result = await testClient.prompt('Reply with: Connection successful', {
+        maxTokens: 50,
+        temperature: 0.1
+      });
 
-      // Test with appropriate provider
-      if (provider === 'claude') {
-        const result = await testClient.messages.create({
-          model: testSettings.model,
-          max_tokens: 50,
-          temperature: 0.1,
-          messages: [{ role: 'user', content: 'Reply with: Connection successful' }]
-        });
-
-        response = {
-          model: result.model,
-          tokensUsed: result.usage.input_tokens + result.usage.output_tokens
-        };
-      } else {
-        // ChatGPT and Ollama
-        const result = await testClient.chat.completions.create({
-          model: testSettings.model,
-          max_tokens: 50,
-          temperature: 0.1,
-          messages: [{ role: 'user', content: 'Reply with: Connection successful' }]
-        });
-
-        response = {
-          model: result.model,
-          tokensUsed: result.usage.total_tokens
-        };
-      }
+      const usage = this.normalizeUsage(result.usage);
 
       return {
         success: true,
         message: 'Connection test successful',
-        provider: provider,
-        model: response.model,
-        tokensUsed: response.tokensUsed
+        provider: result.provider || provider,
+        model: result.model || testSettings.model,
+        tokensUsed: usage.totalTokens
       };
     } catch (error) {
-      console.log(error)
       this.logger.error('AI connection test failed:', error);
       throw new Error(`Connection test failed: ${error.message}`);
     }
@@ -247,10 +254,23 @@ class AIService {
 
   /**
    * Check if AI service is available
-   * @returns {boolean}
    */
   isAvailable() {
     return this.aiClient !== null;
+  }
+
+  /**
+   * Retrieve analytics from the active AI client, if supported.
+   */
+  getAnalytics() {
+    if (this.aiClient && typeof this.aiClient.getAnalytics === 'function') {
+      try {
+        return this.aiClient.getAnalytics();
+      } catch (error) {
+        this.logger.error('Error retrieving AI analytics:', error);
+      }
+    }
+    return null;
   }
 }
 

@@ -614,22 +614,97 @@ export const settingsController = {
         }
     },
 
+    showAITestAlert(type, message, details = []) {
+        const alertEl = document.getElementById('aiTestAlert');
+        if (!alertEl) return;
+
+        const typeClassMap = {
+            success: 'alert-success',
+            error: 'alert-danger',
+            info: 'alert-info'
+        };
+
+        const iconMap = {
+            success: 'bi-check-circle-fill',
+            error: 'bi-exclamation-triangle-fill',
+            info: 'bi-info-circle-fill'
+        };
+
+        const alertClass = typeClassMap[type] || 'alert-secondary';
+        const iconClass = iconMap[type] || 'bi-info-circle-fill';
+
+        alertEl.className = `alert ${alertClass} alert-dismissible fade show mb-3`;
+        alertEl.innerHTML = '';
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'd-flex align-items-center';
+
+        const icon = document.createElement('i');
+        icon.className = `bi ${iconClass} fs-5 me-2`;
+        icon.setAttribute('aria-hidden', 'true');
+
+        const textContainer = document.createElement('div');
+        textContainer.textContent = message;
+
+        if (Array.isArray(details) && details.length > 0) {
+            const detailsContainer = document.createElement('div');
+            detailsContainer.className = 'small mt-1 text-opacity-75';
+            details.forEach((detail) => {
+                const detailLine = document.createElement('div');
+                detailLine.textContent = detail;
+                detailsContainer.appendChild(detailLine);
+            });
+            textContainer.appendChild(detailsContainer);
+        }
+
+        contentWrapper.appendChild(icon);
+        contentWrapper.appendChild(textContainer);
+
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+
+        alertEl.appendChild(contentWrapper);
+        alertEl.appendChild(closeButton);
+    },
+
+    hideAITestAlert() {
+        const alertEl = document.getElementById('aiTestAlert');
+        if (!alertEl) return;
+        alertEl.className = 'alert d-none mb-3';
+        alertEl.innerHTML = '';
+    },
+
     async testAIConnection() {
         const provider = document.getElementById('llmProvider').value;
         const apiKey = document.getElementById('aiApiKey').value;
 
+        this.hideAITestAlert();
+
         if (!provider) {
-            this.app.showNotification('Please select a provider', 'error');
+            this.showAITestAlert('error', 'Please select a provider before testing the connection.');
             return;
         }
 
         // Check if the API key is the masked version and hasn't been changed
         if (!apiKey || (apiKey.startsWith('••••••••') && !this.apiKeyChanged)) {
-            this.app.showNotification('Please enter your full API key to test the connection', 'error');
+            this.showAITestAlert('error', 'Please enter your full API key to test the connection.');
             return;
         }
 
-        this.app.showNotification('Testing connection...', 'info');
+        this.showAITestAlert('info', 'Testing connection...');
+
+        const testButton = document.getElementById('testAIConnectionBtn');
+        const originalButtonContent = testButton ? testButton.innerHTML : null;
+        if (testButton) {
+            testButton.disabled = true;
+            testButton.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Testing...
+            `;
+        }
 
         try {
             const response = await fetch('/applications/wiki/api/settings/ai/test', {
@@ -648,13 +723,26 @@ export const settingsController = {
             const result = await response.json();
 
             if (result.success) {
-                this.app.showNotification(`Connection successful! Model: ${result.model}`, 'success');
+                const details = [];
+                if (result.model) {
+                    details.push(`Model: ${result.model}`);
+                }
+                if (typeof result.tokensUsed === 'number') {
+                    details.push(`Tokens used: ${result.tokensUsed}`);
+                }
+
+                this.showAITestAlert('success', 'Connection successful!', details);
             } else {
                 throw new Error(result.error || 'Connection test failed');
             }
         } catch (error) {
             console.error('Error testing AI connection:', error);
-            this.app.showNotification('Connection test failed: ' + error.message, 'error');
+            this.showAITestAlert('error', `Connection test failed: ${error.message}`);
+        } finally {
+            if (testButton) {
+                testButton.disabled = false;
+                testButton.innerHTML = originalButtonContent;
+            }
         }
     },
 

@@ -288,12 +288,17 @@ module.exports = (options, eventEmitter, services) => {
 
       logger.info(`AI status check for user ${userId}: configured=${!!isConfigured}, enabled=${settings?.enabled}, initialized=${isInitialized}, provider=${settings?.provider}, settingsType=${typeof settings}, isArray=${Array.isArray(settings)}`);
 
+      const analytics = isInitialized && typeof aiService.getAnalytics === 'function'
+        ? aiService.getAnalytics()
+        : null;
+
       res.json({
         success: true,
         configured: !!isConfigured,
         enabled: settings?.enabled !== false && isInitialized, // Only enabled if initialized successfully
         provider: settings?.provider || null,
-        model: settings?.model || null
+        model: settings?.model || null,
+        analytics: analytics || null
       });
     } catch (error) {
       logger.error('Error checking AI status:', error);
