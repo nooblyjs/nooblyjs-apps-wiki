@@ -9,5 +9,15 @@
     "createdAt": "2025-10-14T05:45:13.509Z",
     "initializedAt": "2025-10-14T05:45:16.599Z",
     "avatar": "/applications/wiki/media/avatar-1760420713509.png"
+  },
+  {
+    "id": "1760802661447",
+    "email": "stephenrbooysen@shoprite.co.za",
+    "password": "$2b$10$60sIx2ZQDDIcS6oDSwmHnukin1YCQ0oiHKAJg1veTeieNeukwyjCC",
+    "name": "stephenrbooysen@shoprite.co.za",
+    "provider": "local",
+    "initialized": true,
+    "createdAt": "2025-10-18T15:51:01.447Z",
+    "initializedAt": "2025-10-18T15:51:06.811Z"
   }
 ]
