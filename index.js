@@ -25,6 +25,7 @@ const DataManager = require('./src/components/dataManager');
 const AIService = require('./src/components/aiService');
 
 const { Server } = require('socket.io');
+const SearchIndexer = require('./src/activities/searchIndexer');
 
 /**
  * Creates the wiki service
@@ -56,6 +57,10 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   const queue = serviceRegistry.queue(queueProvider);
   const search = serviceRegistry.searching(searchProvider);
   const aiService = new AIService(serviceRegistry, dataManager, logger);
+  const searchIndexer = new SearchIndexer(logger, dataManager);
+
+  // Make searchIndexer available globally for other modules
+  global.searchIndexer = searchIndexer;
 
   // Socket.IO connection handling
   const io = new Server(server, {
@@ -88,23 +93,28 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   })();
 
   // Start background queue worker
-  startQueueWorker({ dataManager, filing, cache, logger, queue, search, aiService });
+  startQueueWorker({ dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
 
   // Start file watcher for real-time updates
   if (io) {
-    startFileWatcher({ dataManager, filing, cache, logger, queue, search, aiService, io });
+    startFileWatcher({ dataManager, filing, cache, logger, queue, search, aiService, io, searchIndexer });
   }
+
+  // Start AI Context generation scheduler (after a short delay to let services initialize)
+  setTimeout(() => {
+    startAIContextScheduler({ dataManager, filing, cache, logger, queue, search, aiService, searchIndexer, serviceRegistry });
+  }, 2000);
 
 
   // Register routes and views
   options.app = app
-  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
-  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService });
+  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
 
   // Authentication routes
   const authRoutes = require('./src/auth/routes');
@@ -133,7 +143,9 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
  */
 function startQueueWorker(services) {
   const { queue, logger } = services;
-  
+
+  let aiContextGenerationCounter = 0;
+
   // Process queue every 5 seconds
   setInterval(async () => {
     try {
@@ -143,9 +155,74 @@ function startQueueWorker(services) {
         await processTask(services, task);
         logger.info(`Completed task: ${task.type}`);
       }
+
+      // Trigger AI Context generation every 60 seconds (12 iterations * 5 seconds)
+      aiContextGenerationCounter++;
+      if (aiContextGenerationCounter >= 12) {
+        aiContextGenerationCounter = 0;
+        try {
+          logger.info('Triggering scheduled AI Context generation');
+          await processTask(services, { type: 'generateAIContexts' });
+        } catch (error) {
+          logger.error('Error in scheduled AI Context generation:', error);
+        }
+      }
     } catch (error) {
       logger.error('Error processing queue task:', error);
     }
   }, 5000);
-  
+
+}
+
+/**
+ * Start AI Context generation scheduler
+ * Runs immediately on startup, then every 60 seconds
+ */
+function startAIContextScheduler(services) {
+  const { logger, dataManager, aiService, serviceRegistry } = services;
+
+  // Import the AI Context Generator
+  const AIContextGenerator = require('./src/activities/aiContextGenerator');
+
+  async function runAIContextGeneration() {
+    try {
+      logger.info('[SCHEDULER] Creating AI Context Generator instance');
+      logger.info(`[SCHEDULER] Services available - logger: ${!!logger}, dataManager: ${!!dataManager}, aiService: ${!!aiService}, serviceRegistry: ${!!serviceRegistry}`);
+
+      const contextGenerator = new AIContextGenerator(logger, dataManager, aiService, serviceRegistry);
+
+      // Check if AI is ready before processing
+      logger.info('[SCHEDULER] Checking AI readiness');
+      const isReady = await contextGenerator.isAIReady();
+      if (!isReady) {
+        logger.info('[SCHEDULER] AI Context generation skipped: AI service not configured');
+        return;
+      }
+
+      logger.info('[SCHEDULER] Starting AI Context generation...');
+      const stats = await contextGenerator.processAllSpaces();
+      logger.info(`[SCHEDULER] AI Context generation completed:
+        - Folders processed: ${stats.foldersProcessed}
+        - Files processed: ${stats.filesProcessed}
+        - Folder contexts created: ${stats.folderContextsCreated}
+        - File contexts created: ${stats.fileContextsCreated}
+        - Errors: ${stats.errors}`);
+    } catch (error) {
+      logger.error('[SCHEDULER] Error in AI Context generation scheduler:', error);
+    }
+  }
+
+  // Run immediately on startup
+  logger.info('[SCHEDULER] AI Context generation scheduler started');
+  runAIContextGeneration().catch(error => {
+    logger.error('[SCHEDULER] Error in initial AI Context generation:', error);
+  });
+
+  // Schedule to run every 60 seconds
+  setInterval(() => {
+    runAIContextGeneration().catch(error => {
+      logger.error('[SCHEDULER] Error in scheduled AI Context generation:', error);
+    });
+  }, 60000);
+
 }

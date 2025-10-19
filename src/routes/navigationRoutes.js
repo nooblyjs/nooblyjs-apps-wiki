@@ -19,9 +19,9 @@ const path = require('path');
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  
+
   const app = options.app;
-  const { dataManager, filing, cache, logger, queue, search } = services;
+  const { dataManager, filing, cache, logger, queue, search, searchIndexer } = services;
 
   // Move document to folder
   app.put('/applications/wiki/api/documents/:id/move', async (req, res) => {
@@ -285,6 +285,13 @@ module.exports = (options, eventEmitter, services) => {
         // Rename the file
         await fs.rename(oldAbsolutePath, newAbsolutePath);
 
+        // Update search index: remove old path and add new path
+        if (searchIndexer) {
+          searchIndexer.removeFileFromIndex(oldPath);
+          await searchIndexer.updateFile(newAbsolutePath, spaceName);
+          logger.info(`Updated search index: renamed ${oldPath} to ${newPath}`);
+        }
+
         logger.info(`Successfully renamed file from ${oldPath} to ${newPath}`);
 
         res.json({
@@ -434,6 +441,12 @@ module.exports = (options, eventEmitter, services) => {
         // Delete the file
         await fs.unlink(fullFilePath);
 
+        // Remove from search index
+        if (searchIndexer) {
+          searchIndexer.removeFileFromIndex(filePath);
+          logger.info(`Removed document from search index: ${filePath}`);
+        }
+
         logger.info(`Successfully deleted document: ${filePath}`);
         res.json({ success: true, message: 'Document deleted successfully' });
 
@@ -561,6 +574,40 @@ module.exports = (options, eventEmitter, services) => {
 
         // Calculate the new relative path for response (normalize to forward slashes)
         const newRelativePath = path.relative(spaceBaseDir, destinationAbsolutePath).replace(/\\/g, '/');
+
+        // Update search index for moved files
+        if (searchIndexer) {
+          if (itemType === 'file') {
+            // For single file: remove old path and add new path
+            searchIndexer.removeFileFromIndex(sourcePath);
+            await searchIndexer.updateFile(destinationAbsolutePath, space.name);
+            logger.info(`Updated search index: moved file ${sourcePath} to ${newRelativePath}`);
+          } else if (itemType === 'folder') {
+            // For folder: need to update all files within it
+            // Remove old paths and re-index from new location
+            const updateSearchIndexForFolder = async (folderPath, relativeBase) => {
+              try {
+                const items = await fs.readdir(folderPath, { withFileTypes: true });
+                for (const item of items) {
+                  const itemAbsPath = path.join(folderPath, item.name);
+                  const oldRelativePath = path.join(relativeBase, item.name).replace(/\\/g, '/');
+
+                  if (item.isFile()) {
+                    searchIndexer.removeFileFromIndex(oldRelativePath);
+                    await searchIndexer.updateFile(itemAbsPath, space.name);
+                  } else if (item.isDirectory()) {
+                    await updateSearchIndexForFolder(itemAbsPath, oldRelativePath);
+                  }
+                }
+              } catch (err) {
+                logger.warn(`Error updating search index for folder contents: ${err.message}`);
+              }
+            };
+
+            await updateSearchIndexForFolder(destinationAbsolutePath, newRelativePath);
+            logger.info(`Updated search index: moved folder ${sourcePath} to ${newRelativePath}`);
+          }
+        }
 
         // Update documents.json if this is a file or if it's a folder with documents inside
         if (itemType === 'file' || itemType === 'folder') {
