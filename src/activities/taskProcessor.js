@@ -42,7 +42,7 @@ async function processTask(services, task) {
       case 'cleanupExpiredCache':
         await handleCleanupExpiredCache(services, task);
         break;
-        
+
       default:
         logger.warn(`Unknown task type: ${task.type}`);
     }
@@ -194,7 +194,7 @@ async function handleGenerateThumbnail(services, task) {
  */
 async function handleCleanupExpiredCache(services, task) {
   const { cache, logger } = services;
-  
+
   try {
     // This is implementation-specific to the cache provider
     // For memory cache, we might not need to do anything as it handles TTL automatically

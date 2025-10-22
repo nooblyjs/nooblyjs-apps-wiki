@@ -15,16 +15,13 @@ const SearchIndexer = require('../activities/searchIndexer');
  *
  * @param {Object} options - Configuration options object
  * @param {Object} eventEmitter - Event emitter for logging and notifications
- * @param {Object} services - NooblyJS Core services (dataManager, filing, cache, logger, queue, search)
+ * @param {Object} services - NooblyJS Core services (dataManager, filing, cache, logger, queue, search, searchIndexer)
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  
-  const app = options.app;
-  const { dataManager, filing, cache, logger, queue, search } = services;
 
-  // Initialize enhanced search indexer
-  const searchIndexer = new SearchIndexer(logger, dataManager);
+  const app = options.app;
+  const { dataManager, filing, cache, logger, queue, search, searchIndexer } = services;
 
   // Build initial index (async, non-blocking)
   setImmediate(() => {
@@ -165,6 +162,71 @@ module.exports = (options, eventEmitter, services) => {
     } catch (error) {
       logger.error('Error starting index rebuild:', error);
       res.status(500).json({ error: 'Failed to start index rebuild' });
+    }
+  });
+
+  // AI Context generation endpoints
+  const AIContextGenerator = require('../activities/aiContextGenerator');
+
+  // Manually trigger AI Context generation
+  app.post('/applications/wiki/api/ai/generate-contexts', async (req, res) => {
+    try {
+      const { aiService } = services;
+
+      if (!aiService) {
+        return res.status(400).json({
+          success: false,
+          message: 'AI service not available'
+        });
+      }
+
+      const contextGenerator = new AIContextGenerator(logger, dataManager, aiService);
+
+      // Run in background
+      setImmediate(async () => {
+        try {
+          const stats = await contextGenerator.processAllSpaces();
+          logger.info(`Manual AI Context generation completed: ${JSON.stringify(stats)}`);
+        } catch (error) {
+          logger.error('Error in manual AI Context generation:', error);
+        }
+      });
+
+      res.json({
+        success: true,
+        message: 'AI Context generation started in background'
+      });
+    } catch (error) {
+      logger.error('Error starting AI Context generation:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to start AI Context generation: ' + error.message
+      });
+    }
+  });
+
+  // Get AI Context generation status
+  app.get('/applications/wiki/api/ai/context-status', async (req, res) => {
+    try {
+      const { aiService } = services;
+
+      const contextGenerator = new AIContextGenerator(logger, dataManager, aiService);
+      const stats = contextGenerator.getStats();
+
+      const isAIReady = await contextGenerator.isAIReady();
+
+      res.json({
+        success: true,
+        isAIReady,
+        isProcessing: stats.isProcessing,
+        lastProcessedTime: stats.lastProcessedTime
+      });
+    } catch (error) {
+      logger.error('Error getting AI Context status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get AI Context status: ' + error.message
+      });
     }
   });
 };

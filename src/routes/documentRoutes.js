@@ -20,9 +20,9 @@ const mime = require('mime-types');
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
-  
+
   const app = options.app;
-  const { dataManager, filing, cache, logger, queue, search } = services;
+  const { dataManager, filing, cache, logger, queue, search, searchIndexer } = services;
 
   // Helper function to resolve document paths using space configuration
   async function getDocumentAbsolutePath(spaceName, documentPath) {
@@ -761,6 +761,12 @@ ${documentPath}\
           // Add to documents list
           allDocuments.push(docMetadata);
           await dataManager.write('documents', allDocuments);
+
+          // Add to search index
+          if (searchIndexer) {
+            await searchIndexer.updateFile(absolutePath, spaceName);
+            logger.info(`Added document to search index: ${finalPath}`);
+          }
 
           // Clear relevant caches
           await cache.delete('wiki:documents:list');
