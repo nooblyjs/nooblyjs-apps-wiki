@@ -6,6 +6,8 @@ import { userController } from "./modules/usercontroller.js";
 import { templatesController } from "./modules/templatescontroller.js";
 import { settingsController } from "./modules/settingscontroller.js";
 import { aiChatController } from "./modules/aichatcontroller.js";
+import { tabManager } from "./modules/tabManager.js";
+import { tabUIManager } from "./modules/tabUIManager.js";
 import todoScanner from "./services/todoScanner.js";
 import socketService from "./services/socketService.js";
 
@@ -38,6 +40,10 @@ class WikiApp {
             spaces: true
         };
 
+        // Initialize tab manager and UI manager
+        this.tabManager = tabManager;
+        this.tabUIManager = tabUIManager;
+
         // Initialize controllers
         spacesController.init(this);
         navigationController.init(this);
@@ -57,6 +63,12 @@ class WikiApp {
         this.initMarkdown();
         this.initSidebar();
         this.initSidebarResize();
+
+        // Initialize tab manager
+        this.tabManager.init();
+
+        // Initialize tab UI manager
+        this.tabUIManager.init();
 
         // Set navigation controller reference for event bus integration
         socketService.setNavigationController(navigationController);

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wiki</title>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/tabs.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
 
@@ -479,6 +480,13 @@
 
                 <!-- Document View -->
                 <div id="documentView" class="view hidden">
+                    <!-- Tab Bar using Bootstrap Tabs -->
+                    <div id="tabBar" class="tab-bar">
+                        <ul class="nav nav-tabs" id="documentTabs" role="tablist">
+                            <!-- Tabs will be added here dynamically -->
+                        </ul>
+                    </div>
+
                     <div class="document-container">
                         <div class="document-header">
                             <nav class="breadcrumb">

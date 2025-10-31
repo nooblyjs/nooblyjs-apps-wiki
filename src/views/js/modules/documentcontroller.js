@@ -71,6 +71,19 @@ export const documentController = {
             const viewMode = metadata?.viewer || 'default';
             documentViewerState.setCurrentFile(documentPath, viewMode, false);
 
+            // Add to tab manager (will create tab or switch to existing)
+            const tab = this.app.tabManager.addTab(documentPath, spaceName, {
+                title: document.title,
+                content: content,
+                metadata: metadata,
+                viewMode: viewMode
+            });
+
+            if (tab) {
+                // Update tab with full content after loaded
+                this.app.tabManager.updateTab(tab.id, content, { metadata: metadata, isSaving: true });
+            }
+
             this.showEnhancedDocumentView(document);
 
             // Track document view for recent files
@@ -91,6 +104,14 @@ export const documentController = {
 
             // Track the currently viewed file in documentViewerState
             documentViewerState.setCurrentFile(documentPath, 'markdown', false);
+
+            // Still add to tab manager even on error
+            const tab = this.app.tabManager.addTab(documentPath, spaceName, {
+                title: document.title,
+                content: document.content,
+                metadata: document.metadata,
+                viewMode: 'markdown'
+            });
 
             this.showEnhancedDocumentView(document);
             this.app.showNotification('Failed to load document content', 'error');
