@@ -1,8 +1,9 @@
 # NooblyJS Wiki Application
 
-A collaborative documentation and knowledge management platform built with the NooblyJS framework. Create, organize, and search documentation across multiple workspaces with full-text search capabilities and permission controls.
+A modern, collaborative documentation and knowledge management platform built on the NooblyJS framework. Create, organize, and search documentation across multiple workspaces with full-text search capabilities, permission controls, real-time updates, and dynamic content generation.
 
 ![Version](https://img.shields.io/badge/version-1.0.14-blue.svg)
+![CLI Version](https://img.shields.io/badge/cli-1.0.2-green.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -49,6 +50,20 @@ A collaborative documentation and knowledge management platform built with the N
 - **Use Cases:** Dynamic navigation, statistics dashboards, custom tables, automated content generation
 - **Live Preview:** Code execution works in both view and edit modes
 - **Error Handling:** Graceful error messages displayed inline for debugging
+
+### 🔔 **Real-Time Collaboration & Updates**
+- **Socket.IO Integration:** Real-time bidirectional communication between client and server
+- **Event Bus System:** Centralized file and folder change tracking with WebSocket broadcast
+- **Live Updates:** Automatic UI refresh when documents, folders, or spaces are modified
+- **Change Tracking:** Event history with filtering and debugging capabilities
+- **Multi-Client Sync:** Changes visible across all connected users in real-time
+
+### 🤖 **AI-Powered Features**
+- **AI Context Generation:** Automatic generation of context files for folders and documents
+- **Smart Indexing:** AI-driven analysis of folder structures and file contents
+- **Scheduled Processing:** Runs automatically every 60 seconds plus initial startup
+- **Configurable AI:** Support for multiple AI providers (Claude, ChatGPT, Ollama, etc.)
+- **Context Storage:** Generated contexts stored in `.aicontext` hidden directories
 
 ## Quick Start
 
@@ -102,54 +117,107 @@ New users are automatically guided through a setup wizard that:
 
 ### Tech Stack
 
-- **Backend**: Node.js + Express
-- **Frontend**: Vanilla JavaScript + Bootstrap 5
-- **Framework**: NooblyJS Core (service registry pattern)
-- **Authentication**: Passport.js (Local + Google OAuth)
-- **Storage**: JSON files + File system
-- **Search**: In-memory search indexing
+- **Backend**: Node.js (v14+) + Express 4.18.2
+- **Frontend**: Vanilla JavaScript (ES6+) + Bootstrap 5
+- **Framework**: NooblyJS Core 1.0.10 (service registry pattern)
+- **Real-Time**: Socket.IO 4.8.1
+- **Authentication**: Passport.js 0.7.0 (Local + Google OAuth 2.0)
+- **Storage**: JSON files (.application/wiki-data/) + File system (.application/wiki-files/)
+- **Search**: In-memory search indexing with SearchIndexer
+- **AI Integration**: Configurable AI providers (Claude, ChatGPT, Ollama, Gemini)
+- **File Processing**: PDF, Word, Excel, PowerPoint support with dedicated processors
 
 ### Project Structure
 
 ```
 nooblyjs-apps-wiki/
 ├── app.js                          # Express server entry point
+├── index.js                        # Wiki application factory
 ├── src/
-│   ├── index.js                    # Wiki application factory
 │   ├── auth/                       # Authentication system
 │   │   ├── passport-config.js      # Passport strategies
 │   │   ├── routes.js               # Auth routes
-│   │   └── middleware.js           # Auth middleware
+│   │   ├── middleware.js           # Auth middleware
+│   │   └── components/
+│   │       └── userManager.js      # User account management
 │   ├── routes/                     # API endpoints
-│   │   ├── index.js                # Route registration
-│   │   ├── documentRoutes.js       # Document CRUD
+│   │   ├── index.js                # Route registration hub
+│   │   ├── documentRoutes.js       # Document CRUD operations
 │   │   ├── spacesRoutes.js         # Space management
-│   │   ├── searchRoutes.js         # Search functionality
-│   │   ├── navigationRoutes.js     # Navigation/folders
+│   │   ├── searchRoutes.js         # Search & AI context
+│   │   ├── navigationRoutes.js     # Navigation/folder operations
 │   │   ├── userRoutes.js           # User profiles
-│   │   └── wizardRoutes.js         # Setup wizard
-│   ├── views/                      # Frontend
+│   │   ├── wizardRoutes.js         # Setup wizard
+│   │   ├── aiChatRoutes.js         # AI chat integration
+│   │   ├── aiContextRoutes.js      # AI context (deprecated)
+│   │   └── settingsRoutes.js       # User settings
+│   ├── views/                      # Frontend (EJS + JavaScript)
 │   │   ├── index.html              # Main application
 │   │   ├── wizard.html             # Setup wizard
-│   │   └── js/                     # Client-side JavaScript
+│   │   └── js/
 │   │       ├── app.js              # Main app controller
-│   │       └── modules/            # Feature modules
+│   │       ├── wizard.js           # Wizard client logic
+│   │       ├── services/           # Service modules
+│   │       │   ├── socketService.js # Socket.IO client
+│   │       │   └── todoScanner.js   # TODO item detection
+│   │       ├── modules/            # Feature modules
+│   │       │   ├── apiClient.js    # Unified API client
+│   │       │   ├── navigationcontroller.js # File tree
+│   │       │   ├── documentcontroller.js   # Document viewer
+│   │       │   ├── searchcontroller.js     # Search UI
+│   │       │   ├── spacescontroller.js     # Space management UI
+│   │       │   ├── usercontroller.js       # User profile UI
+│   │       │   ├── settingscontroller.js   # Settings UI
+│   │       │   ├── aichatcontroller.js     # AI chat UI
+│   │       │   ├── assistantcontroller.js  # Assistant features
+│   │       │   ├── templatescontroller.js  # Templates UI
+│   │       │   ├── eventBusListener.js     # Real-time updates
+│   │       │   ├── navigationState.js      # Navigation state mgmt
+│   │       │   ├── navigationUpdater.js    # Navigation updates
+│   │       │   ├── folderViewerState.js    # Folder view state
+│   │       │   └── documentViewerState.js  # Document state
+│   │       └── utils/
+│   │           ├── fileHelpers.js  # File utilities
+│   │           └── validation.js    # Input validation
 │   ├── components/                 # Core components
-│   │   └── dataManager.js          # JSON persistence
+│   │   ├── dataManager.js          # JSON persistence layer
+│   │   ├── aiService.js            # AI service integration
+│   │   └── eventBus.js             # Event bus for real-time updates
 │   ├── activities/                 # Background tasks
-│   │   ├── documentContent.js      # Document file ops
-│   │   └── taskProcessor.js        # Queue processing
-│   └── initialisation/             # Setup configuration
-│       └── spaces-template.json    # Default spaces config
-├── .application/                   # Application data
+│   │   ├── aiContextGenerator.js   # AI context generation
+│   │   ├── fileWatcher.js          # File system monitoring
+│   │   ├── taskProcessor.js        # Queue task processing
+│   │   ├── searchIndexer.js        # Search index management
+│   │   └── documentContent.js      # Document file operations
+│   ├── processing/                 # File type processors
+│   │   ├── pdfprocessor.js        # PDF handling
+│   │   ├── docxprocessor.js       # Word documents
+│   │   ├── xlsxprocessor.js       # Excel spreadsheets
+│   │   └── pptxprocessor.js       # PowerPoint presentations
+│   ├── initialisation/             # Setup & initialization
+│   │   ├── initialiseWikiData.js  # Wiki data initialization
+│   │   ├── documentContent.js     # Document file setup
+│   │   └── spaces-template.json   # Default spaces template
+│   └── utils/
+│       └── fileTypeUtils.js        # File type utilities
+├── .application/                   # Application data directory
 │   ├── wiki-data/                  # JSON data files
-│   │   ├── spaces.json
-│   │   ├── documents.json
-│   │   └── users.json
+│   │   ├── spaces.json            # Space configurations
+│   │   ├── documents.json         # Document metadata
+│   │   ├── users.json             # User accounts
+│   │   ├── activity.json          # Activity log
+│   │   ├── aiSettings_*.json      # User AI settings
+│   │   ├── userPreferences_*.json # User preferences
+│   │   ├── userActivity_*.json    # User activity logs
+│   │   └── chatHistory_*.json     # AI chat history
 │   └── wiki-files/                 # Document content files
 ├── documents/                      # Personal space (default)
 ├── documents-shared/               # Shared space (default)
-└── documents-readonly/             # Read-only space (default)
+├── documents-readonly/             # Read-only space (default)
+├── public/                         # Static assets (CSS, images, icons)
+├── package.json                    # Project configuration
+├── README.md                       # User documentation
+└── CLAUDE.md                      # Development guide
 ```
 
 ## Usage Guide
@@ -360,34 +428,63 @@ const search = serviceRegistry.searching('memory');
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/logout` - Logout user
-- `GET /api/auth/check` - Check auth status
+- `GET /api/auth/check` - Check authentication status
 
 ### Spaces
 - `GET /applications/wiki/api/spaces` - List all spaces
 - `POST /applications/wiki/api/spaces` - Create new space
-- `GET /applications/wiki/api/spaces/:id/documents` - Get space documents
-- `GET /applications/wiki/api/spaces/:id/folders` - Get folder tree
+- `GET /applications/wiki/api/spaces/:id/documents` - Get documents in space
+- `GET /applications/wiki/api/spaces/:id/folders` - Get folder tree structure
+- `GET /applications/wiki/api/spaces/:id` - Get space details
 
 ### Documents
-- `GET /applications/wiki/api/documents` - List documents
-- `POST /applications/wiki/api/documents` - Create document
-- `GET /applications/wiki/api/documents/content` - Get document content
+- `GET /applications/wiki/api/documents` - List all documents
+- `POST /applications/wiki/api/documents` - Create new document
+- `GET /applications/wiki/api/documents/:id` - Get document details
+- `GET /applications/wiki/api/documents/content` - Get document content (with query params)
 - `PUT /applications/wiki/api/documents/:id` - Update document
 - `DELETE /applications/wiki/api/documents/:id` - Delete document
+- `GET /applications/wiki/api/documents/:id/versions` - Get version history
 
-### Search
-- `GET /applications/wiki/api/search` - Search documents
-- Query params: `q` (query), `spaceId` (filter by space)
+### Search & Discovery
+- `GET /applications/wiki/api/search` - Full-text search documents
+- Query params: `q` (search query), `spaceId` (filter by space)
+- `GET /applications/wiki/api/navigation/folder/:path` - Get folder contents
+- `POST /applications/wiki/api/navigation/folders` - Create new folder
+- `DELETE /applications/wiki/api/navigation/folder/:path` - Delete folder
 
-### User
+### User Management
 - `GET /applications/wiki/api/profile` - Get user profile
-- `PUT /applications/wiki/api/profile` - Update profile
-- `GET /applications/wiki/api/user/activity` - Get user activity
+- `PUT /applications/wiki/api/profile` - Update user profile
+- `GET /applications/wiki/api/user/activity` - Get user activity log
+- `GET /applications/wiki/api/users/:id` - Get user details
+
+### Settings
+- `GET /applications/wiki/api/settings` - Get user settings
+- `PUT /applications/wiki/api/settings` - Update user settings
+- `GET /applications/wiki/api/settings/theme` - Get theme settings
+- `PUT /applications/wiki/api/settings/theme` - Update theme settings
 
 ### Setup Wizard
-- `GET /applications/wiki/api/wizard/check` - Check if wizard needed
-- `GET /applications/wiki/api/wizard/config` - Get spaces template
-- `POST /applications/wiki/api/wizard/initialize` - Initialize spaces
+- `GET /applications/wiki/api/wizard/check` - Check if wizard needs to run
+- `GET /applications/wiki/api/wizard/config` - Get default spaces template
+- `POST /applications/wiki/api/wizard/initialize` - Initialize default spaces
+
+### AI Integration
+- `POST /applications/wiki/api/ai/chat` - Send message to AI chat
+- `GET /applications/wiki/api/ai/settings` - Get AI settings
+- `PUT /applications/wiki/api/ai/settings` - Update AI settings
+- `POST /applications/wiki/api/ai/generate-contexts` - Trigger AI context generation
+- `GET /applications/wiki/api/ai/context-status` - Check AI context generation status
+
+### Real-Time Events (Socket.IO)
+- `connection` - Client connected to server
+- `disconnect` - Client disconnected from server
+- `file-changed` - File modified event
+- `folder-changed` - Folder modified event
+- `document-created` - Document created event
+- `document-updated` - Document updated event
+- `document-deleted` - Document deleted event
 
 ## Troubleshooting
 

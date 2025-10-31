@@ -1,10 +1,21 @@
 /**
- * NooblyJS Core Filer-based data manager for wiki data
- * Uses filer service for all file operations
+ * @fileoverview Data Manager Service for Wiki Application
+ * Handles JSON file persistence for wiki data (documents, spaces, users, etc.)
+ * Uses NooblyJS Core filer service for file operations
+ *
+ * @author NooblyJS Core Team
+ * @version 1.0.0
+ * @since 2025-08-24
  */
+
+'use strict';
 
 const path = require('path');
 
+/**
+ * Data Manager Class
+ * Manages all JSON file persistence operations for wiki application data
+ */
 class DataManager {
   constructor(dataDir = './application/', filerService = null) {
     this.dataDir = dataDir;
@@ -38,7 +49,6 @@ class DataManager {
       await this.filer.create(filePath, JSON.stringify(data, null, 2));
       return true;
     } catch (error) {
-      console.error(`Error writing ${type} data:`, error);
       return false;
     }
   }
@@ -150,7 +160,6 @@ class DataManager {
 
       return await this.buildFileSystemTree(spaceDir, spaceName);
     } catch (error) {
-      console.error('Error reading folder tree from file system:', error);
       return [];
     }
   }
@@ -199,7 +208,7 @@ class DataManager {
       });
 
     } catch (error) {
-      console.error('Error reading directory:', dirPath, error);
+      // Error reading directory - return current tree state
     }
 
     return tree;

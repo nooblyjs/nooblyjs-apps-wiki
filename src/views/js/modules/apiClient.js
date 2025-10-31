@@ -1,6 +1,11 @@
 /**
- * API Client Module
- * Centralized API communication layer for the Wiki application
+ * @fileoverview Wiki Application API Client Module
+ * Provides centralized API communication layer for all Wiki application endpoints.
+ * Uses modern async/await syntax for cleaner asynchronous code.
+ *
+ * @author NooblyJS Core Team
+ * @version 1.0.0
+ * @since 2025-08-24
  */
 
 const BASE_URL = '/applications/wiki/api';

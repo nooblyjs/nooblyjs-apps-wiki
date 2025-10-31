@@ -84,7 +84,7 @@ router.get('/list', ensureAuthenticated, async (req, res) => {
                     }
                 }
             } catch (error) {
-                console.error(`Error reading directory ${dir}:`, error);
+                // Error reading directory - continue processing
             }
         }
 
@@ -92,7 +92,6 @@ router.get('/list', ensureAuthenticated, async (req, res) => {
 
         res.json({ contextFiles });
     } catch (error) {
-        console.error('Error listing AI context files:', error);
         res.status(500).json({ error: 'Failed to list AI context files' });
     }
 });
@@ -131,7 +130,6 @@ router.get('/content', ensureAuthenticated, async (req, res) => {
         if (error.code === 'ENOENT') {
             res.status(404).json({ error: 'Context file not found' });
         } else {
-            console.error('Error reading context file:', error);
             res.status(500).json({ error: 'Failed to read context file' });
         }
     }
@@ -178,7 +176,6 @@ router.post('/save', ensureAuthenticated, async (req, res) => {
             contextPath: path.relative(spacePath, contextFilePath)
         });
     } catch (error) {
-        console.error('Error saving context file:', error);
         res.status(500).json({ error: 'Failed to save context file' });
     }
 });
@@ -216,7 +213,6 @@ router.delete('/delete', ensureAuthenticated, async (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Error deleting context folder:', error);
         res.status(500).json({ error: 'Failed to delete context folder' });
     }
 });

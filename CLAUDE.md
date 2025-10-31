@@ -5,10 +5,10 @@ This document provides specific guidance for working with the NooblyJS Wiki Appl
 ## Project Overview
 
 **Project Name:** NooblyJS Wiki Application
-**Version:** CLI 1.0.2 / App 1.0.14
-**Type:** Collaborative Documentation and Knowledge Management Platform
+**Version:** CLI 1.0.2 / App 1.0.14 / nooblyjs-core 1.0.10
+**Type:** Real-Time Collaborative Documentation and Knowledge Management Platform
 
-The NooblyJS Wiki Application is a fully-featured collaborative documentation and knowledge management platform built on the NooblyJS framework that enables teams to create, organize, search, and manage documentation across multiple collaborative workspaces with permission controls and dynamic content generation capabilities.
+The NooblyJS Wiki Application is a fully-featured collaborative documentation and knowledge management platform built on the NooblyJS framework that enables teams to create, organize, search, and manage documentation across multiple collaborative workspaces with permission controls, real-time updates via Socket.IO, dynamic content generation, and AI-powered context generation.
 
 ### Core Purpose
 - Create and manage organized documentation across multiple workspaces (Personal, Shared, Read-Only)
@@ -41,10 +41,12 @@ Currently no specific test or lint commands are configured. Consider adding:
 #### Backend
 - **Runtime:** Node.js (>= 14.0.0)
 - **Web Framework:** Express.js 4.18.2
-- **Service Layer:** NooblyJS Core 1.0.7 (service registry pattern)
+- **Service Layer:** NooblyJS Core 1.0.10 (service registry pattern)
 - **Authentication:** Passport.js 0.7.0 with Google OAuth 2.0 and local strategy
-- **Real-time:** Socket.IO 4.8.1
+- **Real-time Communication:** Socket.IO 4.8.1
 - **Session Management:** express-session 1.17.3
+- **AI Integration:** Multiple AI providers support (Claude, ChatGPT, Ollama, Gemini)
+- **Event System:** Custom WikiEventBus for centralized file/folder change tracking
 
 #### Frontend
 - **UI Framework:** Bootstrap 5
@@ -81,13 +83,19 @@ Currently no specific test or lint commands are configured. Consider adding:
 - **File Storage**: Document files in `./.application/wiki-files/` directory (configurable)
 
 ### Service Registry Integration
-The application heavily relies on NooblyJS Core services:
-- `serviceRegistry.logger('console')` - Logging
-- `serviceRegistry.cache('memory')` - Caching
-- `serviceRegistry.dataServe('memory')` - Data management
-- `serviceRegistry.filing('local')` - File operations
-- `serviceRegistry.queue('memory')` - Background tasks
-- `serviceRegistry.searching('memory')` - Search functionality
+The application heavily relies on NooblyJS Core services (initialized in `app.js`):
+- `serviceRegistry.logger('console')` - Logging service
+- `serviceRegistry.cache('memory')` - In-memory caching
+- `serviceRegistry.filing('local')` - File operations with base directory
+- `serviceRegistry.queue('memory')` - Background task queue
+- `serviceRegistry.searching('memory')` - Full-text search indexing
+- `serviceRegistry.scheduling('memory')` - Task scheduling
+- `serviceRegistry.measuring('memory')` - Metrics collection
+- `serviceRegistry.notifying('memory')` - Notifications
+- `serviceRegistry.workflow('memory')` - Workflow management
+- `serviceRegistry.aiservice('ollama')` - AI service integration with configurable model
+
+All services are passed to the wiki factory in `index.js:41-84` and made available to routes, components, and activities.
 
 ## Project Structure
 
@@ -320,6 +328,125 @@ nooblyjs-apps-wiki/
    - Arrays populated in `src/views/js/modules/navigationcontroller.js:populateWindowDocuments()`
    - Enables dynamic navigation, statistics, dashboards, and custom content generation
 
+## Real-Time Event Bus & WebSocket Integration
+
+### Overview
+The Wiki Event Bus (`src/components/eventBus.js`) provides centralized, real-time tracking and broadcasting of all file and folder changes across connected clients. Built on Socket.IO, it enables instant UI updates when documents, folders, or spaces are modified by any user.
+
+### Architecture
+
+#### Core Components
+1. **WikiEventBus** (`src/components/eventBus.js`)
+   - Central event tracking and broadcasting hub
+   - Made available globally via `global.eventBus`
+   - Maintains event history with configurable retention
+   - Provides filtering, subscription, and debugging capabilities
+
+2. **Socket.IO Server** (`index.js:66-82`)
+   - Bidirectional WebSocket communication
+   - CORS enabled for cross-origin requests
+   - Connection/disconnect tracking with logging
+   - Global availability via `global.io`
+
+3. **File Watcher** (`src/activities/fileWatcher.js`)
+   - Monitors file system changes using chokidar
+   - Detects new files, modifications, and deletions
+   - Broadcasts change events through event bus
+   - Triggers search index updates
+
+4. **Event Bus Listener** (`src/views/js/modules/eventBusListener.js`)
+   - Client-side Socket.IO listener
+   - Handles real-time events from server
+   - Updates local UI state automatically
+   - Manages file tree and document viewer updates
+
+### Event Types
+- `file-created` - New file added to space
+- `file-modified` - File content updated
+- `file-deleted` - File removed from space
+- `folder-created` - New folder created
+- `folder-modified` - Folder metadata changed
+- `folder-deleted` - Folder removed
+- `document-created` - Document added to system
+- `document-updated` - Document metadata changed
+- `document-deleted` - Document removed
+- `space-created` - New space created
+- `space-updated` - Space configuration changed
+- `space-deleted` - Space removed
+
+### Usage in Components
+```javascript
+// Emit event (from server-side routes)
+global.eventBus.emit('file-created', { path: '/documents/new-file.md' });
+
+// Subscribe to events (from client)
+global.io.on('file-created', (data) => {
+  console.log('File created:', data.path);
+  // Update UI automatically
+});
+
+// Get recent events (for debugging)
+global.WikiEventBusDebug.recent(20);
+
+// Get event statistics
+global.WikiEventBusDebug.stats();
+```
+
+### Integration Points
+
+**1. File Operations** (`src/routes/documentRoutes.js`, `src/routes/navigationRoutes.js`)
+- Emit events after document creation/update/deletion
+- Broadcast to all connected clients
+- Includes file metadata in event payload
+
+**2. File Watcher** (`src/activities/fileWatcher.js`)
+- Monitors space directories for changes
+- Emits events for file system operations
+- Triggers search index refresh
+
+**3. Frontend Updates** (`src/views/js/modules/eventBusListener.js`)
+- Listens for real-time events
+- Updates file tree automatically
+- Refreshes document list views
+- Updates navigation state
+
+### Debugging Features
+Available via global `WikiEventBusDebug` object:
+```javascript
+// Get recent events (default: last 10)
+global.WikiEventBusDebug.recent(50);
+
+// Get event statistics
+global.WikiEventBusDebug.stats();
+
+// Print activity summary
+global.WikiEventBusDebug.summary();
+
+// Get activity summary as object
+global.WikiEventBusDebug.activity();
+
+// Clear event history
+global.WikiEventBusDebug.clearHistory();
+
+// Filter events by predicate
+global.WikiEventBusDebug.filter(event => event.type === 'document-created');
+
+// Subscribe to specific event types
+global.WikiEventBusDebug.subscribe('file-modified', (event) => {
+  console.log('File modified:', event);
+});
+
+// Get full event bus instance
+global.WikiEventBusDebug.bus();
+```
+
+### Performance Considerations
+- Events stored in memory (configurable retention)
+- Socket.IO for efficient WebSocket communication
+- Event broadcasting to all connected clients
+- Automatic UI refresh without page reload
+- No database queries needed for change detection
+
 ## API Endpoints
 
 ### Authentication Routes
@@ -371,6 +498,8 @@ nooblyjs-apps-wiki/
 - `POST /applications/wiki/api/ai/chat` - Send message to AI chat
 - `GET /applications/wiki/api/ai/settings` - Get AI settings
 - `PUT /applications/wiki/api/ai/settings` - Update AI settings
+- `POST /applications/wiki/api/ai/generate-contexts` - Trigger AI context generation
+- `GET /applications/wiki/api/ai/context-status` - Check AI context generation status
 - `POST /applications/wiki/api/ai/context` - Set AI context (deprecated)
 
 ## Custom Code Injection Feature

@@ -8,29 +8,37 @@
 
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs').promises;
+const path = require('path');
 const PPTXParser = require('pptx-parser');
 
+/**
+ * Converts a PPTX file to markdown format
+ * @async
+ * @param {string} pptxFilePath - Absolute path to the PPTX file
+ * @param {string} outputMdPath - Path where markdown output will be saved
+ * @returns {Promise<string>} Markdown formatted content
+ * @throws {Error} If PPTX processing or file operations fail
+ */
 async function convertToMarkdown(pptxFilePath, outputMdPath) {
   try {
     const parser = new PPTXParser();
     const presentation = await parser.parse(pptxFilePath);
-    
+
     let markdown = `# ${presentation.title || 'Presentation'}\n\n`;
-    
+
     presentation.slides.forEach((slide, index) => {
       markdown += `## Slide ${index + 1}\n\n`;
-      
+
       slide.texts.forEach(text => {
         markdown += `${text}\n\n`;
       });
     });
-    
-    fs.writeFileSync(outputMdPath, markdown, 'utf8');
+
+    await fs.writeFile(outputMdPath, markdown, 'utf8');
 
     return markdown;
   } catch (error) {
-    console.error('Error:', error);
     throw error;
   }
 }

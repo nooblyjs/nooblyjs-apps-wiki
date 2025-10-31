@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Authentication Routes
+ * Handles user registration, login, and OAuth authentication endpoints
+ *
+ * @author NooblyJS Core Team
+ * @version 1.0.0
+ * @since 2025-08-24
+ */
+
+'use strict';
+
 const express = require('express');
 const passport = require('passport');
 const bcrypt = require('bcryptjs');
@@ -52,7 +63,6 @@ router.post('/register', async (req, res) => {
       });
     });
   } catch (error) {
-    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -202,7 +212,6 @@ router.post('/change-password', async (req, res) => {
       message: 'Password changed successfully'
     });
   } catch (error) {
-    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error'

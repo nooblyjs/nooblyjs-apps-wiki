@@ -13,21 +13,22 @@ const path = require('path');
 
 /**
  * Convert a DOCX file to markdown
+ * @async
  * @param {string} filePath - Absolute path to the DOCX file
- * @returns {Promise<string>} Markdown content
+ * @returns {Promise<string>} Markdown formatted content
+ * @throws {Error} If DOCX processing fails
  */
 async function convertToMarkdown(filePath) {
-    try {
-        const result = await mammoth.convertToMarkdown({ path: filePath });
+  try {
+    const result = await mammoth.convertToMarkdown({ path: filePath });
 
-        if (result.messages && result.messages.length > 0) {
-            console.warn('DOCX conversion warnings:', result.messages);
-        }
+    // Warning messages are available in result.messages if needed
+    // but are not logged to console for cleaner operation
 
-        return result.value;
-    } catch (error) {
-        throw new Error(`Failed to convert DOCX to markdown: ${error.message}`);
-    }
+    return result.value;
+  } catch (error) {
+    throw new Error(`Failed to convert DOCX to markdown: ${error.message}`);
+  }
 }
 
 /**

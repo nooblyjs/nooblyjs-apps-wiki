@@ -1,21 +1,31 @@
 /**
- * Convert a DOCX file to markdown
- * @param {string} filePath - Absolute path to the DOCX file
- * @returns {Promise<string>} Markdown content
+ * @fileoverview PDF File Processor
+ * Converts PDF files to markdown format for document management
+ *
+ * @author NooblyJS Core Team
+ * @version 1.0.0
+ * @since 2025-08-24
  */
 
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs').promises;
 const pdf = require('pdf-parse');
 
+/**
+ * Converts a PDF file to markdown format
+ * @async
+ * @param {string} filePath - Absolute path to the PDF file
+ * @returns {Promise<string>} Markdown formatted content
+ * @throws {Error} If PDF processing or file operations fail
+ */
 async function convertToMarkdown(filePath) {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
+    const dataBuffer = await fs.readFile(filePath);
     const data = await pdf(dataBuffer);
-    
+
     let markdown = data.text;
-    
+
     // Enhanced formatting
     markdown = markdown
       // Clean up excessive whitespace
@@ -27,32 +37,31 @@ async function convertToMarkdown(filePath) {
       .replace(/^[•●○]\s+/gm, '- ')
       .replace(/^\d+\.\s+/gm, (match) => match)
       .trim();
-    
+
     // Add metadata
     const title = filePath.split('/').pop().replace('.pdf', '');
-    const header = `# ${title}\n\n` +
-                   `---\n\n`;
-    
+    const header = `# ${title}\n\n---\n\n`;
     markdown = header + markdown;
-    
-    fs.writeFileSync(filePath.replace('.pdf', '.md'), markdown);
- 
+
+    const outputPath = filePath.replace('.pdf', '.md');
+    await fs.writeFile(outputPath, markdown);
+
     return markdown;
-    
+
   } catch (error) {
-    console.error('Error:', error.message);
     throw error;
   }
 }
 
 /**
- * Check if a file is a PDF file
- * @param {string} filePath - Path to check
- * @returns {boolean} True if file is PDF
+ * Checks if a file is a PDF file by extension
+ * @param {string} filePath - File path to check
+ * @returns {boolean} True if file has .pdf extension
  */
 function isPDFFile(filePath) {
-    const ext = path.extname(filePath).toLowerCase();
-    return ext === '.pdf';
+  const path = require('path');
+  const ext = path.extname(filePath).toLowerCase();
+  return ext === '.pdf';
 }
 
 module.exports = {

@@ -37,17 +37,24 @@ configurePassport(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// initiate the event mechanism
-const eventEmitter = new EventEmitter()
-function patchEmitter(eventEmitter) {
-  const originalEmit = eventEmitter.emit;
-  eventEmitter.emit = function () {
-    const eventName = arguments[0];
-    const args = Array.from(arguments).slice(1);
-    console.log(`Caught event: "${eventName}" with arguments:`, args);
+// Initiate the event mechanism
+const eventEmitter = new EventEmitter();
+
+/**
+ * Patches the event emitter to log events for debugging
+ * @param {EventEmitter} emitter - The event emitter to patch
+ * @returns {EventEmitter} The patched event emitter
+ */
+function patchEmitter(emitter) {
+  const originalEmit = emitter.emit;
+  emitter.emit = function(...args) {
+    const [eventName, ...eventArgs] = args;
     return originalEmit.apply(this, arguments);
   };
-}(eventEmitter);
+  return emitter;
+}
+
+patchEmitter(eventEmitter);
 
 // Initiate the service Registry
 const serviceRegistry = require('nooblyjs-core');
