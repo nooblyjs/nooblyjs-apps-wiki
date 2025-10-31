@@ -1311,7 +1311,8 @@ export const documentController = {
                 const saved = await this.saveDocument(doc);
                 if (saved) {
                     // Close editor and return to document view
-                    this.closeEditor(doc);
+                    // Use the updated currentDocument which now has the saved content
+                    this.closeEditor(this.app.currentDocument);
                 }
             };
         }
