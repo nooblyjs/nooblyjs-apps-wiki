@@ -228,6 +228,7 @@ module.exports = (options, eventEmitter, services) => {
 
       try {
         const fs = require('fs').promises;
+        const fsSync = require('fs');
         const stats = await fs.stat(absolutePath);
         const contentType = mime.lookup(absolutePath) || 'application/octet-stream';
         const fileTypeInfo = getFileTypeInfo(documentPath, contentType);
@@ -266,19 +267,19 @@ module.exports = (options, eventEmitter, services) => {
           }
         }
 
-        // If not in cache, read from file system
-        if (!content) {
-          content = await fs.readFile(absolutePath, { encoding });
-
-          // Cache text-based files for 30 minutes
-          if (isTextBased && encoding) {
-            await cache.put(cacheKey, content, 1800);
-            logger.info(`Cached file content: ${cacheKey}`);
-          }
-        }
-
         // Return enhanced response with metadata
         if (req.query.enhanced === 'true') {
+          // If not in cache, read from file system
+          if (!content) {
+            content = await fs.readFile(absolutePath, { encoding });
+
+            // Cache text-based files for 30 minutes
+            if (isTextBased && encoding) {
+              await cache.put(cacheKey, content, 1800);
+              logger.info(`Cached file content: ${cacheKey}`);
+            }
+          }
+
           res.json({
             content: encoding ? content : content.toString('base64'),
             metadata: {
@@ -292,15 +293,37 @@ module.exports = (options, eventEmitter, services) => {
             }
           });
         } else {
-          // Legacy response for backward compatibility
+          // Handle streaming for binary files (video, audio, images, etc.)
+          // This supports HTTP Range requests for seeking in video/audio
           res.setHeader('Content-Type', contentType);
+          res.setHeader('Content-Length', stats.size);
+          res.setHeader('Accept-Ranges', 'bytes');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
 
           // Handle download functionality
           if (download === 'true') {
             res.setHeader('Content-Disposition', `attachment; filename="${fileTypeInfo.fileName}"`);
           }
 
-          res.send(content);
+          // Handle Range requests (essential for video/audio seeking)
+          const range = req.headers.range;
+          if (range) {
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
+            const chunksize = (end - start) + 1;
+
+            res.status(206);
+            res.setHeader('Content-Range', `bytes ${start}-${end}/${stats.size}`);
+            res.setHeader('Content-Length', chunksize);
+
+            const stream = fsSync.createReadStream(absolutePath, { start: start, end: end });
+            stream.pipe(res);
+          } else {
+            // No range request - send entire file
+            const stream = fsSync.createReadStream(absolutePath);
+            stream.pipe(res);
+          }
         }
       } catch (fileError) {
         logger.warn(`Failed to read file ${documentPath}: ${fileError.message}`);

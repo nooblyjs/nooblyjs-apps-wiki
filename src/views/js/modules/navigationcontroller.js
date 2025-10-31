@@ -1934,6 +1934,26 @@ export const navigationController = {
             case 'gif':
             case 'svg':
                 return { icon: 'bi-file-image', color: '' };
+            case 'mp4':
+            case 'webm':
+            case 'ogg':
+            case 'ogv':
+            case 'mov':
+            case 'avi':
+            case 'mkv':
+            case 'flv':
+            case 'wmv':
+            case 'm4v':
+                return { icon: 'bi-play-circle', color: '' };
+            case 'mp3':
+            case 'wav':
+            case 'flac':
+            case 'aac':
+            case 'm4a':
+            case 'oga':
+            case 'weba':
+            case 'opus':
+                return { icon: 'bi-music-note-beamed', color: '' };
             case 'js':
             case 'ts':
             case 'jsx':
@@ -1980,6 +2000,26 @@ export const navigationController = {
             case 'gif':
             case 'svg':
                 return 'Image';
+            case 'mp4':
+            case 'webm':
+            case 'ogg':
+            case 'ogv':
+            case 'mov':
+            case 'avi':
+            case 'mkv':
+            case 'flv':
+            case 'wmv':
+            case 'm4v':
+                return 'Video';
+            case 'mp3':
+            case 'wav':
+            case 'flac':
+            case 'aac':
+            case 'm4a':
+            case 'oga':
+            case 'weba':
+            case 'opus':
+                return 'Audio';
             case 'js':
             case 'ts':
                 return 'JavaScript';
@@ -2020,6 +2060,20 @@ export const navigationController = {
                 viewer: 'image',
                 extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico'],
                 icon: 'image',
+                color: '#666666'
+            },
+            video: {
+                category: 'video',
+                viewer: 'video',
+                extensions: ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'flv', 'm4v'],
+                icon: 'film',
+                color: '#666666'
+            },
+            audio: {
+                category: 'audio',
+                viewer: 'audio',
+                extensions: ['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg', 'oga', 'weba', 'opus'],
+                icon: 'music',
                 color: '#666666'
             },
             text: {
@@ -2088,6 +2142,8 @@ export const navigationController = {
         const iconMap = {
             'pdf': 'bi-file-pdf',
             'image': 'bi-file-image',
+            'video': 'bi-play-circle',
+            'audio': 'bi-music-note-beamed',
             'text': 'bi-file-text',
             'markdown': 'bi-markdown',
             'code': 'bi-file-code',

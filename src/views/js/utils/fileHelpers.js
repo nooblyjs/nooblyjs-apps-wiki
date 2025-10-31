@@ -35,6 +35,26 @@ export const FileHelpers = {
             case 'gif':
             case 'svg':
                 return { icon: 'bi-file-image', color: '' };
+            case 'mp4':
+            case 'webm':
+            case 'ogg':
+            case 'ogv':
+            case 'mov':
+            case 'avi':
+            case 'mkv':
+            case 'flv':
+            case 'wmv':
+            case 'm4v':
+                return { icon: 'bi-play-circle', color: '' };
+            case 'mp3':
+            case 'wav':
+            case 'flac':
+            case 'aac':
+            case 'm4a':
+            case 'oga':
+            case 'weba':
+            case 'opus':
+                return { icon: 'bi-music-note-beamed', color: '' };
             case 'js':
             case 'ts':
             case 'jsx':
@@ -86,6 +106,26 @@ export const FileHelpers = {
             case 'gif':
             case 'svg':
                 return 'Image';
+            case 'mp4':
+            case 'webm':
+            case 'ogg':
+            case 'ogv':
+            case 'mov':
+            case 'avi':
+            case 'mkv':
+            case 'flv':
+            case 'wmv':
+            case 'm4v':
+                return 'Video';
+            case 'mp3':
+            case 'wav':
+            case 'flac':
+            case 'aac':
+            case 'm4a':
+            case 'oga':
+            case 'weba':
+            case 'opus':
+                return 'Audio';
             case 'js':
             case 'ts':
                 return 'JavaScript';

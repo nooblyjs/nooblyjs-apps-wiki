@@ -150,6 +150,12 @@ export const documentController = {
             case 'image':
                 this.showImageViewer(document);
                 break;
+            case 'video':
+                this.showVideoViewer(document);
+                break;
+            case 'audio':
+                this.showAudioViewer(document);
+                break;
             case 'text':
                 this.showTextViewer(document);
                 break;
@@ -243,6 +249,159 @@ export const documentController = {
             </div>
             <div class="image-container">
                 <img src="${imageUrl}" alt="${doc.metadata.fileName}" class="image-content" />
+            </div>
+        `;
+
+        contentElement.appendChild(contentWrapper);
+
+        // Setup download button functionality
+        this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
+
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
+        // Setup star button functionality
+        this.setupStarButton(doc);
+
+        // Track document visit
+        this.trackDocumentVisit(doc, 'viewed');
+
+        this.bindDocumentViewEvents();
+    },
+
+    /**
+     * Get MIME type for video based on file extension
+     */
+    getVideoMimeType(filePath) {
+        const ext = filePath.split('.').pop()?.toLowerCase() || '';
+
+        const mimeTypes = {
+            'mp4': 'video/mp4',
+            'm4v': 'video/x-m4v',
+            'webm': 'video/webm',
+            'ogg': 'video/ogg',
+            'ogv': 'video/ogg',
+            'mov': 'video/quicktime',
+            'avi': 'video/x-msvideo',
+            'mkv': 'video/x-matroska',
+            'flv': 'video/x-flv',
+            'wmv': 'video/x-ms-wmv'
+        };
+
+        return mimeTypes[ext] || 'video/mp4'; // Default to mp4
+    },
+
+    /**
+     * Get MIME type for audio based on file extension
+     */
+    getAudioMimeType(filePath) {
+        const ext = filePath.split('.').pop()?.toLowerCase() || '';
+
+        const mimeTypes = {
+            'mp3': 'audio/mpeg',
+            'wav': 'audio/wav',
+            'flac': 'audio/flac',
+            'aac': 'audio/aac',
+            'm4a': 'audio/mp4',
+            'ogg': 'audio/ogg',
+            'oga': 'audio/ogg',
+            'weba': 'audio/webp',
+            'opus': 'audio/opus'
+        };
+
+        return mimeTypes[ext] || 'audio/mpeg'; // Default to mp3
+    },
+
+    /**
+     * Video Viewer Implementation (HTML5)
+     */
+    showVideoViewer(doc) {
+        this.app.setActiveView('document');
+        this.app.currentView = 'document';
+
+        this.updateDocumentHeader(doc);
+
+        const contentElement = document.querySelector('#documentView .document-container');
+        if (!contentElement) return;
+
+        const videoUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}`;
+        const downloadUrl = videoUrl + '&download=true';
+        const mimeType = this.getVideoMimeType(doc.path);
+
+        // Remove any existing content after header and add video viewer
+        const existingContent = contentElement.querySelector('.document-content-wrapper');
+        if (existingContent) existingContent.remove();
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'document-content-wrapper video-viewer';
+        contentWrapper.innerHTML = `
+            <div class="video-info-bar">
+                <div class="file-info">
+                    <i class="bi bi-play-circle" style="color: #6f42c1;"></i>
+                    <span class="file-name">${doc.metadata.fileName}</span>
+                    <span class="file-size">${this.formatFileSize(doc.metadata.size)}</span>
+                </div>
+            </div>
+            <div class="video-container">
+                <video id="videoPlayer" class="video-content" controls style="width: 100%; max-height: 600px; background-color: #000;">
+                    <source src="${videoUrl}" type="${mimeType}">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        `;
+
+        contentElement.appendChild(contentWrapper);
+
+        // Setup download button functionality
+        this.setupDownloadButton(downloadUrl, doc.metadata.fileName);
+
+        // Setup convert button functionality
+        this.setupConvertButton(doc);
+
+        // Setup star button functionality
+        this.setupStarButton(doc);
+
+        // Track document visit
+        this.trackDocumentVisit(doc, 'viewed');
+
+        this.bindDocumentViewEvents();
+    },
+
+    /**
+     * Audio Viewer Implementation (HTML5)
+     */
+    showAudioViewer(doc) {
+        this.app.setActiveView('document');
+        this.app.currentView = 'document';
+
+        this.updateDocumentHeader(doc);
+
+        const contentElement = document.querySelector('#documentView .document-container');
+        if (!contentElement) return;
+
+        const audioUrl = `/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}`;
+        const downloadUrl = audioUrl + '&download=true';
+        const mimeType = this.getAudioMimeType(doc.path);
+
+        // Remove any existing content after header and add audio viewer
+        const existingContent = contentElement.querySelector('.document-content-wrapper');
+        if (existingContent) existingContent.remove();
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'document-content-wrapper audio-viewer';
+        contentWrapper.innerHTML = `
+            <div class="audio-info-bar">
+                <div class="file-info">
+                    <i class="bi bi-music-note-beamed" style="color: #fd7e14;"></i>
+                    <span class="file-name">${doc.metadata.fileName}</span>
+                    <span class="file-size">${this.formatFileSize(doc.metadata.size)}</span>
+                </div>
+            </div>
+            <div class="audio-container">
+                <audio id="audioPlayer" class="audio-content" controls style="width: 100%; margin: 20px 0;">
+                    <source src="${audioUrl}" type="${mimeType}">
+                    Your browser does not support the audio tag.
+                </audio>
             </div>
         `;
 
