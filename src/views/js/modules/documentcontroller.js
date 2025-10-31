@@ -1230,6 +1230,9 @@ export const documentController = {
             setTimeout(initEasyMDE, 50);
         }
 
+        // Bind editor events (save and close buttons)
+        this.bindEditorEvents(doc);
+
         // Start auto-save timer
         this.startAutoSave(doc);
     },
@@ -1307,8 +1310,8 @@ export const documentController = {
             saveBtn.onclick = async () => {
                 const saved = await this.saveDocument(doc);
                 if (saved) {
-                    // Close editor and return to preview view
-                    this.closeEditor();
+                    // Close editor and return to document view
+                    this.closeEditor(doc);
                 }
             };
         }
