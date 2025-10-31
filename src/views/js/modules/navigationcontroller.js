@@ -801,6 +801,12 @@ export const navigationController = {
         // Switch to a custom folder view
         this.app.setActiveView('folder');
 
+        // Hide tab bar when viewing folders
+        const tabBar = document.getElementById('tabBar');
+        if (tabBar) {
+            tabBar.classList.add('hidden');
+        }
+
         // Store the current folder path for context menu
         this.app.currentFolder = folderContent.path;
 

@@ -9,9 +9,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
 
+    <!-- Font Awesome Icons for EasyMDE -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SimpleMDE/EasyMDE Markdown Editor (using unpkg CDN) -->
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+
+    <!-- EasyMDE Styling Overrides (must come after EasyMDE CSS) -->
+    <link rel="stylesheet" href="/css/easymde-overrides.css">
+
     <!-- Bootstrap 5 JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Markdown Parser (needed for EasyMDE preview) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
+    <!-- EasyMDE Markdown Editor JS (using unpkg CDN) -->
+    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 </head>
 <body>
     <!-- Login/Register Page -->
@@ -404,6 +419,13 @@
                     </div>
                 </div>
 
+                <!-- Tab Bar (shown in both document and editor views) -->
+                <div id="tabBar" class="tab-bar">
+                    <ul class="nav nav-tabs" id="documentTabs" role="tablist">
+                        <!-- Tabs will be added here dynamically -->
+                    </ul>
+                </div>
+
                 <!-- Editor View -->
                 <div id="editorView" class="view hidden">
                     <div class="editor-container">
@@ -435,37 +457,7 @@
                         
                         <div class="editor-main">
                             <div id="markdownEditor" class="editor-pane">
-                                <div class="editor-toolbar">
-                                    <div class="toolbar-group">
-                                        <button id="boldBtn" class="btn btn-outline-secondary btn-sm" title="Bold (Ctrl+B)">
-                                            <i class="bi bi-type-bold"></i>
-                                        </button>
-                                        <button id="italicBtn" class="btn btn-outline-secondary btn-sm" title="Italic (Ctrl+I)">
-                                            <i class="bi bi-type-italic"></i>
-                                        </button>
-                                        <button id="codeBtn" class="btn btn-outline-secondary btn-sm" title="Inline Code">
-                                            <i class="bi bi-code"></i>
-                                        </button>
-                                    </div>
-                                    <div class="toolbar-separator"></div>
-                                    <div class="toolbar-group">
-                                        <button id="h1Btn" class="btn btn-outline-secondary btn-sm" title="Heading 1">H1</button>
-                                        <button id="h2Btn" class="btn btn-outline-secondary btn-sm" title="Heading 2">H2</button>
-                                        <button id="h3Btn" class="btn btn-outline-secondary btn-sm" title="Heading 3">H3</button>
-                                    </div>
-                                    <div class="toolbar-separator"></div>
-                                    <div class="toolbar-group">
-                                        <button id="listBtn" class="btn btn-outline-secondary btn-sm" title="Unordered List">
-                                            <i class="bi bi-list-ul"></i>
-                                        </button>
-                                        <button id="numberedListBtn" class="btn btn-outline-secondary btn-sm" title="Ordered List">
-                                            <i class="bi bi-list-ol"></i>
-                                        </button>
-                                        <button id="linkBtn" class="btn btn-outline-secondary btn-sm" title="Link">
-                                            <i class="bi bi-link"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <!-- EasyMDE will be initialized here -->
                                 <textarea id="editorTextarea" placeholder="Start writing..."></textarea>
                             </div>
                             <div id="previewPane" class="preview-pane hidden">
@@ -480,13 +472,6 @@
 
                 <!-- Document View -->
                 <div id="documentView" class="view hidden">
-                    <!-- Tab Bar using Bootstrap Tabs -->
-                    <div id="tabBar" class="tab-bar">
-                        <ul class="nav nav-tabs" id="documentTabs" role="tablist">
-                            <!-- Tabs will be added here dynamically -->
-                        </ul>
-                    </div>
-
                     <div class="document-container">
                         <div class="document-header">
                             <nav class="breadcrumb">

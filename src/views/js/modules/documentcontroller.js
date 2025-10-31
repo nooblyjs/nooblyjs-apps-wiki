@@ -128,6 +128,12 @@ export const documentController = {
         this.app.setActiveView('document');
         this.app.currentView = 'document';
 
+        // Show tab bar when viewing documents
+        const tabBar = document.getElementById('tabBar');
+        if (tabBar) {
+            tabBar.classList.remove('hidden');
+        }
+
         // Update header with placeholder
         const docTitle = document.getElementById('currentDocTitle');
         if (docTitle) {
@@ -1089,8 +1095,23 @@ export const documentController = {
      * Edit current document
      */
     editCurrentDocument() {
-        if (this.app.currentDocument) {
-            // Switch to editor view with current document loaded
+        // Get the currently active tab
+        const activeTab = this.app.tabManager.getActiveTab();
+
+        if (activeTab) {
+            // Create document object from active tab
+            const doc = {
+                title: activeTab.title,
+                path: activeTab.path,
+                spaceName: activeTab.spaceName,
+                content: activeTab.content,
+                metadata: activeTab.metadata
+            };
+
+            // Switch to editor view with the currently viewed document
+            this.showEditorView(doc);
+        } else if (this.app.currentDocument) {
+            // Fallback to currentDocument if no active tab
             this.showEditorView(this.app.currentDocument);
         }
     },
@@ -1118,7 +1139,7 @@ export const documentController = {
     },
 
     /**
-     * Markdown Editor Implementation
+     * Markdown Editor Implementation using EasyMDE
      */
     showMarkdownEditor(doc) {
         this.app.setActiveView('editor');
@@ -1144,19 +1165,71 @@ export const documentController = {
             titleElement.textContent = doc.title || doc.metadata?.fileName || 'Untitled';
         }
 
-        const textarea = document.getElementById('editorTextarea');
-        if (textarea) {
-            textarea.value = doc.content || '';
-            // Auto-resize textarea
-            this.autoResizeTextarea(textarea);
-        }
-
-        // Show markdown editor pane, hide preview initially
+        // Show markdown editor pane
         document.getElementById('markdownEditor')?.classList.remove('hidden');
         document.getElementById('previewPane')?.classList.add('hidden');
 
-        // Bind editor events
-        this.bindEditorEvents(doc);
+        // Initialize or update EasyMDE editor
+        const textarea = document.getElementById('editorTextarea');
+        if (textarea) {
+            // Store document reference for later use
+            this.currentEditingDoc = doc;
+
+            // Destroy existing editor if any
+            if (this.easyMDEInstance) {
+                this.easyMDEInstance.toTextArea();
+                this.easyMDEInstance = null;
+            }
+
+            // Set textarea content immediately as fallback
+            textarea.value = doc.content || '';
+
+            // Initialize EasyMDE if available, with retry logic
+            const initEasyMDE = () => {
+                if (typeof EasyMDE !== 'undefined') {
+                    try {
+                        // Initialize EasyMDE with comprehensive toolbar
+                        this.easyMDEInstance = new EasyMDE({
+                            element: textarea,
+                            initialValue: doc.content || '',
+                            spellChecker: false,
+                            autoDownloadFontAwesome: true,
+                            toolbar: [
+                                'bold', 'italic', 'strikethrough', '|',
+                                'heading-1', 'heading-2', 'heading-3', '|',
+                                'code', 'code-block', '|',
+                                'quote', 'unordered-list', 'ordered-list', '|',
+                                'link', 'image', 'table', 'horizontal-rule', '|',
+                                'preview', 'side-by-side', 'fullscreen', '|',
+                                'undo', 'redo'
+                            ],
+                            previewRender: (plainText) => {
+                                if (typeof marked !== 'undefined') {
+                                    return marked.parse(plainText);
+                                }
+                                return plainText;
+                            }
+                        });
+
+                        // Update on changes
+                        this.easyMDEInstance.codemirror.on('change', () => {
+                            this.app.tabManager.markTabDirty(this.currentEditingDoc.path);
+                        });
+
+                        console.log('[DocumentController] EasyMDE initialized successfully');
+                    } catch (error) {
+                        console.error('[DocumentController] Error initializing EasyMDE:', error);
+                    }
+                } else {
+                    // Retry after a short delay if EasyMDE not yet loaded
+                    console.log('[DocumentController] Waiting for EasyMDE to load...');
+                    setTimeout(initEasyMDE, 100);
+                }
+            };
+
+            // Start initialization with a small delay to ensure libraries are loaded
+            setTimeout(initEasyMDE, 50);
+        }
 
         // Start auto-save timer
         this.startAutoSave(doc);
@@ -1479,14 +1552,19 @@ export const documentController = {
      * Save document
      */
     async saveDocument(doc, isAutoSave = false) {
-        const textarea = document.getElementById('editorTextarea');
+        // Get content from EasyMDE if available, otherwise from textarea
+        let content;
 
-        if (!textarea) {
-            console.error('Editor textarea not found');
-            return false;
+        if (this.easyMDEInstance) {
+            content = this.easyMDEInstance.value();
+        } else {
+            const textarea = document.getElementById('editorTextarea');
+            if (!textarea) {
+                console.error('Editor textarea not found');
+                return false;
+            }
+            content = textarea.value;
         }
-
-        const content = textarea.value;
 
         // Skip auto-save if content hasn't changed
         if (isAutoSave && content === this.lastSavedContent) {
@@ -1666,6 +1744,12 @@ export const documentController = {
 
         // Stop auto-save
         this.stopAutoSave();
+
+        // Destroy EasyMDE instance
+        if (this.easyMDEInstance) {
+            this.easyMDEInstance.toTextArea();
+            this.easyMDEInstance = null;
+        }
 
         // Remove event listeners
         document.removeEventListener('keydown', this.app.handleKeyDown);
