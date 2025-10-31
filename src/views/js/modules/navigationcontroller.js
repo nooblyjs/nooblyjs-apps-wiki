@@ -2470,5 +2470,15 @@ export const navigationController = {
         } else {
             console.warn('[NavigationController] documentController or reloadCurrentFileContent not available');
         }
+    },
+
+    handleEditModeConflict() {
+        console.log('[NavigationController] handleEditModeConflict() called');
+
+        if (documentController && documentController.handleEditModeConflict) {
+            return documentController.handleEditModeConflict();
+        } else {
+            console.warn('[NavigationController] documentController or handleEditModeConflict not available');
+        }
     }
 };

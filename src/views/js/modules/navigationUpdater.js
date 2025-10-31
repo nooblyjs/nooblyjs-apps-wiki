@@ -313,11 +313,18 @@ function updateFileviewer(space, file, operation = 'update') {
       console.log(`✓ Removed file from folder viewer: ${file.path}`);
     }
   } else if (operation === 'update') {
-    // File was updated - refresh content if it's currently being viewed (and not in edit mode)
-    if (documentViewerState.isFileCurrentlyViewed(file.path) && !documentViewerState.isInEditMode()) {
-      // Call the document controller reload method
-      if (navController && navController.reloadCurrentFileContent) {
-        navController.reloadCurrentFileContent();
+    // File was updated - handle based on whether user is editing or viewing
+    if (documentViewerState.isFileCurrentlyViewed(file.path)) {
+      if (documentViewerState.isInEditMode()) {
+        // File is in edit mode - show conflict dialog
+        if (navController && navController.handleEditModeConflict) {
+          navController.handleEditModeConflict();
+        }
+      } else {
+        // File is in view mode - reload content silently
+        if (navController && navController.reloadCurrentFileContent) {
+          navController.reloadCurrentFileContent();
+        }
       }
     }
   }

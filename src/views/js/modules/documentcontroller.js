@@ -945,6 +945,9 @@ export const documentController = {
         this.app.currentView = 'editor';
         this.app.isEditing = true;
 
+        // Track edit mode in documentViewerState
+        documentViewerState.setCurrentFile(doc.path, 'markdown', true);
+
         // Update editor breadcrumb
         const spaceLink = document.getElementById('editorBackToSpace');
         const titleElement = document.getElementById('editorDocTitle');
@@ -986,6 +989,10 @@ export const documentController = {
         this.app.setActiveView('editor');
         this.app.currentView = 'editor';
         this.app.isEditing = true;
+
+        // Track edit mode in documentViewerState
+        const viewMode = doc.metadata?.viewer || 'text';
+        documentViewerState.setCurrentFile(doc.path, viewMode, true);
 
         // Update editor breadcrumb
         const spaceLink = document.getElementById('editorBackToSpace');
@@ -1483,6 +1490,12 @@ export const documentController = {
         // Remove event listeners
         document.removeEventListener('keydown', this.app.handleKeyDown);
 
+        // Update documentViewerState to reflect exit from edit mode
+        if (this.app.currentDocument) {
+            const viewMode = this.app.currentDocument.metadata?.viewer || 'markdown';
+            documentViewerState.setCurrentFile(this.app.currentDocument.path, viewMode, false);
+        }
+
         // Return to document view
         this.showEnhancedDocumentView(this.app.currentDocument);
     },
@@ -1809,6 +1822,105 @@ export const documentController = {
             }
 
             this.app.showNotification('Failed to reload file content', 'error');
+        }
+    },
+
+    /**
+     * Handle file update conflict when user is in edit mode
+     * Shows a confirmation dialog asking if user wants to reload the file
+     * If yes: closes editor and reloads content
+     * If no: keeps user in edit mode
+     * @return {void}
+     */
+    handleEditModeConflict() {
+        // Create modal HTML for the conflict dialog
+        const conflictHtml = `
+            <div class="modal fade" id="editConflictModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title" id="editConflictLabel">
+                                <i class="bi bi-exclamation-triangle-fill" style="color: #ff9800; margin-right: 8px;"></i>
+                                File Changed
+                            </h5>
+                            <button type="button" class="btn-close" id="closeConflictModal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>The file you are editing has been changed by another source.</p>
+                            <p><strong>Would you like to reload the file?</strong></p>
+                            <small class="text-muted">If you reload, your unsaved changes will be lost. If you continue editing, you may overwrite the external changes.</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="continueEditingBtn">Continue Editing</button>
+                            <button type="button" class="btn btn-primary" id="reloadFileBtn">Reload File</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove any existing conflict modal and backdrops
+        const existingModal = document.getElementById('editConflictModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+
+        // Add modal to document
+        document.body.insertAdjacentHTML('beforeend', conflictHtml);
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('editConflictModal'), {
+            keyboard: false,
+            backdrop: 'static'
+        });
+        modal.show();
+
+        // Helper function to properly close modal and clean up
+        const closeModalAndCleanup = () => {
+            modal.hide();
+            // Remove modal from DOM after hide animation completes
+            setTimeout(() => {
+                const modalEl = document.getElementById('editConflictModal');
+                if (modalEl) {
+                    modalEl.remove();
+                }
+                // Remove any lingering backdrops
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            }, 300);
+        };
+
+        // Handle continue editing button click
+        const continueBtn = document.getElementById('continueEditingBtn');
+        if (continueBtn) {
+            continueBtn.onclick = (e) => {
+                e.preventDefault();
+                closeModalAndCleanup();
+            };
+        }
+
+        // Handle close button click
+        const closeBtn = document.getElementById('closeConflictModal');
+        if (closeBtn) {
+            closeBtn.onclick = (e) => {
+                e.preventDefault();
+                closeModalAndCleanup();
+            };
+        }
+
+        // Handle reload button click
+        const reloadBtn = document.getElementById('reloadFileBtn');
+        if (reloadBtn) {
+            reloadBtn.onclick = async () => {
+                // Close the modal and clean up
+                closeModalAndCleanup();
+
+                // Close the editor (returns to document view)
+                this.closeEditor();
+
+                // Reload the document content
+                await this.reloadCurrentFileContent();
+            };
         }
     }
 };
