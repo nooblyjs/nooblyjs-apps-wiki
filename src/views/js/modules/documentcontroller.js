@@ -1141,7 +1141,7 @@ export const documentController = {
     /**
      * Markdown Editor Implementation using EasyMDE
      */
-    showMarkdownEditor(doc) {
+    async showMarkdownEditor(doc) {
         this.app.setActiveView('editor');
         this.app.currentView = 'editor';
         this.app.isEditing = true;
@@ -1167,6 +1167,19 @@ export const documentController = {
 
         // Show markdown editor pane
         document.getElementById('markdownEditor')?.classList.remove('hidden');
+
+        // Fetch the latest content from the server
+        let freshContent = doc.content || '';
+        try {
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}`);
+            if (response.ok) {
+                freshContent = await response.text();
+                // Update the doc object with fresh content
+                doc.content = freshContent;
+            }
+        } catch (error) {
+            console.warn('[DocumentController] Failed to fetch fresh content, using cached content:', error);
+        }
 
         // Initialize or update EasyMDE editor
         const textarea = document.getElementById('editorTextarea');
@@ -1240,7 +1253,7 @@ export const documentController = {
     /**
      * Text/Code Editor Implementation
      */
-    showTextCodeEditor(doc) {
+    async showTextCodeEditor(doc) {
         this.app.setActiveView('editor');
         this.app.currentView = 'editor';
         this.app.isEditing = true;
@@ -1263,6 +1276,19 @@ export const documentController = {
 
         if (titleElement) {
             titleElement.textContent = doc.title || doc.metadata?.fileName || 'Untitled';
+        }
+
+        // Fetch the latest content from the server
+        let freshContent = doc.content || '';
+        try {
+            const response = await fetch(`/applications/wiki/api/documents/content?path=${encodeURIComponent(doc.path)}&spaceName=${encodeURIComponent(doc.spaceName)}`);
+            if (response.ok) {
+                freshContent = await response.text();
+                // Update the doc object with fresh content
+                doc.content = freshContent;
+            }
+        } catch (error) {
+            console.warn('[DocumentController] Failed to fetch fresh content, using cached content:', error);
         }
 
         const textarea = document.getElementById('editorTextarea');
