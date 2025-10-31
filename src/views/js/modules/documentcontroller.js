@@ -1167,7 +1167,6 @@ export const documentController = {
 
         // Show markdown editor pane
         document.getElementById('markdownEditor')?.classList.remove('hidden');
-        document.getElementById('previewPane')?.classList.add('hidden');
 
         // Initialize or update EasyMDE editor
         const textarea = document.getElementById('editorTextarea');
@@ -1274,15 +1273,8 @@ export const documentController = {
             this.autoResizeTextarea(textarea);
         }
 
-        // Show editor pane, hide preview for non-markdown files
+        // Show editor pane
         document.getElementById('markdownEditor')?.classList.remove('hidden');
-        document.getElementById('previewPane')?.classList.add('hidden');
-
-        // Hide preview button for non-markdown files
-        const previewBtn = document.getElementById('previewDoc');
-        if (previewBtn) {
-            previewBtn.style.display = doc.metadata?.viewer === 'markdown' ? 'block' : 'none';
-        }
 
         // Bind editor events
         this.bindEditorEvents(doc);
@@ -1319,12 +1311,6 @@ export const documentController = {
                     this.closeEditor();
                 }
             };
-        }
-
-        // Preview button (for markdown)
-        const previewBtn = document.getElementById('previewDoc');
-        if (previewBtn) {
-            previewBtn.onclick = () => this.togglePreview(doc);
         }
 
         // Close button
@@ -1671,43 +1657,6 @@ export const documentController = {
             this.autoSaveTimer = null;
             this.lastSavedContent = null;
             console.log('Auto-save disabled');
-        }
-    },
-
-    /**
-     * Toggle preview for markdown
-     */
-    togglePreview(doc) {
-        const editorPane = document.getElementById('markdownEditor');
-        const previewPane = document.getElementById('previewPane');
-        const previewContent = document.getElementById('previewContent');
-        const textarea = document.getElementById('editorTextarea');
-        const previewBtn = document.getElementById('previewDoc');
-
-        if (!editorPane || !previewPane || !previewContent || !textarea || !previewBtn) return;
-
-        if (previewPane.classList.contains('hidden')) {
-            // Show preview
-            if (typeof marked !== 'undefined') {
-                // Process wiki-code blocks before rendering
-                const processedContent = this.processWikiCodeBlocks(textarea.value || '');
-                const renderedContent = marked.parse(processedContent);
-                previewContent.innerHTML = renderedContent;
-
-                // Apply syntax highlighting
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAllUnder(previewContent);
-                }
-            } else {
-                previewContent.innerHTML = '<p>Markdown preview not available</p>';
-            }
-
-            previewPane.classList.remove('hidden');
-            previewBtn.textContent = 'Edit';
-        } else {
-            // Hide preview
-            previewPane.classList.add('hidden');
-            previewBtn.textContent = 'Preview';
         }
     },
 
