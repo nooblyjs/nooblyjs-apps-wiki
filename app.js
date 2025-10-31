@@ -66,6 +66,12 @@ const worker = serviceRegistry.working('memory');
 const workflow = serviceRegistry.workflow('memory');
 const authservice = serviceRegistry.authservice('memory');
 
+const aiservice = serviceRegistry.aiservice('ollama', {
+  model: 'tinyllama:1.1b',
+  'express-app': app,
+  tokensStorePath: './.noobly-core/data/ai-tokens.json' 
+});
+
 // Load the wiki application
 const wiki = require('./index.js');
 wiki(app, server, eventEmitter, serviceRegistry,{});

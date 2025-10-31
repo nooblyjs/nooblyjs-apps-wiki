@@ -48,13 +48,14 @@ class AIContextGenerator {
 
       try {
         aiSettings = await this.dataManager.read(settingsFileName);
+        console.log(aiSettings);
         this.logger.info(`[AI INIT] AI settings loaded for ${userId}: provider=${aiSettings.provider}, enabled=${aiSettings.enabled}`);
       } catch (readError) {
         this.logger.error(`[AI INIT] Could not read AI settings for ${userId}: ${readError.message}`);
         return false;
       }
 
-      if (!aiSettings || !aiSettings.enabled || !aiSettings.provider || !aiSettings.apiKey) {
+      if (!aiSettings || !aiSettings.enabled || !aiSettings.provider) {
         this.logger.error(`[AI INIT] Invalid AI settings for ${userId}: enabled=${aiSettings?.enabled}, provider=${aiSettings?.provider}, hasKey=${!!aiSettings?.apiKey}`);
         return false;
       }
