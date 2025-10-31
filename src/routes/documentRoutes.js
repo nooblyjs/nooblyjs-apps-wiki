@@ -640,7 +640,9 @@ ${documentPath}\
             path: documentPath,
             modified: stats.mtime.toISOString(),
             size: stats.size,
-            source: 'api'
+            source: 'api',
+            userId: req.user?.id || req.user?.username || 'unknown',
+            userName: req.user?.username || 'unknown'
           });
         }
 
@@ -807,7 +809,9 @@ ${documentPath}\
               parentPath: path.dirname(finalPath) === '.' ? '' : path.dirname(finalPath),
               created: docMetadata.createdAt,
               modified: docMetadata.modifiedAt,
-              source: 'api'
+              source: 'api',
+              userId: req.user?.id || req.user?.username || 'unknown',
+              userName: req.user?.username || 'unknown'
             });
           }
         }

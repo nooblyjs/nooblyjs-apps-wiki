@@ -88,6 +88,35 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   const eventBus = new WikiEventBus(logger, io);
   global.eventBus = eventBus;
   logger.info('Wiki Event Bus initialized and available globally');
+
+  // Add global debugging helpers for event bus monitoring
+  global.WikiEventBusDebug = {
+    // Get recent events
+    recent: (count = 10) => eventBus.getRecentEvents(count),
+
+    // Get statistics
+    stats: () => eventBus.getStatistics(),
+
+    // Print activity summary
+    summary: () => eventBus.printSummary(),
+
+    // Get activity summary
+    activity: () => eventBus.getActivitySummary(),
+
+    // Clear history
+    clearHistory: () => eventBus.clearHistory(),
+
+    // Filter events by predicate
+    filter: (predicate) => eventBus.filterEvents(predicate),
+
+    // Subscribe to events
+    subscribe: (eventType, callback) => eventBus.subscribe(eventType, callback),
+
+    // Get full event bus instance
+    bus: () => eventBus
+  };
+
+  logger.info('Wiki Event Bus Debug helpers available at: global.WikiEventBusDebug');
   
   // Initialize wiki data if not exists
   (async () => {

@@ -124,7 +124,9 @@ module.exports = (options, eventEmitter, services) => {
             parentPath: parentPath || '',
             created: folder.createdAt,
             modified: folder.createdAt,
-            source: 'api'
+            source: 'api',
+            userId: req.user?.id || req.user?.username || 'unknown',
+            userName: req.user?.username || 'unknown'
           });
         }
 
@@ -391,7 +393,9 @@ module.exports = (options, eventEmitter, services) => {
             spaceName: space.name,
             name: path.basename(folderPath),
             path: folderPath,
-            source: 'api'
+            source: 'api',
+            userId: req.user?.id || req.user?.username || 'unknown',
+            userName: req.user?.username || 'unknown'
           });
         }
 
@@ -479,7 +483,9 @@ module.exports = (options, eventEmitter, services) => {
             spaceName: space.name,
             name: path.basename(filePath),
             path: filePath,
-            source: 'api'
+            source: 'api',
+            userId: req.user?.id || req.user?.username || 'unknown',
+            userName: req.user?.username || 'unknown'
           });
         }
 

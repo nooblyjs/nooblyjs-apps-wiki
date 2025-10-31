@@ -154,6 +154,44 @@ function removeNodeFromTree(path) {
 }
 
 /**
+ * Check if a file change event came from the current user via API
+ * Returns true if the event should be ignored (self-inflicted change)
+ * @private
+ */
+function isChangeFromCurrentUser(event) {
+  // Only apply this logic to API changes
+  if (event.event.source !== 'api') {
+    return false;
+  }
+
+  // Get current user information from the app
+  // Try multiple ways to get current user
+  const currentUser = window.currentUser ||
+                      window.app?.currentUser ||
+                      (typeof userController !== 'undefined' && userController.app?.data?.currentUser);
+
+  if (!currentUser) {
+    // Can't determine current user, assume it's external
+    return false;
+  }
+
+  // Get user ID from event (stored in context by event bus normalizeEvent)
+  const eventUserId = event.context?.userId;
+
+  if (!eventUserId || eventUserId === 'unknown') {
+    // No user info in event, assume it's external
+    return false;
+  }
+
+  // Compare user IDs (event stores user ID as either user.id or user.username)
+  const currentUserId = currentUser.id || currentUser.username;
+  const isSameUser = eventUserId === currentUserId ||
+                     eventUserId === currentUser.username;
+
+  return isSameUser;
+}
+
+/**
  * Update the main navigation sidebar/file tree
  * Called whenever files or folders change to refresh the navigation view
  * Adds/removes items dynamically without full tree refresh
@@ -315,10 +353,19 @@ function updateFileviewer(space, file, operation = 'update') {
   } else if (operation === 'update') {
     // File was updated - handle based on whether user is editing or viewing
     if (documentViewerState.isFileCurrentlyViewed(file.path)) {
+      // Check if this change came from the current user via API
+      const isUserOwnChange = isChangeFromCurrentUser(event);
+
       if (documentViewerState.isInEditMode()) {
-        // File is in edit mode - show conflict dialog
-        if (navController && navController.handleEditModeConflict) {
-          navController.handleEditModeConflict();
+        // File is in edit mode
+        if (isUserOwnChange) {
+          // User saved the file themselves - don't show dialog
+          console.log('[NavigationUpdater] Ignoring self-inflicted API change while editing');
+        } else {
+          // Someone else or external change detected - show conflict dialog
+          if (navController && navController.handleEditModeConflict) {
+            navController.handleEditModeConflict();
+          }
         }
       } else {
         // File is in view mode - reload content silently

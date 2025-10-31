@@ -139,11 +139,39 @@ class WikiEventBus extends EventEmitter {
    * @private
    */
   logEvent(event) {
-    const { operation, itemType, source } = event.event;
+    const { operation, itemType, source, id } = event.event;
     const spaceName = event.space.name;
     const { path } = event.item;
     const spacePath = event.context.fullPath;
+    const timestamp = new Date(event.event.timestamp).toLocaleTimeString();
 
+    // Color coding for console output
+    const colors = {
+      create: 'color: #4CAF50; font-weight: bold;',  // Green
+      update: 'color: #2196F3; font-weight: bold;',  // Blue
+      delete: 'color: #F44336; font-weight: bold;'   // Red
+    };
+
+    const color = colors[operation] || 'color: #999;';
+
+    // Console group for detailed event logging
+    console.group(
+      `%c[WIKI-EVENT-BUS] ${operation.toUpperCase()} ${itemType.toUpperCase()} @ ${timestamp}`,
+      `${color} background-color: #f5f5f5; padding: 4px 8px; border-radius: 3px;`
+    );
+
+    console.log('%c📋 Event ID:', 'color: #666; font-weight: bold;', id);
+    console.log('%c🗂️  Space:', 'color: #9C27B0; font-weight: bold;', `${spaceName}`);
+    console.log('%c📄 Path:', 'color: #FF9800; font-weight: bold;', path);
+    console.log('%c📍 Full Path:', 'color: #673AB7; font-weight: bold;', spacePath);
+    console.log('%c📡 Source:', 'color: #0288D1; font-weight: bold;', source);
+
+    console.log('%c📦 Full Event Object:', 'color: #1976D2; font-weight: bold;');
+    console.log(event);
+
+    console.groupEnd();
+
+    // Also log to the logger service for persistence
     const logMessage =
       `[WIKI-EVENT] ${operation.toUpperCase()} ${itemType.toUpperCase()} ` +
       `(${source}) | Space: "${spaceName}" | Path: "${path}" | ` +
@@ -222,6 +250,67 @@ class WikiEventBus extends EventEmitter {
    */
   filterEvents(predicate) {
     return this.eventHistory.filter(predicate);
+  }
+
+  /**
+   * Subscribe to events locally
+   * Allows backend components to listen for file/folder changes
+   * @param {string} eventType - Event type to listen for ('change', or specific 'file:create', 'folder:delete', etc.)
+   * @param {Function} callback - Callback function called with event object
+   * @return {Function} Unsubscribe function
+   */
+  subscribe(eventType = 'change', callback) {
+    // Subscribe to internal event emitter
+    this.on(eventType, callback);
+
+    // Return unsubscribe function
+    return () => {
+      this.off(eventType, callback);
+    };
+  }
+
+  /**
+   * Get a human-readable summary of event activity
+   * @return {Object} Summary of recent activity
+   */
+  getActivitySummary() {
+    const stats = this.getStatistics();
+    const recent = this.getRecentEvents(5);
+
+    return {
+      stats: stats,
+      recentEvents: recent.map(event => ({
+        id: event.event.id,
+        type: event.event.type,
+        timestamp: event.event.timestamp,
+        spaceName: event.space.name,
+        itemName: event.item.name,
+        itemPath: event.item.path,
+        source: event.event.source
+      }))
+    };
+  }
+
+  /**
+   * Display event summary to console
+   * Useful for debugging and monitoring
+   * @return {void}
+   */
+  printSummary() {
+    const summary = this.getActivitySummary();
+
+    console.group('%c[WIKI-EVENT-BUS] Activity Summary', 'color: white; background-color: #3F51B5; padding: 4px 8px; border-radius: 3px; font-weight: bold;');
+
+    console.log('%c📊 Statistics:', 'color: #1976D2; font-weight: bold;', summary.stats);
+
+    if (summary.recentEvents.length > 0) {
+      console.log('%c🕐 Recent Events:', 'color: #F57C00; font-weight: bold;');
+      console.table(summary.recentEvents);
+    }
+
+    console.groupEnd();
+
+    return summary;
   }
 }
 
