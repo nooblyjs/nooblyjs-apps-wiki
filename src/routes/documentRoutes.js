@@ -629,6 +629,21 @@ ${documentPath}\
 
         logger.info(`Successfully saved document to ${documentPath}`);
 
+        // Emit event through EventBus for document update
+        if (global.eventBus) {
+          const spaces = await dataManager.read('spaces');
+          const space = spaces.find(s => s.name === spaceName);
+          global.eventBus.emitChange('update', 'file', {
+            spaceId: space?.id || null,
+            spaceName: spaceName,
+            name: path.basename(documentPath),
+            path: documentPath,
+            modified: stats.mtime.toISOString(),
+            size: stats.size,
+            source: 'api'
+          });
+        }
+
         // Update search index for searchable files
         if (isTextBased) {
           // Clear search cache to refresh results
@@ -779,6 +794,22 @@ ${documentPath}\
           newDocument.document = docMetadata;
 
           logger.info(`Created new document: ${title} (ID: ${nextId})`);
+
+          // Emit event through EventBus
+          if (global.eventBus) {
+            const spaces = await dataManager.read('spaces');
+            const space = spaces.find(s => s.id === parseInt(spaceId));
+            global.eventBus.emitChange('create', 'file', {
+              spaceId: space?.id || null,
+              spaceName: spaceName,
+              name: path.basename(finalPath),
+              path: finalPath,
+              parentPath: path.dirname(finalPath) === '.' ? '' : path.dirname(finalPath),
+              created: docMetadata.createdAt,
+              modified: docMetadata.modifiedAt,
+              source: 'api'
+            });
+          }
         }
 
         res.json(newDocument);

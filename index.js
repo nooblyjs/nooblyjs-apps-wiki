@@ -23,6 +23,7 @@ const { processTask } = require('./src/activities/taskProcessor');
 const { startFileWatcher } = require('./src/activities/fileWatcher');
 const DataManager = require('./src/components/dataManager');
 const AIService = require('./src/components/aiService');
+const WikiEventBus = require('./src/components/eventBus');
 
 const { Server } = require('socket.io');
 const SearchIndexer = require('./src/activities/searchIndexer');
@@ -82,6 +83,11 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
 
   // Make io available globally for other modules
   global.io = io;
+
+  // Initialize Wiki Event Bus for centralized file/folder change tracking
+  const eventBus = new WikiEventBus(logger, io);
+  global.eventBus = eventBus;
+  logger.info('Wiki Event Bus initialized and available globally');
   
   // Initialize wiki data if not exists
   (async () => {

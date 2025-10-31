@@ -58,6 +58,9 @@ class WikiApp {
         this.initSidebar();
         this.initSidebarResize();
 
+        // Set navigation controller reference for event bus integration
+        socketService.setNavigationController(navigationController);
+
         // Initialize Socket.IO for real-time updates
         socketService.init();
     }

@@ -1,5 +1,6 @@
 import { documentController } from "./documentcontroller.js";
 import { templatesController } from "./templatescontroller.js";
+import folderViewerState from "./folderViewerState.js";
 
 export const navigationController = {
     app: null,
@@ -195,6 +196,190 @@ export const navigationController = {
             }
             return '';
         }).join('');
+    },
+
+    /**
+     * Bind events to a single file item in the file tree (for dynamic elements)
+     * @param {HTMLElement} fileItem - The file item element
+     */
+    bindFileItemEvents_Single(fileItem) {
+        if (!fileItem) return;
+
+        // Click event
+        fileItem.addEventListener('click', () => {
+            const documentPath = fileItem.dataset.documentPath;
+            const spaceName = fileItem.dataset.spaceName;
+            documentController.openDocumentByPath(documentPath, spaceName);
+        });
+
+        // Context menu
+        fileItem.addEventListener('contextmenu', (e) => {
+            e.stopPropagation();
+            const filePath = fileItem.dataset.documentPath;
+            const spaceName = fileItem.dataset.spaceName;
+            this.contextMenuTargetSpaceName = spaceName;
+            this.showContextMenu(e, filePath, 'file');
+        });
+
+        // Drag and drop
+        fileItem.setAttribute('draggable', 'true');
+        fileItem.addEventListener('dragstart', (e) => {
+            if (this.isReadOnlyMode) {
+                e.preventDefault();
+                return;
+            }
+            this.handleDragStart(e, fileItem.dataset.documentPath, 'file');
+        });
+    },
+
+    /**
+     * Bind events to a single file item in the folder viewer (for dynamic elements)
+     * @param {HTMLElement} fileItem - The file item element
+     */
+    bindFolderViewFileItem_Single(fileItem) {
+        if (!fileItem) return;
+
+        // Click event to open document
+        fileItem.addEventListener('click', () => {
+            const documentPath = fileItem.dataset.documentPath;
+            const spaceName = fileItem.dataset.spaceName;
+            documentController.openDocumentByPath(documentPath, spaceName);
+        });
+
+        // Context menu for files
+        fileItem.addEventListener('contextmenu', (e) => {
+            e.stopPropagation();
+            const filePath = fileItem.dataset.documentPath;
+            const spaceName = fileItem.dataset.spaceName;
+            this.contextMenuTargetSpaceName = spaceName;
+            this.showContextMenu(e, filePath, 'file');
+        });
+
+        // Preview on hover for file items
+        fileItem.addEventListener('mouseenter', (e) => {
+            const documentPath = fileItem.dataset.documentPath;
+            const spaceName = fileItem.dataset.spaceName;
+
+            this.previewTimeout = setTimeout(() => {
+                this.currentPreviewCard = fileItem;
+                this.showFilePreview(fileItem, documentPath, spaceName);
+            }, 500);
+        });
+
+        fileItem.addEventListener('mouseleave', (e) => {
+            clearTimeout(this.previewTimeout);
+            this.hideFilePreview();
+        });
+    },
+
+    /**
+     * Bind events to a single folder item in the folder viewer (for dynamic elements)
+     * @param {HTMLElement} folderItem - The folder item element
+     */
+    bindFolderViewFolderItem_Single(folderItem) {
+        if (!folderItem) return;
+
+        // Click event to load folder
+        folderItem.addEventListener('click', () => {
+            const folderPath = folderItem.dataset.folderPath;
+            this.loadFolderContent(folderPath);
+        });
+
+        // Context menu for folders
+        folderItem.addEventListener('contextmenu', (e) => {
+            e.stopPropagation();
+            const folderPath = folderItem.dataset.folderPath;
+            this.showContextMenu(e, folderPath, 'folder');
+        });
+
+        // Drag and drop for folder items
+        if (!this.isReadOnlyMode) {
+            folderItem.setAttribute('draggable', 'true');
+
+            folderItem.addEventListener('dragstart', (e) => {
+                this.handleDragStart(e, folderItem.dataset.folderPath, 'folder');
+            });
+
+            folderItem.addEventListener('dragover', (e) => {
+                this.handleDragOver(e);
+            });
+
+            folderItem.addEventListener('dragenter', (e) => {
+                this.handleDragEnter(e, folderItem);
+            });
+
+            folderItem.addEventListener('dragleave', (e) => {
+                this.handleDragLeave(e, folderItem);
+            });
+
+            folderItem.addEventListener('drop', (e) => {
+                this.handleDrop(e, folderItem.dataset.folderPath, 'folder');
+            });
+        }
+    },
+
+    /**
+     * Bind events to a single folder item (for dynamic elements)
+     * @param {HTMLElement} folderItem - The folder item element
+     */
+    bindFolderItemEvents_Single(folderItem) {
+        if (!folderItem) return;
+
+        // Toggle folder
+        folderItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const folderId = folderItem.dataset.folderId;
+            const hasChildren = document.querySelector(`[data-folder-children="${folderId}"]`);
+            if (hasChildren) {
+                this.toggleFolder(folderId);
+            }
+        });
+
+        // Load folder content
+        folderItem.addEventListener('click', (e) => {
+            if (e.target.closest('.chevron-icon')) return;
+
+            const folderPath = folderItem.dataset.folderPath;
+            this.selectFolder(folderPath);
+            this.loadFolderContent(folderPath);
+        });
+
+        // Context menu
+        folderItem.addEventListener('contextmenu', (e) => {
+            const folderPath = folderItem.dataset.folderPath;
+            this.showContextMenu(e, folderPath, 'folder');
+        });
+
+        // Drag and drop
+        folderItem.setAttribute('draggable', 'true');
+
+        folderItem.addEventListener('dragstart', (e) => {
+            if (this.isReadOnlyMode) {
+                e.preventDefault();
+                return;
+            }
+            this.handleDragStart(e, folderItem.dataset.folderPath, 'folder');
+        });
+
+        folderItem.addEventListener('dragover', (e) => {
+            if (this.isReadOnlyMode) return;
+            this.handleDragOver(e);
+        });
+
+        folderItem.addEventListener('dragenter', (e) => {
+            if (this.isReadOnlyMode) return;
+            this.handleDragEnter(e, folderItem);
+        });
+
+        folderItem.addEventListener('dragleave', (e) => {
+            if (this.isReadOnlyMode) return;
+            this.handleDragLeave(e, folderItem);
+        });
+
+        folderItem.addEventListener('drop', (e) => {
+            if (this.isReadOnlyMode) return;
+            this.handleDrop(e, folderItem.dataset.folderPath, 'folder');
+        });
     },
 
     bindFileTreeEvents() {
@@ -619,6 +804,13 @@ export const navigationController = {
         // Store the current folder path for context menu
         this.app.currentFolder = folderContent.path;
 
+        // Update folder viewer state so event bus knows what's being viewed
+        folderViewerState.setCurrentFolder(folderContent.path, this.currentViewMode);
+
+        // Initialize item counts from folderContent
+        folderViewerState.itemCount.files = folderContent.stats.files;
+        folderViewerState.itemCount.folders = folderContent.stats.folders;
+
         // Update the main content to show folder overview
         const mainContent = document.getElementById('mainContent');
         if (!mainContent) return;
@@ -878,6 +1070,9 @@ export const navigationController = {
                 if (newMode !== this.currentViewMode) {
                     this.currentViewMode = newMode;
                     this.lastGlobalViewMode = newMode; // Track the last globally used mode
+
+                    // Update folder viewer state with new view mode
+                    folderViewerState.currentViewMode = newMode;
 
                     // Save this preference for the current folder
                     await this.saveFolderViewPreference(this.app.currentFolder, newMode);
@@ -2260,5 +2455,20 @@ export const navigationController = {
         }
 
         console.log('window.currentDocuments updated for path:', folderPath, window.currentDocuments);
+    },
+
+    /**
+     * Reload the currently viewed file content
+     * Delegates to documentController's reloadCurrentFileContent method
+     * Called when file update event is received from event bus
+     */
+    reloadCurrentFileContent() {
+        console.log('[NavigationController] reloadCurrentFileContent() called');
+
+        if (documentController && documentController.reloadCurrentFileContent) {
+            return documentController.reloadCurrentFileContent();
+        } else {
+            console.warn('[NavigationController] documentController or reloadCurrentFileContent not available');
+        }
     }
 };

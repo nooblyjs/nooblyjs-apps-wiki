@@ -9,6 +9,7 @@
 
 import { navigationController } from "./navigationcontroller.js";
 import { userController } from "./usercontroller.js";
+import documentViewerState from "./documentViewerState.js";
 
 export const documentController = {
     isReadOnlyMode: false,
@@ -65,6 +66,11 @@ export const documentController = {
             };
 
             this.app.currentDocument = document;
+
+            // Track the currently viewed file in documentViewerState
+            const viewMode = metadata?.viewer || 'default';
+            documentViewerState.setCurrentFile(documentPath, viewMode, false);
+
             this.showEnhancedDocumentView(document);
 
             // Track document view for recent files
@@ -82,6 +88,10 @@ export const documentController = {
             };
 
             this.app.currentDocument = document;
+
+            // Track the currently viewed file in documentViewerState
+            documentViewerState.setCurrentFile(documentPath, 'markdown', false);
+
             this.showEnhancedDocumentView(document);
             this.app.showNotification('Failed to load document content', 'error');
 
@@ -1697,5 +1707,108 @@ export const documentController = {
                 </div>`;
             }
         });
+    },
+
+    /**
+     * Reload the currently viewed file content
+     * Called when file update event is received from event bus
+     * Updates the document viewer with fresh content while maintaining view mode
+     */
+    async reloadCurrentFileContent() {
+        const currentPath = documentViewerState.getCurrentFilePath();
+
+        if (!currentPath || !this.app.currentDocument) {
+            console.warn('[DocumentController] No file currently being viewed');
+            return;
+        }
+
+        try {
+            // Fetch updated file content
+            const response = await fetch(
+                `/applications/wiki/api/documents/content?path=${encodeURIComponent(currentPath)}&spaceName=${encodeURIComponent(this.app.currentDocument.spaceName)}&enhanced=true`
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to reload document: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const { content, metadata } = data;
+
+            // Update current document with new content
+            const updatedDoc = {
+                title: currentPath.split('/').pop(),
+                path: currentPath,
+                spaceName: this.app.currentDocument.spaceName,
+                content: content,
+                metadata: metadata
+            };
+
+            this.app.currentDocument = updatedDoc;
+
+            // Re-render with the appropriate viewer
+            this.showEnhancedDocumentView(updatedDoc);
+
+            // Show bootstrap alert that file was updated
+            const alertContainer = document.querySelector('#documentView .document-container');
+            if (alertContainer) {
+                const alertHtml = `
+                    <div class="alert alert-info alert-dismissible fade show" role="alert" style="margin-bottom: 20px; animation: slideInDown 0.3s ease-in-out;">
+                        <i class="bi bi-info-circle-fill" style="margin-right: 8px;"></i>
+                        <strong>File Updated!</strong> The file content has been reloaded with the latest changes.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                // Insert alert at the top of the document container
+                const existingAlert = alertContainer.querySelector('.alert-info');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+
+                alertContainer.insertAdjacentHTML('afterbegin', alertHtml);
+
+                // Auto-dismiss alert after 5 seconds
+                setTimeout(() => {
+                    const alert = alertContainer.querySelector('.alert-info');
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            }
+        } catch (error) {
+            console.error('Error reloading document content:', error);
+
+            // Show error alert
+            const alertContainer = document.querySelector('#documentView .document-container');
+            if (alertContainer) {
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px; animation: slideInDown 0.3s ease-in-out;">
+                        <i class="bi bi-exclamation-triangle-fill" style="margin-right: 8px;"></i>
+                        <strong>Error!</strong> Failed to reload file content: ${this.escapeHtml(error.message)}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                const existingAlert = alertContainer.querySelector('.alert-danger');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+
+                alertContainer.insertAdjacentHTML('afterbegin', alertHtml);
+
+                // Auto-dismiss error alert after 7 seconds
+                setTimeout(() => {
+                    const alert = alertContainer.querySelector('.alert-danger');
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 7000);
+            }
+
+            this.app.showNotification('Failed to reload file content', 'error');
+        }
     }
 };

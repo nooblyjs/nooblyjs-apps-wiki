@@ -8,6 +8,7 @@
  */
 
 import { navigationController } from '../modules/navigationcontroller.js';
+import { initializeEventBusListener } from '../modules/eventBusListener.js';
 
 class SocketService {
   constructor() {
@@ -15,6 +16,16 @@ class SocketService {
     this.isConnected = false;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
+    this.navigationController = null;
+  }
+
+  /**
+   * Set navigation controller reference for event bus integration
+   * @param {Object} navController - The navigationController instance
+   */
+  setNavigationController(navController) {
+    this.navigationController = navController;
+    console.log('[SocketService] Navigation controller reference set');
   }
 
   /**
@@ -46,6 +57,9 @@ class SocketService {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.showNotification('Connected to server', 'success', false);
+
+      // Initialize Event Bus listener for detailed event logging
+      initializeEventBusListener(this.socket, this.navigationController);
     });
 
     this.socket.on('disconnect', (reason) => {

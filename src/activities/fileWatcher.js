@@ -154,10 +154,55 @@ function startFileWatcher(services) {
 }
 
 /**
+ * Clear all relevant caches when folder structure changes
+ * Invalidates folder, space, and search caches
+ * @private
+ */
+async function invalidateFolderCaches(relativePath, space, cache, logger) {
+  try {
+    const parentPath = path.dirname(relativePath);
+
+    // Clear the file content cache if this is a file (not just a folder)
+    // File content cache key is: ${spaceName}-${documentPath}
+    await cache.delete(`${space.name}-${relativePath}`);
+    logger.info(`[Cache] Cleared file content cache: ${space.name}-${relativePath}`);
+
+    // Clear caches for the parent folder and all ancestors
+    let currentPath = parentPath;
+    while (currentPath && currentPath !== '.') {
+      // Folder structure cache for this path
+      await cache.delete(`wiki:folder:${space.id}:${currentPath}`);
+      await cache.delete(`wiki:folder:${space.name}:${currentPath}`);
+
+      // Move up the directory tree
+      const lastSlash = currentPath.lastIndexOf('/');
+      currentPath = lastSlash === -1 ? '.' : currentPath.substring(0, lastSlash);
+    }
+
+    // Clear root folder cache
+    await cache.delete(`wiki:folder:${space.id}:`);
+    await cache.delete(`wiki:folder:${space.name}:`);
+
+    // Clear general folder/document list caches
+    await cache.delete('wiki:documents:list');
+    await cache.delete('wiki:documents:recent');
+    await cache.delete('wiki:recent:activity');
+    await cache.delete(`wiki:space:${space.id}:documents`);
+
+    // Clear search caches
+    await cache.delete('wiki:search:*');
+
+    logger.info(`[Cache] Invalidated folder caches for: ${space.name}/${relativePath}`);
+  } catch (error) {
+    logger.warn(`Failed to invalidate folder caches:`, error.message);
+  }
+}
+
+/**
  * Handle file added event
  */
 async function handleFileAdded(filePath, watchedPaths, services) {
-  const { logger, io, cache } = services;
+  const { logger, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) {
@@ -186,29 +231,30 @@ async function handleFileAdded(filePath, watchedPaths, services) {
     }
   }
 
-  // Emit Socket.IO event
-  io.emit('file:added', {
-    space: {
-      id: space.id,
-      name: space.name
-    },
-    file: {
+  // Invalidate all relevant folder and structure caches
+  await invalidateFolderCaches(relativePath, space, cache, logger);
+
+  // Emit event through centralized Event Bus
+  if (global.eventBus) {
+    global.eventBus.emitChange('create', 'file', {
+      spaceId: space.id,
+      spaceName: space.name,
       name: fileName,
       path: relativePath,
       parentPath: parentPath === '.' ? '' : parentPath,
-      type: 'document',
       created: stats.created,
       modified: stats.modified,
-      size: stats.size
-    }
-  });
+      size: stats.size,
+      source: 'file-watcher'
+    });
+  }
 }
 
 /**
  * Handle folder added event
  */
 async function handleFolderAdded(dirPath, watchedPaths, services) {
-  const { logger, io } = services;
+  const { logger, cache } = services;
   const space = findSpaceForPath(dirPath, watchedPaths);
 
   if (!space) {
@@ -225,28 +271,29 @@ async function handleFolderAdded(dirPath, watchedPaths, services) {
   // Get folder stats
   const stats = await getFileStats(dirPath);
 
-  // Emit Socket.IO event
-  io.emit('folder:added', {
-    space: {
-      id: space.id,
-      name: space.name
-    },
-    folder: {
+  // Invalidate all relevant folder and structure caches
+  await invalidateFolderCaches(relativePath, space, cache, logger);
+
+  // Emit event through centralized Event Bus
+  if (global.eventBus) {
+    global.eventBus.emitChange('create', 'folder', {
+      spaceId: space.id,
+      spaceName: space.name,
       name: folderName,
       path: relativePath,
       parentPath: parentPath === '.' ? '' : parentPath,
-      type: 'folder',
       created: stats.created,
-      modified: stats.modified
-    }
-  });
+      modified: stats.modified,
+      source: 'file-watcher'
+    });
+  }
 }
 
 /**
  * Handle file changed event
  */
 async function handleFileChanged(filePath, watchedPaths, services) {
-  const { logger, io, cache } = services;
+  const { logger, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) return;
@@ -271,26 +318,28 @@ async function handleFileChanged(filePath, watchedPaths, services) {
     }
   }
 
-  // Emit Socket.IO event
-  io.emit('file:changed', {
-    space: {
-      id: space.id,
-      name: space.name
-    },
-    file: {
+  // Invalidate folder structure and search caches
+  await invalidateFolderCaches(relativePath, space, cache, logger);
+
+  // Emit event through centralized Event Bus
+  if (global.eventBus) {
+    global.eventBus.emitChange('update', 'file', {
+      spaceId: space.id,
+      spaceName: space.name,
       name: fileName,
       path: relativePath,
       modified: stats.modified,
-      size: stats.size
-    }
-  });
+      size: stats.size,
+      source: 'file-watcher'
+    });
+  }
 }
 
 /**
  * Handle file deleted event
  */
 async function handleFileDeleted(filePath, watchedPaths, services) {
-  const { logger, io, cache } = services;
+  const { logger, cache } = services;
   const space = findSpaceForPath(filePath, watchedPaths);
 
   if (!space) return;
@@ -311,25 +360,26 @@ async function handleFileDeleted(filePath, watchedPaths, services) {
     }
   }
 
-  // Emit Socket.IO event
-  io.emit('file:deleted', {
-    space: {
-      id: space.id,
-      name: space.name
-    },
-    file: {
+  // Invalidate folder structure and search caches
+  await invalidateFolderCaches(relativePath, space, cache, logger);
+
+  // Emit event through centralized Event Bus
+  if (global.eventBus) {
+    global.eventBus.emitChange('delete', 'file', {
+      spaceId: space.id,
+      spaceName: space.name,
       name: fileName,
       path: relativePath,
-      type: 'document'
-    }
-  });
+      source: 'file-watcher'
+    });
+  }
 }
 
 /**
  * Handle folder deleted event
  */
 async function handleFolderDeleted(dirPath, watchedPaths, services) {
-  const { logger, io } = services;
+  const { logger, cache } = services;
   const space = findSpaceForPath(dirPath, watchedPaths);
 
   if (!space) return;
@@ -339,18 +389,19 @@ async function handleFolderDeleted(dirPath, watchedPaths, services) {
 
   logger.info(`Folder deleted: ${folderName} from ${space.name}`);
 
-  // Emit Socket.IO event
-  io.emit('folder:deleted', {
-    space: {
-      id: space.id,
-      name: space.name
-    },
-    folder: {
+  // Invalidate folder structure and search caches
+  await invalidateFolderCaches(relativePath, space, cache, logger);
+
+  // Emit event through centralized Event Bus
+  if (global.eventBus) {
+    global.eventBus.emitChange('delete', 'folder', {
+      spaceId: space.id,
+      spaceName: space.name,
       name: folderName,
       path: relativePath,
-      type: 'folder'
-    }
-  });
+      source: 'file-watcher'
+    });
+  }
 }
 
 /**

@@ -114,6 +114,20 @@ module.exports = (options, eventEmitter, services) => {
 
         logger.info(`Created folder: ${name} at ${folderPath}`);
 
+        // Emit event through EventBus for folder creation
+        if (global.eventBus) {
+          global.eventBus.emitChange('create', 'folder', {
+            spaceId: space.id,
+            spaceName: space.name,
+            name: name,
+            path: folderPath,
+            parentPath: parentPath || '',
+            created: folder.createdAt,
+            modified: folder.createdAt,
+            source: 'api'
+          });
+        }
+
         res.json({ success: true, folder });
       } catch (fileError) {
         logger.error(`Failed to create folder ${folderPath}:`, fileError);
@@ -370,6 +384,17 @@ module.exports = (options, eventEmitter, services) => {
         // Delete the folder and all its contents recursively
         await fs.rm(fullFolderPath, { recursive: true, force: true });
 
+        // Emit event through EventBus for folder deletion
+        if (global.eventBus) {
+          global.eventBus.emitChange('delete', 'folder', {
+            spaceId: space.id,
+            spaceName: space.name,
+            name: path.basename(folderPath),
+            path: folderPath,
+            source: 'api'
+          });
+        }
+
         logger.info(`Successfully deleted folder: ${folderPath}`);
         res.json({ success: true, message: 'Folder deleted successfully' });
 
@@ -445,6 +470,17 @@ module.exports = (options, eventEmitter, services) => {
         if (searchIndexer) {
           searchIndexer.removeFileFromIndex(filePath);
           logger.info(`Removed document from search index: ${filePath}`);
+        }
+
+        // Emit event through EventBus for document deletion
+        if (global.eventBus) {
+          global.eventBus.emitChange('delete', 'file', {
+            spaceId: space.id,
+            spaceName: space.name,
+            name: path.basename(filePath),
+            path: filePath,
+            source: 'api'
+          });
         }
 
         logger.info(`Successfully deleted document: ${filePath}`);
