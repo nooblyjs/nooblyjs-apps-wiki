@@ -1688,7 +1688,7 @@ export const documentController = {
     /**
      * Close editor
      */
-    closeEditor() {
+    closeEditor(doc) {
         this.app.isEditing = false;
 
         // Stop auto-save
@@ -1703,14 +1703,17 @@ export const documentController = {
         // Remove event listeners
         document.removeEventListener('keydown', this.app.handleKeyDown);
 
+        // Use the document passed to closeEditor, or fall back to currentDocument
+        const docToShow = doc || this.app.currentDocument;
+
         // Update documentViewerState to reflect exit from edit mode
-        if (this.app.currentDocument) {
-            const viewMode = this.app.currentDocument.metadata?.viewer || 'markdown';
-            documentViewerState.setCurrentFile(this.app.currentDocument.path, viewMode, false);
+        if (docToShow) {
+            const viewMode = docToShow.metadata?.viewer || 'markdown';
+            documentViewerState.setCurrentFile(docToShow.path, viewMode, false);
         }
 
         // Return to document view
-        this.showEnhancedDocumentView(this.app.currentDocument);
+        this.showEnhancedDocumentView(docToShow);
     },
 
     /**
