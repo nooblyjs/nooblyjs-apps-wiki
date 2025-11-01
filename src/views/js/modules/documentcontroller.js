@@ -10,6 +10,12 @@
 import { navigationController } from "./navigationcontroller.js";
 import { userController } from "./usercontroller.js";
 import documentViewerState from "./documentViewerState.js";
+import { dragDropManager } from "./dragDropManager.js";
+import { uploadManager } from "./uploadManager.js";
+import { uploadProgressUI } from "./uploadProgressUI.js";
+import { errorHandler } from "./errorHandler.js";
+import { clipboardPasteHandler } from "./clipboardPasteHandler.js";
+import { pasteIndicator } from "./pasteIndicator.js";
 
 export const documentController = {
     isReadOnlyMode: false,
@@ -18,6 +24,578 @@ export const documentController = {
 
     init(app) {
         this.app = app;
+        uploadProgressUI.init();
+        pasteIndicator.init();
+        this.initializeDragDrop();
+        this.initializeClipboardPaste();
+    },
+
+    /**
+     * Initialize drag and drop functionality
+     */
+    initializeDragDrop() {
+        // Initialize upload manager first
+        dragDropManager.initializeUploadManager({
+            onProgress: (progressData) => this.handleUploadProgress(progressData),
+            onSuccess: (successData) => this.handleUploadSuccess(successData),
+            onError: (errorData) => this.handleUploadError(errorData),
+            onComplete: (completeData) => this.handleUploadComplete(completeData),
+            onUploadStarted: (startData) => this.handleUploadStarted(startData),
+            onRetry: (retryData) => this.handleUploadRetry(retryData),
+            onErrorRecovery: (recoveryData) => this.handleUploadErrorRecovery(recoveryData)
+        });
+
+        dragDropManager.init(
+            ['#mainContent', '#documentView', '#fileTree'],
+            {
+                enableVisualFeedback: true,
+                enableValidation: true,
+                onFilesDropped: (files, dropTarget) => this.handleFilesDropped(files, dropTarget),
+                onTargetFolderDetected: (folderInfo) => this.handleTargetFolderDetected(folderInfo),
+                onValidationError: (validationResult) => this.handleValidationErrors(validationResult),
+                onValidationWarning: (validationResult) => this.handleValidationWarnings(validationResult)
+            }
+        );
+
+        // Configure drop zones with specific behavior
+        dragDropManager.configureDropZone('#fileTree', {
+            type: 'file-tree',
+            detectFolderFromItem: true,
+            readOnlyFoldersDisabled: true
+        });
+
+        dragDropManager.configureDropZone('#documentView', {
+            type: 'content-area',
+            useCurrentFolder: true
+        });
+
+        dragDropManager.configureDropZone('#mainContent', {
+            type: 'main-area',
+            useCurrentFolder: true
+        });
+    },
+
+    /**
+     * Initialize clipboard paste functionality
+     */
+    initializeClipboardPaste() {
+        clipboardPasteHandler.init({
+            config: {
+                enabledFormats: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+                maxImageSize: 50 * 1024 * 1024, // 50 MB
+                autoGenerateFilenames: true,
+                uploadOnPaste: true,
+                showPasteNotification: true
+            },
+            onImageDetected: (detectionData) => this.handleImageDetected(detectionData),
+            onImagePasted: (pasteData) => this.handleImagePasted(pasteData),
+            onError: (errorData) => this.handleClipboardError(errorData),
+            onPasteAttempt: (attemptData) => this.handlePasteAttempt(attemptData)
+        });
+
+        console.log('[DocumentController] Clipboard paste handler initialized');
+    },
+
+    /**
+     * Handle image detected in clipboard
+     * @param {Object} detectionData - Detection information
+     */
+    handleImageDetected(detectionData) {
+        const { count } = detectionData;
+        console.log(`[DocumentController] Image(s) detected in clipboard: ${count}`);
+
+        // Show visual feedback
+        pasteIndicator.showPasteDetected(detectionData);
+
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `${count} image(s) found in clipboard. Pasting...`,
+                'info'
+            );
+        }
+    },
+
+    /**
+     * Handle image pasted from clipboard
+     * @param {Object} pasteData - Paste information
+     */
+    handleImagePasted(pasteData) {
+        const { file, filename, source, index, total } = pasteData;
+
+        console.log(`[DocumentController] Image pasted: ${filename} (${index + 1}/${total}) from ${source}`);
+
+        // Add image to upload progress UI
+        uploadProgressUI.addFileUpload({
+            uploadId: `clipboard_${Date.now()}_${index}`,
+            file: filename,
+            size: file.size
+        });
+
+        // Get current upload destination
+        const spaceId = this.getCurrentSpaceId();
+        const folderPath = this.app && this.app.currentFolder ? this.app.currentFolder : '';
+
+        if (!spaceId) {
+            console.error('[DocumentController] No space ID available for clipboard paste upload');
+            if (this.app && this.app.showNotification) {
+                this.app.showNotification('Cannot upload: no space selected', 'error');
+            }
+            return;
+        }
+
+        // Create a file-like object for upload
+        const fileInfo = {
+            uploadId: `clipboard_${Date.now()}_${index}`,
+            file: file,
+            size: file.size,
+            source: source
+        };
+
+        // Trigger upload
+        this.uploadPastedImage(fileInfo, spaceId, folderPath);
+    },
+
+    /**
+     * Upload pasted image file
+     * @param {Object} fileInfo - File information
+     * @param {number} spaceId - Target space ID
+     * @param {string} folderPath - Target folder path
+     */
+    async uploadPastedImage(fileInfo, spaceId, folderPath) {
+        const { uploadId, file } = fileInfo;
+
+        try {
+            // Initialize upload manager if not already done
+            if (!uploadManager.onProgress) {
+                uploadManager.init({
+                    onProgress: (progressData) => this.handleUploadProgress(progressData),
+                    onSuccess: (successData) => this.handleUploadSuccess(successData),
+                    onError: (errorData) => this.handleUploadError(errorData),
+                    onComplete: (completeData) => this.handleUploadComplete(completeData),
+                    onUploadStarted: (startData) => this.handleUploadStarted(startData),
+                    onRetry: (retryData) => this.handleUploadRetry(retryData),
+                    onErrorRecovery: (recoveryData) => this.handleUploadErrorRecovery(recoveryData)
+                });
+            }
+
+            // Upload the file
+            const results = await uploadManager.uploadFiles([file], {
+                spaceId: spaceId,
+                folderPath: folderPath
+            });
+
+            console.log('[DocumentController] Pasted image upload results:', results);
+
+        } catch (error) {
+            console.error('[DocumentController] Error uploading pasted image:', error);
+            uploadProgressUI.markUploadError(uploadId, {
+                error: error.message,
+                displayMessage: `Failed to upload pasted image: ${error.message}`
+            });
+
+            if (this.app && this.app.showNotification) {
+                this.app.showNotification(
+                    `Failed to upload pasted image: ${error.message}`,
+                    'error'
+                );
+            }
+        }
+    },
+
+    /**
+     * Handle clipboard paste error
+     * @param {Object} errorData - Error information
+     */
+    handleClipboardError(errorData) {
+        const { type, message, file } = errorData;
+
+        console.error('[DocumentController] Clipboard paste error:', type, message);
+
+        // Show visual feedback for error
+        pasteIndicator.showUploadError({
+            error: message,
+            filename: file ? file.name : 'Unknown'
+        });
+
+        if (this.app && this.app.showNotification) {
+            let displayMessage = message;
+
+            if (type === 'no_images') {
+                displayMessage = 'No images found in clipboard. You can paste PNG, JPEG, GIF, or WebP images.';
+            } else if (type === 'file_too_large') {
+                displayMessage = `Image too large (${file ? file.name : 'unknown'}). Maximum size is 50 MB.`;
+            } else if (type === 'url_download_failed') {
+                displayMessage = `Failed to download image from URL.`;
+            }
+
+            this.app.showNotification(displayMessage, 'warning');
+        }
+    },
+
+    /**
+     * Handle paste attempt (user pressed Ctrl+V or Cmd+V)
+     * @param {Object} attemptData - Attempt information
+     */
+    handlePasteAttempt(attemptData) {
+        console.log('[DocumentController] Paste attempt detected');
+    },
+
+    /**
+     * Handle target folder detection during drag
+     * Updates UI to show where files will be uploaded
+     * @param {Object} folderInfo - Folder information
+     */
+    handleTargetFolderDetected(folderInfo) {
+        const targetElement = document.getElementById('dropZoneTarget');
+        if (targetElement && folderInfo) {
+            const targetText = folderInfo.name || 'Root';
+            targetElement.textContent = `📁 Uploading to: ${targetText}`;
+            targetElement.classList.remove('hidden');
+        }
+    },
+
+    /**
+     * Handle validation errors
+     * @param {Object} validationResult - Result from file validation
+     */
+    handleValidationErrors(validationResult) {
+        console.error('[DocumentController] File validation failed:', validationResult);
+
+        const validator = dragDropManager.getValidator();
+        const errorMessage = validator.formatErrorMessage(validationResult);
+
+        // Show error notification to user
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `File validation failed: ${validationResult.rejectedCount} file(s) were rejected.`,
+                'error'
+            );
+        }
+
+        // Log detailed error information
+        console.warn('[DocumentController] Validation Details:\n' + errorMessage);
+
+        // You can also display errors in a modal or detailed error panel
+        this.showValidationErrorDetails(validationResult);
+    },
+
+    /**
+     * Handle validation warnings
+     * @param {Object} validationResult - Result from file validation
+     */
+    handleValidationWarnings(validationResult) {
+        if (!validationResult.warnings || validationResult.warnings.length === 0) {
+            return;
+        }
+
+        console.warn('[DocumentController] File validation warnings:', validationResult.warnings);
+
+        const validator = dragDropManager.getValidator();
+        const warningMessage = validator.formatWarningMessage(validationResult.warnings);
+
+        // Show warning notification to user
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `${validationResult.warnings.length} file(s) have warnings but will be processed.`,
+                'warning'
+            );
+        }
+
+        // Log detailed warning information
+        console.info('[DocumentController] Validation Warnings:\n' + warningMessage);
+    },
+
+    /**
+     * Show detailed validation error information
+     * @param {Object} validationResult - Validation result object
+     */
+    showValidationErrorDetails(validationResult) {
+        const validator = dragDropManager.getValidator();
+        const errorMessage = validator.formatErrorMessage(validationResult);
+
+        // Format error details
+        const errorDetails = {
+            totalFiles: validationResult.totalFiles,
+            validFiles: validationResult.validCount,
+            rejectedFiles: validationResult.rejectedCount,
+            totalSize: validator.getReadableFileSize(validationResult.totalSize),
+            errors: validationResult.errors
+        };
+
+        console.table(errorDetails);
+        console.warn('Detailed error messages:\n' + errorMessage);
+    },
+
+    /**
+     * Handle files dropped into the application
+     * @param {FileList|Array<File>} files - Files that were dropped
+     * @param {Object} dropTarget - Information about where files were dropped
+     */
+    async handleFilesDropped(files, dropTarget) {
+        console.log('[DocumentController] Handling dropped files:', {
+            count: files.length,
+            dropTarget: dropTarget.selector,
+            targetFolder: dropTarget.folderInfo
+        });
+
+        const fileInfo = dragDropManager.getFileInfo(files);
+        console.log('[DocumentController] File details:', fileInfo);
+
+        // Store file info for later use in progress UI
+        this.droppedFilesInfo = fileInfo;
+
+        // Determine target folder path
+        let folderPath = '';
+        let folderMessage = '';
+
+        // First, check if files were dropped directly on a folder item in the file tree
+        if (dropTarget.folderInfo && dropTarget.folderInfo.path !== undefined && dropTarget.folderInfo.path !== '') {
+            folderPath = dropTarget.folderInfo.path;
+            folderMessage = ` to folder: "${dropTarget.folderInfo.name}"`;
+            console.log('[DocumentController] Uploading to drop target folder:', folderPath);
+        }
+        // If not, check if there's a current folder (regardless of view type)
+        // This handles folder views, cards view, etc.
+        else if (this.app && this.app.currentFolder) {
+            folderPath = this.app.currentFolder;
+            const folderName = this.app.currentFolder.split('/').pop() || 'Root';
+            folderMessage = ` to folder: "${folderName}"`;
+            console.log('[DocumentController] Uploading to current folder:', folderPath, '(view:', this.app.currentView, ')');
+        }
+        // Fallback to root if no folder context
+        else {
+            console.log('[DocumentController] Uploading to root folder (no folder context)');
+            console.log('[DocumentController] currentView:', this.app?.currentView);
+            console.log('[DocumentController] currentFolder:', this.app?.currentFolder);
+        }
+
+        // Show notification that upload is starting
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `Uploading ${files.length} file(s)${folderMessage}...`,
+                'info'
+            );
+        }
+
+        // Prepare upload options
+        const uploadOptions = {
+            spaceId: this.getCurrentSpaceId(),
+            folderPath: folderPath
+        };
+
+        console.log('[DocumentController] Upload options:', uploadOptions);
+
+        // Start the upload
+        try {
+            const results = await dragDropManager.startUpload(files, uploadOptions);
+            console.log('[DocumentController] Upload results:', results);
+        } catch (error) {
+            console.error('[DocumentController] Upload failed:', error);
+            if (this.app && this.app.showNotification) {
+                this.app.showNotification(
+                    `Upload failed: ${error.message}`,
+                    'error'
+                );
+            }
+        }
+    },
+
+    /**
+     * Get current space ID for uploads
+     * @returns {number} Current space ID
+     */
+    getCurrentSpaceId() {
+        if (this.app && this.app.currentSpace) {
+            return this.app.currentSpace.id;
+        }
+        // Default to space 1 (Personal Space)
+        return 1;
+    },
+
+    /**
+     * Handle upload started event
+     * @param {Object} startData - Start data with total files and upload IDs
+     */
+    handleUploadStarted(startData) {
+        console.log('[DocumentController] Upload started:', startData);
+
+        // Show upload progress UI
+        uploadProgressUI.show();
+
+        // Add each file to the progress UI
+        startData.uploadIds.forEach((uploadId, index) => {
+            const fileInfo = this.droppedFilesInfo && this.droppedFilesInfo[index]
+                ? this.droppedFilesInfo[index]
+                : { name: 'Unknown', size: 0 };
+
+            uploadProgressUI.addFileUpload({
+                uploadId,
+                file: fileInfo.name || 'Unknown',
+                size: fileInfo.size || 0
+            });
+        });
+
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `Starting upload of ${startData.totalFiles} file(s)...`,
+                'info'
+            );
+        }
+    },
+
+    /**
+     * Handle upload progress event
+     * @param {Object} progressData - Progress information
+     */
+    handleUploadProgress(progressData) {
+        const percentComplete = progressData.percentComplete.toFixed(0);
+        console.log(`[DocumentController] Upload progress for ${progressData.file}: ${percentComplete}%`);
+
+        // Update progress UI
+        uploadProgressUI.updateFileProgress(progressData.uploadId, {
+            loaded: progressData.loaded,
+            total: progressData.total,
+            percentComplete: progressData.percentComplete
+        });
+    },
+
+    /**
+     * Handle individual upload success
+     * @param {Object} successData - Success information
+     */
+    handleUploadSuccess(successData) {
+        console.log('[DocumentController] File uploaded successfully:', successData);
+
+        // Mark as successful in progress UI
+        uploadProgressUI.markUploadSuccess(successData.uploadId);
+
+        // Show visual feedback for pasted images
+        if (successData.uploadId && successData.uploadId.includes('clipboard')) {
+            pasteIndicator.showUploadSuccess({
+                filename: successData.file
+            });
+        }
+
+        // Optionally refresh the file tree or notify the user
+        if (navigationController && navigationController.refreshFileTree) {
+            navigationController.refreshFileTree();
+        }
+    },
+
+    /**
+     * Handle upload error for a file
+     * @param {Object} errorData - Error information
+     */
+    handleUploadError(errorData) {
+        console.error('[DocumentController] Upload error:', errorData);
+
+        // Mark as error in progress UI with full error object
+        uploadProgressUI.markUploadError(errorData.uploadId, errorData);
+
+        if (this.app && this.app.showNotification) {
+            const displayMessage = errorData.displayMessage || errorData.error || 'Upload failed';
+            this.app.showNotification(
+                `Failed to upload ${errorData.file}: ${displayMessage}`,
+                'error'
+            );
+        }
+    },
+
+    /**
+     * Handle upload retry in progress
+     * @param {Object} retryData - Retry information
+     */
+    handleUploadRetry(retryData) {
+        const { uploadId, file, attempt, maxAttempts, errorType, retryDelay } = retryData;
+
+        console.log(`[DocumentController] Upload retry: ${file} (${attempt}/${maxAttempts})`);
+
+        // Update progress UI to show retry in progress
+        uploadProgressUI.showRetryInProgress(uploadId, { attempt, maxAttempts, retryDelay });
+
+        if (this.app && this.app.showNotification) {
+            const delaySeconds = Math.ceil(retryDelay / 1000);
+            this.app.showNotification(
+                `Retrying ${file}... (attempt ${attempt}/${maxAttempts}) in ${delaySeconds}s`,
+                'info'
+            );
+        }
+    },
+
+    /**
+     * Handle error recovery with user action options
+     * @param {Object} recoveryData - Recovery information
+     */
+    handleUploadErrorRecovery(recoveryData) {
+        const { uploadId, file, classifiedError, recoveryAction, displayMessage } = recoveryData;
+
+        console.log(`[DocumentController] Upload error recovery: ${file} (${classifiedError.type})`);
+
+        // Pass to UI for user interaction
+        uploadProgressUI.markUploadError(uploadId, recoveryData);
+
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(
+                `${file}: ${classifiedError.title}`,
+                'warning'
+            );
+        }
+    },
+
+    /**
+     * Handle all uploads complete
+     * @param {Object} completeData - Completion data with results
+     */
+    handleUploadComplete(completeData) {
+        console.log('[DocumentController] All uploads complete:', completeData);
+
+        const { results } = completeData;
+        const successful = results.filter(r => r.success).length;
+        const failed = results.filter(r => !r.success).length;
+
+        let message = `Upload complete: ${successful} file(s) uploaded`;
+        let type = 'success';
+
+        if (failed > 0) {
+            message += `, ${failed} file(s) failed`;
+            type = 'warning';
+        }
+
+        if (this.app && this.app.showNotification) {
+            this.app.showNotification(message, type);
+        }
+
+        // Refresh file tree to show newly uploaded files
+        if (navigationController && navigationController.renderFileTree) {
+            console.log('[DocumentController] Refreshing file tree after upload');
+            navigationController.renderFileTree(navigationController.fullFileTree);
+        }
+
+        // If files were uploaded to a specific folder (not root), switch to folder view to show them
+        if (this.app && this.app.currentFolder && this.app.currentFolder.trim() !== '') {
+            console.log('[DocumentController] Switching to folder view to display uploaded files:', this.app.currentFolder);
+            if (navigationController && navigationController.loadFolderContent) {
+                navigationController.loadFolderContent(this.app.currentFolder);
+            }
+        }
+
+        // Trigger file tree update via Socket.IO if available
+        // The socketService manages the socket connection
+        try {
+            if (this.app && this.app.socketService && this.app.socketService.socket) {
+                results.forEach(result => {
+                    if (result.success) {
+                        this.app.socketService.socket.emit('file-created', {
+                            path: result.path,
+                            name: result.file,
+                            size: result.size
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('[DocumentController] Could not emit file-created event:', error);
+        }
     },
 
     /**

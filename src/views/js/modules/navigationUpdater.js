@@ -343,6 +343,16 @@ function updateFileviewer(space, file, operation = 'update') {
         navController.bindFolderViewFileItem_Single(fileElement);
         console.log(`✓ Bound events to file element in folder viewer: ${file.path}`);
       }
+
+      // Load preview for the newly added file if we're in cards view
+      if (navController && navController.loadCardPreviews) {
+        if (navController.currentViewMode === 'cards') {
+          console.log(`[FileViewer] Loading preview for newly added file in cards view: ${file.path}`);
+          navController.loadCardPreviews();
+        } else if (navController.currentViewMode === 'grid') {
+          console.log(`[FileViewer] In grid view - no preview loading needed for: ${file.path}`);
+        }
+      }
     }
   } else if (operation === 'delete') {
     // A file was deleted - remove it from folder viewer

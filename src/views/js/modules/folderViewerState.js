@@ -248,9 +248,59 @@ class FolderViewerState {
    * @private
    */
   addFileToCardsView(fileName, filePath, spaceName, folderContent) {
-    // Similar to grid view but with different styling
-    // For now, use the same as grid (returns the element)
-    return this.addFileToGridView(fileName, filePath, spaceName, folderContent);
+    // Create Bootstrap card element (proper cards view structure)
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-4 col-lg-3 mb-4';
+
+    const ext = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+    const fileTypeMap = {
+      '.md': { icon: 'bi-file-text-fill', color: '#0dcaf0' },
+      '.txt': { icon: 'bi-file-text', color: '#6c757d' },
+      '.pdf': { icon: 'bi-file-pdf', color: '#dc3545' },
+      '.jpg': { icon: 'bi-file-image', color: '#ffc107' },
+      '.jpeg': { icon: 'bi-file-image', color: '#ffc107' },
+      '.png': { icon: 'bi-file-image', color: '#ffc107' },
+      '.gif': { icon: 'bi-file-image', color: '#ffc107' },
+      '.js': { icon: 'bi-file-code', color: '#ffc107' },
+      '.ts': { icon: 'bi-file-code', color: '#ffc107' },
+      '.py': { icon: 'bi-file-code', color: '#ffc107' }
+    };
+
+    const fileType = fileTypeMap[ext] || { icon: 'bi-file', color: '#6c757d' };
+    const fileTypeStr = ext ? ext.substring(1).toUpperCase() : 'File';
+    const createdDate = new Date().toLocaleDateString();
+
+    // Check if file is image type for preview
+    const isImage = ['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
+
+    colDiv.innerHTML = `
+      <div class="card file-card-bootstrap"
+        data-document-path="${filePath}"
+        data-space-name="${spaceName}"
+        draggable="true">
+        <div class="card-body text-center">
+          <div class="card-preview ${isImage ? 'card-preview-loading' : ''}" data-file-path="${filePath}" data-space-name="${spaceName}">
+            ${isImage ? '<div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div>' : `<i class="bi ${fileType.icon}" style="font-size: 4rem; color: ${fileType.color};"></i>`}
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title-text"><strong>${fileName}</strong></div>
+          <small class="text-muted">${fileTypeStr} • 0 B</small><br>
+          <small class="text-muted">${createdDate}</small>
+        </div>
+      </div>
+    `;
+
+    // Find items-cards and append
+    const itemsCards = folderContent.querySelector('.items-cards');
+    if (itemsCards) {
+      itemsCards.appendChild(colDiv);
+    }
+
+    // Update counts
+    this.updateItemCount(1, 'file');
+    console.log(`✓ Added file to cards view: ${fileName}`);
+    return colDiv.querySelector('.file-card-bootstrap');
   }
 
   /**
@@ -399,8 +449,45 @@ class FolderViewerState {
    * @private
    */
   addFolderToCardsView(folderName, folderPath, folderContent) {
-    // Similar to grid view but with different styling
-    return this.addFolderToGridView(folderName, folderPath, folderContent);
+    // Create Bootstrap card element (proper cards view structure)
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-4 col-lg-3 mb-4';
+
+    const createdDate = new Date().toLocaleDateString();
+
+    colDiv.innerHTML = `
+      <div class="card folder-card-bootstrap"
+        data-folder-path="${folderPath}"
+        draggable="true">
+        <div class="card-body text-center">
+          <div class="card-preview card-preview-folder">
+            <i class="bi bi-folder" style="font-size: 4rem; color: #6c757d;"></i>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title-text"><strong>${folderName}</strong></div>
+          <small class="text-muted">0 items</small><br>
+          <small class="text-muted">${createdDate}</small>
+        </div>
+      </div>
+    `;
+
+    // Find items-cards and prepend folders before files
+    const itemsCards = folderContent.querySelector('.items-cards');
+    if (itemsCards) {
+      // Insert before first file card
+      const firstFileCard = itemsCards.querySelector('.file-card-bootstrap');
+      if (firstFileCard) {
+        firstFileCard.closest('.col-md-4').parentNode.insertBefore(colDiv, firstFileCard.closest('.col-md-4'));
+      } else {
+        itemsCards.appendChild(colDiv);
+      }
+    }
+
+    // Update counts
+    this.updateItemCount(1, 'folder');
+    console.log(`✓ Added folder to cards view: ${folderName}`);
+    return colDiv.querySelector('.folder-card-bootstrap');
   }
 
   /**

@@ -2136,3 +2136,156 @@ body {
     max-width: 100%;
   }
 }
+
+/* ===================================
+   Phase 8: Drag-Drop UI Enhancements
+   =================================== */
+
+/* File tree folder highlighting on drag-over */
+.folder-item.drag-over {
+  background-color: #e7f1ff;
+  border-left: 3px solid #0d6efd;
+  padding-left: calc(var(--level, 0) * 16px - 3px);
+  transition: all 0.15s ease-in-out;
+  cursor: copy !important;
+}
+
+.folder-item.drag-over i.folder-icon {
+  color: #0d6efd;
+}
+
+.folder-item.drag-over .folder-item-text {
+  font-weight: 500;
+  color: #0052cc;
+}
+
+/* Dragging element visual feedback */
+.folder-item.dragging,
+.file-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+/* File item drag-over state */
+.file-item.drag-over {
+  background-color: #f0f0f0;
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+
+/* Read-only folder indicator */
+.folder-item.read-only,
+.file-item.read-only {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
+
+.folder-item.read-only:hover,
+.file-item.read-only:hover {
+  background-color: #fff3cd;
+}
+
+.folder-item.read-only i,
+.file-item.read-only i {
+  opacity: 0.7;
+}
+
+/* Drop zone overlay in document area */
+.drop-zone-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(13, 110, 253, 0.1);
+  border: 2px dashed #0d6efd;
+  z-index: 1040;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.drop-zone-overlay.active {
+  display: flex;
+}
+
+.drop-zone-overlay-content {
+  background-color: white;
+  border: 2px dashed #0d6efd;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+
+.drop-zone-overlay-content i {
+  font-size: 2rem;
+  color: #0d6efd;
+  margin-bottom: 1rem;
+}
+
+.drop-zone-overlay-content p {
+  margin: 0;
+  color: #0052cc;
+  font-weight: 500;
+}
+
+/* Document content area drop zone */
+.document-content.drop-active {
+  background-color: #f0f7ff;
+  border: 2px dashed #0d6efd;
+  border-radius: 4px;
+}
+
+/* Folder viewer drop targets */
+.folder-card.drag-over {
+  background-color: #e7f1ff;
+  border: 2px solid #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  transform: scale(1.02);
+  transition: all 0.15s ease-in-out;
+}
+
+.folder-card.read-only {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.folder-card.read-only:hover {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}
+
+/* Cursor feedback for drag operations */
+.draggable-item {
+  cursor: grab;
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.drop-target {
+  cursor: copy;
+}
+
+.read-only-folder {
+  cursor: not-allowed;
+}
+
+/* Expand indicator animation */
+@keyframes folder-expand {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.folder-item.expanded-animating {
+  animation: folder-expand 0.2s ease-in-out;
+}

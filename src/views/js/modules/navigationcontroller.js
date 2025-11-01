@@ -18,6 +18,11 @@ export const navigationController = {
     folderViewPreferences: {}, // Stores view preferences per space and folder
     lastGlobalViewMode: 'grid', // Tracks the last globally used view mode
 
+    // Phase 8: Drag-drop UI state
+    dragOverFolder: null,
+    dragExpandTimeout: null,
+    dragExpandDelay: 800, // ms before auto-expanding folder on hover
+
     async init(app) {
         this.app = app;
         // Preferences load after authentication during initial data fetch
@@ -708,7 +713,18 @@ export const navigationController = {
     },
 
     createFolderOverview(folder) {
-        const childFiles = folder.children ? folder.children.filter(c => c.type === 'document') : [];
+        const spaceName = this.app.currentSpace?.name || 'Unknown Space';
+
+        // Add spaceName to each file so it's available in the view
+        const childFiles = folder.children
+            ? folder.children
+                .filter(c => c.type === 'document')
+                .map(file => ({
+                    ...file,
+                    spaceName: file.spaceName || spaceName
+                }))
+            : [];
+
         // Filter out system folders (those starting with .)
         const childFolders = folder.children ? folder.children.filter(c => c.type === 'folder' && !c.name.startsWith('.')) : [];
 
@@ -721,7 +737,7 @@ export const navigationController = {
         return {
             title: folder.name,
             path: folder.path,
-            spaceName: this.app.currentSpace?.name || 'Unknown Space',
+            spaceName: spaceName,
             stats: {
                 files: childFiles.length,
                 folders: childFolders.length
@@ -2320,6 +2336,8 @@ export const navigationController = {
     handleDragStart(e, itemPath, itemType) {
         e.stopPropagation();
 
+        console.log('[Phase 8] Drag started:', { itemPath, itemType, spaceId: this.app.currentSpace.id });
+
         // Store drag data
         e.dataTransfer.setData('text/plain', JSON.stringify({
             sourcePath: itemPath,
@@ -2344,8 +2362,43 @@ export const navigationController = {
         e.preventDefault();
         e.stopPropagation();
 
+        const targetPath = targetElement.dataset.folderPath || targetElement.dataset.documentPath;
+        console.log('[Phase 8] Drag enter:', { targetPath, elementClass: targetElement.className });
+
         // Add visual feedback to drop target
         targetElement.classList.add('drag-over');
+
+        // Phase 8: Auto-expand folder on drag-over-hold
+        // Only expand folders, not files
+        if (targetElement.classList.contains('folder-item') || targetElement.classList.contains('folder-card')) {
+            // Clear any existing timeout
+            if (this.dragExpandTimeout) {
+                clearTimeout(this.dragExpandTimeout);
+            }
+
+            // Set timeout to expand folder after delay
+            this.dragExpandTimeout = setTimeout(() => {
+                const folderId = targetElement.dataset.folderId;
+
+                // For file tree folders
+                if (targetElement.classList.contains('folder-item')) {
+                    const hasChildren = document.querySelector(`[data-folder-children="${folderId}"]`);
+
+                    // Only expand if folder has children and isn't already expanded
+                    if (hasChildren && !targetElement.classList.contains('expanded')) {
+                        this.toggleFolder(folderId);
+                        console.log(`[Phase 8] Auto-expanded file tree folder on drag-over: ${targetElement.dataset.folderPath}`);
+                    }
+                }
+                // For folder viewer cards - handled by loadFolderContent
+                else if (targetElement.classList.contains('folder-card')) {
+                    const folderPath = targetElement.dataset.folderPath;
+                    console.log(`[Phase 8] Would expand folder viewer folder on drag-over: ${folderPath}`);
+                }
+            }, this.dragExpandDelay);
+
+            this.dragOverFolder = targetElement;
+        }
     },
 
     handleDragLeave(e, targetElement) {
@@ -2358,6 +2411,13 @@ export const navigationController = {
 
         if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
             targetElement.classList.remove('drag-over');
+
+            // Phase 8: Cancel auto-expand timeout when leaving folder
+            if (this.dragExpandTimeout && this.dragOverFolder === targetElement) {
+                clearTimeout(this.dragExpandTimeout);
+                this.dragExpandTimeout = null;
+                this.dragOverFolder = null;
+            }
         }
     },
 
@@ -2365,9 +2425,45 @@ export const navigationController = {
         e.preventDefault();
         e.stopPropagation();
 
-        // Get drag data
-        const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+        // Phase 8: Clear drag state
+        if (this.dragExpandTimeout) {
+            clearTimeout(this.dragExpandTimeout);
+            this.dragExpandTimeout = null;
+        }
+        this.dragOverFolder = null;
+
+        // Check if this is an external file drag (from file system) or internal drag (from app)
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            // External file drag - handle file upload to target folder
+            console.log('[Phase 8] External file drop detected:', { targetPath, fileCount: e.dataTransfer.files.length });
+            this.handleExternalFileDrop(e, targetPath);
+            return;
+        }
+
+        // Get drag data for internal drag-drop
+        let dragData;
+        try {
+            const dragDataText = e.dataTransfer.getData('text/plain');
+            if (!dragDataText) {
+                console.warn('[Phase 8] No drag data found');
+                this.app.showNotification('No drag data found', 'error');
+                return;
+            }
+            dragData = JSON.parse(dragDataText);
+        } catch (parseError) {
+            console.error('[Phase 8] Failed to parse drag data:', parseError);
+            this.app.showNotification('Failed to process drag and drop', 'error');
+            return;
+        }
+
         const { sourcePath, itemType, spaceId } = dragData;
+
+        // Validate drag data
+        if (!sourcePath || !itemType || !spaceId) {
+            console.error('[Phase 8] Invalid drag data:', dragData);
+            this.app.showNotification('Failed to process drag and drop', 'error');
+            return;
+        }
 
         // Remove visual feedback from all elements
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -2382,10 +2478,19 @@ export const navigationController = {
             return;
         }
 
+        // Phase 8: Check if target folder is read-only
+        const targetFolderElement = document.querySelector(`[data-folder-path="${targetPath}"]`);
+        if (targetFolderElement && targetFolderElement.classList.contains('read-only')) {
+            this.app.showNotification('Cannot drop files into read-only folders', 'error');
+            return;
+        }
+
         // Prevent dropping into the same location
         const sourceParent = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : '';
+        console.log('[Phase 8] Drop location check:', { sourcePath, sourceParent, targetPath, isSame: sourceParent === targetPath });
         if (sourceParent === targetPath) {
             console.log('Already in this folder');
+            this.app.showNotification('Item is already in this folder', 'warning');
             return;
         }
 
@@ -2412,6 +2517,9 @@ export const navigationController = {
 
             const result = await response.json();
 
+            // Log the response for debugging
+            console.log('[Phase 8] Move API response:', { status: response.status, result });
+
             if (result.success) {
                 this.app.showNotification(`${itemType === 'folder' ? 'Folder' : 'File'} moved successfully`, 'success');
 
@@ -2423,11 +2531,114 @@ export const navigationController = {
                     await this.loadFolderContent(this.currentFolderPath);
                 }
             } else {
-                this.app.showNotification(result.message || 'Failed to move item', 'error');
+                // Handle API errors including 409 Conflict
+                const errorMessage = result.message || `Failed to move item (HTTP ${response.status})`;
+                console.error(`[Phase 8] Move operation failed:`, errorMessage, 'Data:', {
+                    sourcePath, targetPath, itemType, spaceId
+                });
+                this.app.showNotification(errorMessage, 'error');
             }
         } catch (error) {
-            console.error('Error moving item:', error);
-            this.app.showNotification('Failed to move item', 'error');
+            console.error('[Phase 8] Error moving item:', error);
+            this.app.showNotification('Failed to move item: ' + error.message, 'error');
+        }
+    },
+
+    /**
+     * Handle external file drop from file system into left navigation
+     * @param {DragEvent} e - The drag event
+     * @param {string} targetPath - The target folder path in navigation
+     * @private
+     */
+    async handleExternalFileDrop(e, targetPath) {
+        const files = e.dataTransfer.files;
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        console.log('[Phase 8] Processing external file drop:', { targetPath, files: Array.from(files).map(f => f.name) });
+
+        // Check if target folder is read-only
+        const targetFolderElement = document.querySelector(`[data-folder-path="${targetPath}"]`);
+        if (targetFolderElement && targetFolderElement.classList.contains('read-only')) {
+            this.app.showNotification('Cannot upload files to read-only folders', 'error');
+            return;
+        }
+
+        // Get the current space
+        if (!this.app.currentSpace) {
+            this.app.showNotification('No space selected', 'error');
+            return;
+        }
+
+        // Upload each file to the target folder
+        const uploadPromises = Array.from(files).map(file => {
+            return this.uploadFileToFolder(file, targetPath);
+        });
+
+        try {
+            const results = await Promise.all(uploadPromises);
+            const successCount = results.filter(r => r).length;
+
+            if (successCount > 0) {
+                this.app.showNotification(`${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully`, 'success');
+
+                // Reload the file tree to show new files
+                await this.loadFileTree();
+
+                // Reload the current folder view if we're in it
+                if (this.currentFolderPath !== undefined) {
+                    await this.loadFolderContent(this.currentFolderPath);
+                }
+            }
+        } catch (error) {
+            console.error('[Phase 8] Error uploading files:', error);
+            this.app.showNotification('Failed to upload files: ' + error.message, 'error');
+        }
+    },
+
+    /**
+     * Upload a single file to a specific folder
+     * @param {File} file - The file to upload
+     * @param {string} folderPath - The target folder path
+     * @return {Promise<boolean>} True if upload succeeded
+     * @private
+     */
+    async uploadFileToFolder(file, folderPath) {
+        try {
+            const fileName = file.name;
+
+            // Create form data for file upload
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('spaceId', this.app.currentSpace.id);
+            formData.append('folderPath', folderPath || '');
+
+            console.log('[Phase 8] Uploading file:', { fileName, folderPath, spaceId: this.app.currentSpace.id });
+
+            // Upload the file
+            const response = await fetch('/applications/wiki/api/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: response.statusText }));
+                throw new Error(`Upload failed: ${errorData.error || response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log('[Phase 8] File uploaded successfully:', fileName);
+                return true;
+            } else {
+                console.error('[Phase 8] Upload failed for file:', fileName, result.error || result.message);
+                return false;
+            }
+        } catch (error) {
+            console.error('[Phase 8] Error uploading file:', file.name, error);
+            return false;
         }
     },
 
