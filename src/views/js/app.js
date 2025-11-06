@@ -10,6 +10,7 @@ import { tabManager } from "./modules/tabManager.js";
 import { tabUIManager } from "./modules/tabUIManager.js";
 import todoScanner from "./services/todoScanner.js";
 import socketService from "./services/socketService.js";
+// Note: documentationController is only used on landing page, not in wiki app
 
 /**
  * @fileoverview Updated Wiki Application with new layout
@@ -53,7 +54,6 @@ class WikiApp {
         templatesController.init(this);
         settingsController.init(this);
         aiChatController.init(this);
-        documentationController.init(this);
 
         this.init();
     }
