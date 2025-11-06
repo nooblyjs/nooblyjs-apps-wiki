@@ -1,14 +1,3 @@
-/**
- * Passport Configuration for Wiki Authentication
- * Integrates with NooblyJS Core AuthService for user management
- *
- * Primary Auth: Uses NooblyJS Core AuthService (in-memory storage with Passport)
- * Fallback Auth: File-based storage in data/users.json (for backward compatibility)
- *
- * When authService is provided from app.js, it takes priority.
- * The file-based fallback is maintained for legacy support.
- */
-
 const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcryptjs');
