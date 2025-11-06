@@ -236,20 +236,22 @@
         </div>
     </section>
 
-    <!-- Documentation Viewer Modal -->
-    <div class="modal fade" id="documentationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content" style="border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); border-radius: 12px;">
-                <div class="modal-header" style="border-bottom: 2px solid #f0f0f0; padding: 1.5rem 2rem;">
-                    <h5 class="modal-title" id="documentationTitle" style="font-weight: 600; color: var(--custom-primary);">Documentation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 2rem; padding-bottom: 3rem;">
-                    <div id="documentationContent" class="markdown-content">
-                        <p class="text-muted text-center">
-                            <i class="bi bi-hourglass-split"></i> Loading documentation...
-                        </p>
-                    </div>
+    <!-- Documentation Viewer -->
+    <div id="documentationViewer" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1050; padding: 2rem;">
+        <div style="width: 90%; height: 90%; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); display: flex; flex-direction: column;">
+            <!-- Header -->
+            <div style="border-bottom: 2px solid #f0f0f0; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                <h2 id="documentationTitle" style="margin: 0; font-weight: 600; color: var(--custom-primary); font-size: 1.5rem;">Documentation</h2>
+                <button id="closeDocumentation" onclick="closeDocumentation()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #666; padding: 0;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <!-- Content -->
+            <div style="flex: 1; overflow-y: auto; padding: 2rem;">
+                <div id="documentationContent" class="markdown-content">
+                    <p class="text-muted text-center">
+                        <i class="bi bi-hourglass-split"></i> Loading documentation...
+                    </p>
                 </div>
             </div>
         </div>
@@ -488,7 +490,7 @@
             }
         }
 
-        // View documentation in modal
+        // View documentation in viewer
         async function viewDocumentation(docId, docName) {
             try {
                 const response = await fetch(`/applications/wiki/api/documentation/${docId}`);
@@ -506,14 +508,30 @@
                 document.getElementById('documentationTitle').textContent = docName;
                 document.getElementById('documentationContent').innerHTML = htmlContent;
 
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('documentationModal'));
-                modal.show();
+                // Show viewer
+                document.getElementById('documentationViewer').style.display = 'block';
+                document.body.style.overflow = 'hidden';
             } catch (error) {
                 console.error('Error loading documentation file:', error);
                 alert('Error loading documentation file');
             }
         }
+
+        // Close documentation viewer
+        function closeDocumentation() {
+            document.getElementById('documentationViewer').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close viewer when clicking on overlay
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewer = document.getElementById('documentationViewer');
+            viewer.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeDocumentation();
+                }
+            });
+        });
 
         // Simple markdown to HTML converter
         function markdownToHtml(markdown) {
