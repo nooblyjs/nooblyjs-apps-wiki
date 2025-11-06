@@ -44,6 +44,7 @@ module.exports = (options, eventEmitter, services) => {
   const wizardRoutes = require('./wizardRoutes');
   const settingsRoutes = require('./settingsRoutes');
   const aiChatRoutes = require('./aiChatRoutes');
+  const documentationRoutes = require('./documentationRoutes');
   // const aiContextRoutes = require('./aiContextRoutes'); // DEPRECATED: Now using existing document/navigation APIs
 
   // Register all routes
@@ -56,6 +57,7 @@ module.exports = (options, eventEmitter, services) => {
   wizardRoutes(options, eventEmitter, services);
   settingsRoutes(options, eventEmitter, services);
   aiChatRoutes(options, eventEmitter, services);
+  documentationRoutes(options, eventEmitter, services);
 
   // Store dataManager in app for middleware access
   app.set('dataManager', dataManager);

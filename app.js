@@ -88,6 +88,12 @@ wiki(app, server, eventEmitter, serviceRegistry, { authservice });
 // Launch the application public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Launch the application docs folder
+app.use('/docs', express.static(path.join(__dirname, 'docs')));
+
+// Launch the application docs folder
+app.use('/readme', express.static(path.join(__dirname, 'README.md')));
+
 server.listen(PORT, () => {
   log.info(`Nooblyjs Content Server running on port ${PORT}`);
   log.info(`Socket.IO server initialized`);

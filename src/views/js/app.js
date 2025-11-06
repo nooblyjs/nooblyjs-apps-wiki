@@ -53,6 +53,7 @@ class WikiApp {
         templatesController.init(this);
         settingsController.init(this);
         aiChatController.init(this);
+        documentationController.init(this);
 
         this.init();
     }

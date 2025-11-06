@@ -2289,3 +2289,168 @@ body {
 .folder-item.expanded-animating {
   animation: folder-expand 0.2s ease-in-out;
 }
+
+/* Documentation View Styles */
+#documentationView .view {
+  display: flex;
+  flex-direction: column;
+}
+
+#docListContainer {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.doc-item {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.doc-item:hover {
+  background-color: #f8f9fa !important;
+  border-left: 3px solid #0d6efd;
+  padding-left: calc(0.75rem - 3px) !important;
+}
+
+.doc-item.active {
+  background-color: #e7f1ff !important;
+  border-left: 3px solid #0d6efd;
+  padding-left: calc(0.75rem - 3px) !important;
+}
+
+#docViewerContent {
+  padding: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+#docViewerContent h1,
+#docViewerContent h2,
+#docViewerContent h3,
+#docViewerContent h4,
+#docViewerContent h5,
+#docViewerContent h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+#docViewerContent h1 {
+  font-size: 2rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+#docViewerContent h2 {
+  font-size: 1.5rem;
+  color: #0d6efd;
+}
+
+#docViewerContent h3 {
+  font-size: 1.25rem;
+}
+
+#docViewerContent p {
+  margin-bottom: 1rem;
+}
+
+#docViewerContent ul,
+#docViewerContent ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#docViewerContent li {
+  margin-bottom: 0.5rem;
+}
+
+#docViewerContent code {
+  background-color: #f4f4f4;
+  border-radius: 3px;
+  padding: 0.2rem 0.4rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #e83e8c;
+}
+
+#docViewerContent pre {
+  background-color: #2d2d2d;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+#docViewerContent pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+#docViewerContent blockquote {
+  border-left: 4px solid #0d6efd;
+  margin-left: 0;
+  padding-left: 1rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+#docViewerContent a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+#docViewerContent a:hover {
+  text-decoration: underline;
+}
+
+#docViewerContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+#docViewerContent table th,
+#docViewerContent table td {
+  border: 1px solid #dee2e6;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+#docViewerContent table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+#docViewerContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  margin: 1rem 0;
+}
+
+#docViewerContent hr {
+  border: none;
+  border-top: 2px solid #e9ecef;
+  margin: 2rem 0;
+}
+
+/* Download button styling */
+#docDownloadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Documentation button in header */
+#documentationBtn {
+  transition: all 0.2s ease;
+}
+
+#documentationBtn:hover {
+  background-color: #e9ecef !important;
+  transform: translateY(-1px);
+}
