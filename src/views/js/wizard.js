@@ -27,7 +27,7 @@
 
             if (!data.needsWizard) {
                 // User has already completed wizard, redirect to main app
-                window.location.href = '/';
+                window.location.href = '/applications/wiki';
                 return;
             }
         } catch (error) {
