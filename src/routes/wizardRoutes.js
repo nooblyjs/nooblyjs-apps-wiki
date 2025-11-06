@@ -183,7 +183,7 @@ async function initializeUserWiki(userId, spaceConfigs, filing, dataManager, sea
 module.exports = (options, eventEmitter, services) => {
 
   const app = options.app;
-  const { dataManager, filing, cache, logger, queue, search } = services;
+  const { dataManager, filing, cache, logger, queue, search, userInitializer } = services;
 
   // Check if user needs wizard
   app.get('/applications/wiki/api/wizard/check', async (req, res) => {
@@ -193,7 +193,13 @@ module.exports = (options, eventEmitter, services) => {
       }
 
       const user = req.user;
-      const needsWizard = !user.initialized;
+
+      // Check initialization status from userInitializer
+      let isInitialized = false;
+      if (userInitializer) {
+        isInitialized = await userInitializer.isInitialized(user.username);
+      }
+      const needsWizard = !isInitialized;
 
       res.json({
         needsWizard,
@@ -201,7 +207,7 @@ module.exports = (options, eventEmitter, services) => {
           id: user.id,
           email: user.email,
           name: user.name || '',
-          initialized: user.initialized || false
+          initialized: isInitialized
         }
       });
     } catch (error) {
@@ -263,6 +269,12 @@ module.exports = (options, eventEmitter, services) => {
 
       logger.info(`Wiki initialized for user ${req.user.email}: ${result.spaces.length} spaces, ${result.documentCount} documents`);
 
+      // Mark user as initialized
+      if (userInitializer && req.user.username) {
+        await userInitializer.markInitialized(req.user.username);
+        logger.info(`User marked as initialized: ${req.user.username}`);
+      }
+
       res.json({
         success: true,
         message: 'Wiki initialized successfully',
@@ -282,14 +294,10 @@ module.exports = (options, eventEmitter, services) => {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const users = await readUsers();
-      const user = users.find(u => u.id === req.user.id);
-
-      if (user) {
-        user.initialized = true;
-        user.initializedAt = new Date().toISOString();
-        user.skippedWizard = true;
-        await writeUsers(users);
+      // Mark user as initialized
+      if (userInitializer && req.user.username) {
+        await userInitializer.markInitialized(req.user.username);
+        logger.info(`User wizard skipped and marked as initialized: ${req.user.username}`);
       }
 
       res.json({ success: true });

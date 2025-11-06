@@ -102,6 +102,11 @@ function configurePassport(passport, authService) {
     done(null, identifier);
   });
 
+  // Mark that authService has been configured for this Passport instance
+  if (authService) {
+    authService._passportConfigured = true;
+  }
+
   passport.deserializeUser(async (identifier, done) => {
     try {
       // If authService is provided, use it to look up users

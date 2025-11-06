@@ -24,6 +24,7 @@ const { startFileWatcher } = require('./src/activities/fileWatcher');
 const DataManager = require('./src/components/dataManager');
 const AIService = require('./src/components/aiService');
 const WikiEventBus = require('./src/components/eventBus');
+const UserInitializer = require('./src/components/userInitializer');
 
 const { Server } = require('socket.io');
 const SearchIndexer = require('./src/activities/searchIndexer');
@@ -59,10 +60,13 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   const search = serviceRegistry.searching(searchProvider);
   const aiService = new AIService(serviceRegistry, dataManager, logger);
   const searchIndexer = new SearchIndexer(logger, dataManager);
-  const authservice = serviceRegistry.authservice('passport', {
-    'express-app': app,
-    dependencies: { logging: logger, caching: cache, dataservice: null }
-  });
+  const userInitializer = new UserInitializer(dataDirectory);
+
+  // Use authservice passed from app.js (avoids creating duplicate instances)
+  const authservice = options.authservice;
+  if (!authservice) {
+    throw new Error('authservice must be passed from app.js to wiki factory');
+  }
 
   // Make searchIndexer available globally for other modules
   global.searchIndexer = searchIndexer;
@@ -150,7 +154,7 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
 
   // Register routes and views
   options.app = app
-  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
+  Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer, userInitializer });
   SpacesRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
   NavigationRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
   DocumentRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });

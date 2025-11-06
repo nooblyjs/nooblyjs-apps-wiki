@@ -83,7 +83,7 @@ configurePassport(passport, authservice);
 
 // Load the wiki application
 const wiki = require('./index.js');
-wiki(app, server, eventEmitter, serviceRegistry,{});
+wiki(app, server, eventEmitter, serviceRegistry, { authservice });
 
 // Launch the application public folder
 app.use(express.static(path.join(__dirname, 'public')));

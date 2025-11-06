@@ -24,11 +24,12 @@
  * @param {Object} services - NooblyJS Core services object
  * @param {Object} services.dataManager - Data manager for wiki data persistence
  * @param {Object} services.logger - Logger service instance
+ * @param {Object} services.userInitializer - User initialization tracker
  * @return {void}
  */
 module.exports = (options, eventEmitter, services) => {
   const app = options.app;
-  const { logger } = services;
+  const { logger, userInitializer } = services;
 
   // Helper function to handle async route errors with proper error response
   const asyncHandler = (fn) => (req, res, next) => {
@@ -113,6 +114,12 @@ module.exports = (options, eventEmitter, services) => {
       }
 
       eventEmitter.emit('wiki:user-registered', { email });
+
+      // Ensure user initializer has this user marked as not initialized
+      if (userInitializer) {
+        await userInitializer.ensureFiles();
+        // User already defaults to not initialized (no entry in file means false)
+      }
 
       res.status(201).json({
         success: true,
@@ -219,18 +226,24 @@ module.exports = (options, eventEmitter, services) => {
         });
       }
 
+      // Check if user has initialized via user initializer
+      let isInitialized = false;
+      if (userInitializer) {
+        isInitialized = await userInitializer.isInitialized(user.username);
+      }
+
       eventEmitter.emit('wiki:user-login', { email });
       logger.info(`Login successful for email: ${email}`);
 
       res.status(200).json({
         success: true,
-        needsWizard: !user.initialized,  // Check if user completed wizard (default to true for new users)
+        needsWizard: !isInitialized,  // Check if user completed wizard
         user: {
           id: user.id,
           username: user.username,
           email: user.email,
           name: user.name || user.username,  // Use username as fallback for name
-          initialized: user.initialized || false
+          initialized: isInitialized
         },
         message: 'Login successful'
       });
