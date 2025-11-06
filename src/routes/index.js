@@ -35,6 +35,7 @@ module.exports = (options, eventEmitter, services) => {
   });
 
   // Load and register route modules
+  const authRoutes = require('./authRoutes');
   const documentRoutes = require('./documentRoutes');
   const spacesRoutes = require('./spacesRoutes');
   const searchRoutes = require('./searchRoutes');
@@ -46,6 +47,7 @@ module.exports = (options, eventEmitter, services) => {
   // const aiContextRoutes = require('./aiContextRoutes'); // DEPRECATED: Now using existing document/navigation APIs
 
   // Register all routes
+  authRoutes(options, eventEmitter, services);
   documentRoutes(options, eventEmitter, services);
   spacesRoutes(options, eventEmitter, services);
   searchRoutes(options, eventEmitter, services);

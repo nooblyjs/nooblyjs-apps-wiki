@@ -31,9 +31,7 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// Configure Passport
-const { configurePassport } = require('./src/auth/passport-config');
-configurePassport(passport);
+// Initialize Passport middleware (configuration will happen after authservice is created)
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -76,8 +74,12 @@ const authservice = serviceRegistry.authservice('memory');
 const aiservice = serviceRegistry.aiservice('ollama', {
   model: 'tinyllama:1.1b',
   'express-app': app,
-  tokensStorePath: './.noobly-core/data/ai-tokens.json' 
+  tokensStorePath: './.noobly-core/data/ai-tokens.json'
 });
+
+// Configure Passport with the authservice (now that it's been created)
+const { configurePassport } = require('./src/auth/passport-config');
+configurePassport(passport, authservice);
 
 // Load the wiki application
 const wiki = require('./index.js');

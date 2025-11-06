@@ -59,6 +59,10 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   const search = serviceRegistry.searching(searchProvider);
   const aiService = new AIService(serviceRegistry, dataManager, logger);
   const searchIndexer = new SearchIndexer(logger, dataManager);
+  const authservice = serviceRegistry.authservice('passport', {
+    'express-app': app,
+    dependencies: { logging: logger, caching: cache, dataservice: null }
+  });
 
   // Make searchIndexer available globally for other modules
   global.searchIndexer = searchIndexer;
@@ -141,6 +145,9 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   }, 2000);
 
 
+  // Make authservice available to routes via app context
+  app.set('authservice', authservice);
+
   // Register routes and views
   options.app = app
   Routes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
@@ -150,10 +157,6 @@ module.exports = (app, server, eventEmitter, serviceRegistry, options) => {
   SearchRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
   UserRoutes(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
   Views(options, eventEmitter, { dataManager, filing, cache, logger, queue, search, aiService, searchIndexer });
-
-  // Authentication routes
-  const authRoutes = require('./src/auth/routes');
-  app.use('/api/auth', authRoutes);
 
 
   // Serve wizard page
@@ -184,7 +187,7 @@ function startQueueWorker(services) {
   // Process queue every 5 seconds
   setInterval(async () => {
     try {
-      const task = queue.dequeue();
+      const task = queue.dequeue('tasks');
       if (task && task.type) {
         logger.info(`Processing task: ${task.type}`);
         await processTask(services, task);

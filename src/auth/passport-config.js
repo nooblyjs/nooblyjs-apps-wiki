@@ -42,7 +42,10 @@ async function createUser(userData) {
   return newUser;
 }
 
-function configurePassport(passport) {
+function configurePassport(passport, authService) {
+  // If authService is provided, use it for passport configuration
+  // Otherwise fall back to file-based system for backward compatibility
+
   passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
@@ -93,13 +96,32 @@ function configurePassport(passport) {
   }
 
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    // Serialize by username if using core auth service, otherwise by id
+    // Core auth service user objects have 'username' property
+    const identifier = user.username || user.id;
+    done(null, identifier);
   });
 
-  passport.deserializeUser(async (id, done) => {
+  passport.deserializeUser(async (identifier, done) => {
     try {
-      const user = await findUserById(id);
-      done(null, user);
+      // If authService is provided, use it to look up users
+      if (authService && typeof authService.getUser === 'function') {
+        try {
+          const user = await authService.getUser(identifier);
+          done(null, user);
+        } catch (error) {
+          // User not found in core auth service, fall back to file system
+          const user = await findUserById(identifier);
+          if (!user) {
+            return done(null, null);
+          }
+          done(null, user);
+        }
+      } else {
+        // Fall back to file-based system
+        const user = await findUserById(identifier);
+        done(null, user);
+      }
     } catch (error) {
       done(error, null);
     }
