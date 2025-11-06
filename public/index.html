@@ -75,16 +75,22 @@
         }
         .markdown-content p {
             margin-bottom: 1rem;
+            color: #333;
         }
         .markdown-content ul,
         .markdown-content ol {
             margin-left: 1.5rem;
             margin-bottom: 1rem;
         }
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
         .markdown-content code {
-            background-color: #f4f4f4;
-            border-radius: 3px;
-            padding: 0.2rem 0.4rem;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 0.3rem 0.6rem;
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
             color: #e83e8c;
@@ -92,22 +98,29 @@
         .markdown-content pre {
             background-color: #2d2d2d;
             color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 5px;
+            padding: 1.25rem;
+            border-radius: 8px;
             overflow-x: auto;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #444;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         .markdown-content pre code {
             background-color: transparent;
             color: inherit;
             padding: 0;
+            border: none;
         }
         .markdown-content blockquote {
             border-left: 4px solid var(--custom-primary);
             margin-left: 0;
-            padding-left: 1rem;
+            padding-left: 1.25rem;
             color: #666;
             font-style: italic;
+            background-color: #f8f9fa;
+            padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
         }
         .documentation-item {
             cursor: pointer;
@@ -226,12 +239,12 @@
     <!-- Documentation Viewer Modal -->
     <div class="modal fade" id="documentationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="documentationTitle">Documentation</h5>
+            <div class="modal-content" style="border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); border-radius: 12px;">
+                <div class="modal-header" style="border-bottom: 2px solid #f0f0f0; padding: 1.5rem 2rem;">
+                    <h5 class="modal-title" id="documentationTitle" style="font-weight: 600; color: var(--custom-primary);">Documentation</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 2rem;">
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 2rem; padding-bottom: 3rem;">
                     <div id="documentationContent" class="markdown-content">
                         <p class="text-muted text-center">
                             <i class="bi bi-hourglass-split"></i> Loading documentation...
