@@ -60,16 +60,21 @@ module.exports = (options, eventEmitter, services) => {
       }
 
       // Get list of published documents from published.json
-      const publishedFiles = getPublishedDocs();
+      const publishedDocs = getPublishedDocs();
       const docs = [];
 
       // Only process published files
-      publishedFiles.forEach(filename => {
-        if (!filename.endsWith('.md')) {
-          filename = filename + '.md';
+      publishedDocs.forEach(docEntry => {
+        // Support both array of strings and array of objects with file/description
+        const filename = typeof docEntry === 'string' ? docEntry : docEntry.file;
+        const description = typeof docEntry === 'string' ? undefined : docEntry.description;
+
+        let fileToProcess = filename;
+        if (!fileToProcess.endsWith('.md')) {
+          fileToProcess = fileToProcess + '.md';
         }
 
-        const filePath = path.join(docsDir, filename);
+        const filePath = path.join(docsDir, fileToProcess);
 
         // Verify file exists and is within docs directory
         if (fs.existsSync(filePath) && filePath.startsWith(docsDir)) {
@@ -92,7 +97,8 @@ module.exports = (options, eventEmitter, services) => {
               docs.push({
                 id: filename.replace(/\.md$/, ''),
                 title: title,
-                filename: filename,
+                filename: fileToProcess,
+                description: description || excerpt,
                 excerpt: excerpt,
                 size: stat.size,
                 modified: stat.mtime

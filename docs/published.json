@@ -1,5 +1,22 @@
 [
-    "nooblyjs-app-wiki-requirements.md"
+    {
+        "file": "nooblyjs-app-wiki-requirements.md",
+        "description": "The wiki requirements document"
+    },
+    {
+        "file": "nooblyjs-app-wiki-architecture",
+        "description": "The wiki requirements document"
+    },
+    {
+        "file": "wiki-extension-implementation",
+        "description": "Implementing an extension"
+    },
+    {
+        "file": "wiki-feature-advanced-markdown",
+        "description": "Advanced Mardown Usage"
+    },
+    {
+        "file": "wiki-feature-code-usage",
+        "description": "Code usage"
+    }
 ]
-
-
