@@ -319,14 +319,21 @@ module.exports = (options, eventEmitter, services) => {
       if (req.isAuthenticated()) {
         logger.info(`Auth check successful for user: ${req.user?.email}`);
 
+        // Check initialization status from userInitializer (same logic as wizard endpoint)
+        let isInitialized = false;
+        if (userInitializer) {
+          isInitialized = await userInitializer.isInitialized(req.user.username);
+        }
+        const needsWizard = !isInitialized;
+
         res.status(200).json({
           authenticated: true,
-          needsWizard: !req.user.initialized,  // Check if user completed wizard
+          needsWizard,
           user: {
             id: req.user.id,
             email: req.user.email,
             name: req.user.name,
-            initialized: req.user.initialized || false
+            initialized: isInitialized
           }
         });
       } else {

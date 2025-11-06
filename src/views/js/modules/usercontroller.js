@@ -1,3 +1,5 @@
+import { clipboardPasteHandler } from "./clipboardPasteHandler.js";
+
 export const userController = {
 
     init(app) {
@@ -542,6 +544,10 @@ export const userController = {
     showLogin() {
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('wikiApp').classList.add('hidden');
+
+        // Disable clipboard paste handler when showing login page
+        clipboardPasteHandler.setWikiAppVisibility(false);
+
         this.setupAuthToggle();
     },
 
@@ -591,6 +597,10 @@ export const userController = {
 
                 document.getElementById('loginPage').classList.add('hidden');
                 document.getElementById('wikiApp').classList.remove('hidden');
+
+                // Enable clipboard paste handler when showing wiki app
+                clipboardPasteHandler.setWikiAppVisibility(true);
+
                 await this.app.loadInitialData();
                 this.app.showHome();
             } else {

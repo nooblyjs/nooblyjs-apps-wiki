@@ -93,7 +93,11 @@ export const documentController = {
             onPasteAttempt: (attemptData) => this.handlePasteAttempt(attemptData)
         });
 
-        console.log('[DocumentController] Clipboard paste handler initialized');
+        // Enable the paste handler and set wiki app as visible
+        clipboardPasteHandler.setEnabled(true);
+        clipboardPasteHandler.setWikiAppVisibility(true);
+
+        console.log('[DocumentController] Clipboard paste handler initialized and enabled');
     },
 
     /**

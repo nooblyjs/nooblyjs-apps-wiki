@@ -19,6 +19,10 @@ export const clipboardPasteHandler = {
         showPasteNotification: true
     },
 
+    // State
+    isEnabled: false,
+    isWikiAppVisible: false,
+
     // Callbacks
     onImageDetected: null,
     onImagePasted: null,
@@ -60,16 +64,31 @@ export const clipboardPasteHandler = {
      * @param {ClipboardEvent} event - Paste event
      */
     handlePasteEvent(event) {
-        // Check if paste occurred in an input or textarea
+        // Only process if enabled and wiki app is visible
+        if (!this.isEnabled || !this.isWikiAppVisible) {
+            console.log('[ClipboardPasteHandler] Paste handler disabled or wiki app not visible');
+            return;
+        }
+
         const target = event.target;
-        const isFormElement = target instanceof HTMLInputElement ||
-                            target instanceof HTMLTextAreaElement ||
-                            target.contentEditable === 'true';
 
-        // Only handle paste in document area or editors, not in regular input fields
-        const isDocumentArea = !target.matches('input[type="text"], input[type="password"], textarea, input[type="search"]');
+        // Skip if a text input, password input, search input, or textarea is focused
+        if (target instanceof HTMLInputElement) {
+            const inputType = target.type.toLowerCase();
+            if (inputType === 'text' || inputType === 'password' || inputType === 'search' || inputType === 'email') {
+                console.log('[ClipboardPasteHandler] Skipping paste: text input field has focus');
+                return;
+            }
+        }
 
-        if (!isDocumentArea) {
+        if (target instanceof HTMLTextAreaElement) {
+            console.log('[ClipboardPasteHandler] Skipping paste: textarea has focus');
+            return;
+        }
+
+        // Skip if any contentEditable element is focused
+        if (target.contentEditable === 'true') {
+            console.log('[ClipboardPasteHandler] Skipping paste: contentEditable element has focus');
             return;
         }
 
@@ -470,12 +489,17 @@ export const clipboardPasteHandler = {
      * @param {boolean} enabled - Whether to enable paste handling
      */
     setEnabled(enabled) {
-        if (enabled) {
-            this.bindPasteListener();
-            console.log('[ClipboardPasteHandler] Paste handling enabled');
-        } else {
-            document.removeEventListener('paste', (event) => this.handlePasteEvent(event), true);
-            console.log('[ClipboardPasteHandler] Paste handling disabled');
-        }
+        this.isEnabled = enabled;
+        console.log('[ClipboardPasteHandler] Paste handling ' + (enabled ? 'enabled' : 'disabled'));
+    },
+
+    /**
+     * Set wiki app visibility state
+     * Call this when the wiki app becomes visible or hidden
+     * @param {boolean} visible - Whether the wiki app is visible
+     */
+    setWikiAppVisibility(visible) {
+        this.isWikiAppVisible = visible;
+        console.log('[ClipboardPasteHandler] Wiki app visibility set to: ' + (visible ? 'visible' : 'hidden'));
     }
 };
